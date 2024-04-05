@@ -13,6 +13,7 @@ SCS = "c946c3f1-0d1f-5ce8-9dea-7daa1f7e2d13"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
 [compat]
+LogExpFunctions = "0.3"
 julia = "1"
 
 [extras]
