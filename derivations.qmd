@@ -8,6 +8,9 @@ authors:
 date-modified: last-modified
 date: April 3, 2024 
 format: html
+execute:
+  cache: true
+  freeze: auto
 ---
 
 \newcommand{\logexp}{\mathop{\mathrm{logexp}}}
@@ -44,3 +47,26 @@ x_j &= \frac{1}{\sigma(x)}{q_j\exp(\ip{a_j,y})}, \quad j\in[n],\\
 \sigma(x) &= \sum_{j=1}^n q_j\exp(\ip{a_j,y}),
 \end{aligned}
 $$
+
+## Testing
+
+```{julia}
+using Plots, KLLS, Random
+```
+
+```{julia}
+Random.seed!(1234)
+m, n = 200, 300
+q = fill(1/n, n)
+A = randn(m, n)
+b = A*q + 0.1*randn(m)
+λ = 1e-2;
+```
+
+```{julia}
+p, y, trace = newton_opt(A, b, q, λ);
+```
+
+```{julia}
+plot(trace.pResid, yscale=:log10, label="Primal residual", xlabel="iteration", lw=3)
+```
