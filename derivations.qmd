@@ -7,7 +7,9 @@ authors:
   - name: "Tim Hoheisel"
 date-modified: last-modified
 date: April 3, 2024 
-format: html
+format:
+  html: default
+  typst: default
 execute:
   cache: true
   freeze: auto
@@ -68,5 +70,5 @@ p, y, trace = newton_opt(A, b, q, λ);
 ```
 
 ```{julia}
-plot(trace.pResid, yscale=:log10, label="Primal residual", xlabel="iteration", lw=3)
+plot(trace.pResid, yscale=:log10, label="Primal residual", xlabel="iteration", lw=2)
 ```
