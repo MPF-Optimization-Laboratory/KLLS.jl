@@ -17,26 +17,24 @@ Newton's method for minimizing unconstrained optimization problems
 - `(p, y)` approximate primal-dual pair
 """
 function newton_opt(
-    A::Matrix, b::Vector, q::Vector, λ::Real=1e-6;
-    y0::Vector = zeros(size(A, 1)),
+    data::KLLSData;
+    y0::Vector = zeros(size(data.A, 1)),
     optTol::Real = 1e-6,
     max_iter::Int = 100,
     μ::Real = 1e-4)
 
     tracer = Tracer()
     y = copy(y0)
-    logΣexp = LogExpFunction(q)
     ls_its = 0
 
     evaldual(y) = begin
-        f, p, H = logΣexp(A'y)
-        dObj = f + 0.5λ * dot(y, y) - dot(b, y)
-        dGrd = A*p + λ*y - b 
-        dHes = A*H*A' + λ*I
-        return dObj, dGrd, dHes, p
+        dObj = dObj!(data, y) 
+        dGrd = dGrad!(data, y, similar(y))
+        dHes = dHess(data)
+        return dObj, dGrd, dHes
     end
 
-    dObj, dGrd, dHes, p = evaldual(y)
+    dObj, dGrd, dHes = evaldual(y)
     ϵ = optTol * (1 + norm(dGrd, Inf)) # relative tolerance
 
     for k ∈ 0:max_iter
@@ -51,7 +49,8 @@ function newton_opt(
         end
 
         # Newton step. Replace with a CG solver for large problems
-        if dot(d, dGrd) > 0
+        slope = dot(d, dGrd)
+        if slope > 0
             error("no descent")
         end
 
@@ -64,10 +63,10 @@ function newton_opt(
 
         # Update y and evaluate objective quantities
         @. y = y + α*d
-        dObj, dGrd, dHes, p = evaldual(y)
+        dObj, dGrd, dHes = evaldual(y)
 
     end
-    return p, y, tracer
+    return grad(data.lse), y, tracer
 end
 
 function armijo(f, ∇fx, x, d; μ=1e-5, α=1, ρ=0.5, maxits=10)

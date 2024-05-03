@@ -1,21 +1,5 @@
 using NLPModels
-
-struct KLLSData{T<:Real}
-    A::AbstractMatrix{T}
-    b::Vector{T}
-    q::Vector{T}
-    lse::LogExpFunction
-    λ::T
-end
-
-function KLLSData(A, b; kwargs...)
-    n = size(A, 2)
-    q = fill(1/n, n)
-    KLLSData(A, b, q; kwargs...)
-end
-function KLLSData(A, b, q; λ=1e-6)
-    KLLSData(A, b, q, LogExpFunction(q), λ)
-end
+using JSOSolvers
 
 struct KLLSModel{T, S} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
@@ -33,19 +17,21 @@ function KLLSModel(data)
 end
 
 function NLPModels.obj(nlp::KLLSModel, y::AbstractVector)
-    @unpack A, b, λ, lse = nlp.data
-    f, _, _ = lse(A'y)
-    return f + 0.5λ * dot(y, y) - dot(b, y)
+    return dObj!(nlp.data, y)
 end
 
 function NLPModels.grad!(nlp::KLLSModel, y::AbstractVector, ∇f::AbstractVector)
-    @unpack A, b, λ, lse = nlp.data
-    _, p, _ = lse(A'y)
-    ∇f .= A*p + λ*y - b
+    return dGrad!(nlp.data, y, ∇f)
 end
 
 function NLPModels.hprod!(nlp::KLLSModel, y::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(eltype(y)))
-    @unpack A, λ, lse = nlp.data
-    _, _, H = lse(A'y)
-    Hz .= (A*(H*(A')*z)) + λ*z
+    return Hz = dHess_prod!(nlp.data, z, Hz)
+end
+
+function newtoncg(data::KLLSData; kwargs...)
+    nlp = KLLSModel(data)
+    stats = trunk(nlp; kwargs...) 
+    p = grad(data.lse)
+    y = stats.solution
+    return p, y, stats
 end

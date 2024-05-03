@@ -1,8 +1,7 @@
 using Revise
 using Random
 using KLLS
-using NLPModels
-using JSOSolvers
+using LinearAlgebra
 
 # using Test
 # @testset "KLLS.jl" begin
@@ -15,14 +14,10 @@ m, n = 200, 300
 q = (v=rand(n); v/sum(v))
 A = randn(m, n)
 b = A*q + 0.1*randn(m)
-λ = 1e-4
+λ = 1e-3
+data = KLLSData(A, b, q, λ=λ)
 
-newton_opt(A, b, q, λ, max_iter=10000);
+pn, _, _ = newton_opt(data, max_iter=10000);
+pc, yc, stats = newtoncg(data, verbose=100);
 
-nlp = KLLS.KLLSModel(KLLSData(A, b, q, λ=λ))
-stats = trunk(nlp, verbose=100)
-
-# y = randn(m)
-# obj(nlp, randn(m))
-# grad!(nlp, y, zeros(m))
-# hess_op!(nlp, y, randn(m), zeros(m))
+norm(pc)

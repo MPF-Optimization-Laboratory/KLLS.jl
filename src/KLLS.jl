@@ -2,9 +2,10 @@ module KLLS
 
 using LinearAlgebra
 using Printf
+using Tullio
 using UnPack
 
-export newton_opt
+export newton_opt, newtoncg
 export KLLSData, KLLSModel
 
 include("logsumexp.jl")
