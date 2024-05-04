@@ -31,7 +31,7 @@ end
 function newtoncg(data::KLLSData; kwargs...)
     nlp = KLLSModel(data)
     stats = trunk(nlp; kwargs...) 
-    p = grad(data.lse)
-    y = stats.solution
+    p = copy(grad(data.lse))
+    y = copy(stats.solution)
     return p, y, stats
 end

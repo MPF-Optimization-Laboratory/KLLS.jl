@@ -9,7 +9,7 @@ using LinearAlgebra
 # end
 
 Random.seed!(1234)
-m, n = 200, 300
+m, n = 200, 400
 # q = fill(1/n, n)
 q = (v=rand(n); v/sum(v))
 A = randn(m, n)

@@ -5,7 +5,7 @@ using Printf
 using Tullio
 using UnPack
 
-export newton_opt, newtoncg
+export newton_opt, newtoncg, solve!
 export KLLSData, KLLSModel
 
 include("logsumexp.jl")

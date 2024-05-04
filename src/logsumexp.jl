@@ -71,7 +71,7 @@ end
 #=
 KLLSData - data structure and methods for dual objective
 =#
-struct KLLSData{T<:Real}
+mutable struct KLLSData{T<:Real}
     A::AbstractMatrix{T}
     b::Vector{T}
     q::Vector{T}
@@ -123,7 +123,7 @@ function dHess_prod!(data::KLLSData, y, v)
     mul!(w, A', y)       # w =            A'y
     w .= g.*w .- g*(g⋅w) # w =  (G - gg')(A'y)
     mul!(v, A, w)        # v = A(G - gg')(A'y)
-    if λ > 0             # v += λ*y
+    if λ > 0
         v .+= λ*y
     end
     return v
