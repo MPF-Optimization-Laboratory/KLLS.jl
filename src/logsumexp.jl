@@ -1,6 +1,6 @@
-struct LogExpFunction
-    q::Vector{Float64}  # prior
-    g::Vector{Float64}  # buffer for gradient
+struct LogExpFunction{T}
+    q::Vector{T}  # prior
+    g::Vector{T}  # buffer for gradient
 end
 
 """
@@ -72,10 +72,10 @@ end
 KLLSData - data structure and methods for dual objective
 =#
 mutable struct KLLSData{T<:Real}
-    A::AbstractMatrix{T}
+    A::Matrix{T}
     b::Vector{T}
     q::Vector{T}
-    lse::LogExpFunction
+    lse::LogExpFunction{T}
     λ::T
     w::Vector{T} # n-buffer for Hessian-vector product
 end
@@ -90,14 +90,14 @@ function KLLSData(A, b, q; λ=1e-6)
     KLLSData(A, b, q, LogExpFunction(q), λ, similar(q))
 end
 
-function dObj!(data::KLLSData, y)
+function dObj!(data::KLLSData{T}, y::Vector{T}) where T<:Real
     @unpack A, b, λ, w, lse = data
     mul!(w, A', y)
     f = obj!(lse, w)
     return f + 0.5λ * y⋅y - b⋅y
 end
 
-function dGrad!(data::KLLSData, y, ∇f) 
+function dGrad!(data::KLLSData{T}, y::Vector{T}, ∇f::Vector{T}) where T<:Real
     @unpack A, b, λ, lse = data
     p = grad(lse)
     @tullio ∇f[i] = λ*y[i] - b[i]
@@ -115,13 +115,13 @@ function dHess(data::KLLSData)
     return ∇²dObj
 end
 
-function dHess_prod!(data::KLLSData, y, v)
+function dHess_prod!(data::KLLSData{T}, y::Vector{T}, v::Vector{T}) where T<:Real
     @unpack A, λ, w, lse = data
     # H = hess(lse)
     # v .= (A*(H*(A')*y)) + λ*y
     g = grad(lse)
     mul!(w, A', y)       # w =            A'y
-    w .= g.*w .- g*(g⋅w) # w =  (G - gg')(A'y)
+    w .= g.*(w .- (g⋅w)) # w =  (G - gg')(A'y)
     mul!(v, A, w)        # v = A(G - gg')(A'y)
     if λ > 0
         v .+= λ*y
