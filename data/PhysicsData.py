@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import softmax 
+from scipy.io import savemat
 import inversionmethods as IM
 import matplotlib.pyplot as plt
 pi=np.pi
@@ -46,6 +47,10 @@ A, b, bn = IM.generate_data(taus, omegas, x0, noise_level, Nsamples, kernel, gam
 
 # Save the data into a .npz file
 np.savez('PhysicsData.npz', A=A, b=b, bn=bn, x0=x0)
+
+# Save the data into a Mat file
+mdic = {"A": A, "b": b, "x0": x0}
+savemat("PhysicsData.mat", mdic)
 
 # Running the above code, one has access to A, b in R^{50}, and the initial vector x0 in R^{400}
 
