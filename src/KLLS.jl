@@ -6,7 +6,7 @@ using Tullio
 using UnPack
 
 export newton_opt, newtoncg, solve!
-export KLLSData, KLLSModel
+export KLLSData
 
 include("logsumexp.jl")
 include("newtoncg.jl")

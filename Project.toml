@@ -4,13 +4,11 @@ authors = ["Michael Friedlander <michael@friedlander.io> and contributors"]
 version = "1.0.0-DEV"
 
 [deps]
-ADNLPModels = "54578032-b7ea-4c30-94aa-7cbd1cce6c9a"
 JSOSolvers = "10dff2fc-5484-5881-a0e0-c90441020f8a"
-Lazy = "50d2b5c4-7a5e-59d5-8109-a42b560f39c0"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 NLPModels = "a4795742-8479-5a88-8948-cc11e1c8c1a6"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
-Octavian = "6fd5a793-0b7e-452c-907f-f8bfe9c57db4"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Printf = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 Tullio = "bc48ee85-29a4-5162-ae0b-a64e1601d4bc"

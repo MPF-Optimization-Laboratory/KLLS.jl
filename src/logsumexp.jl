@@ -1,4 +1,4 @@
-struct LogExpFunction{T}
+struct LogExpFunction{T<:AbstractFloat}
     q::Vector{T}  # prior
     g::Vector{T}  # buffer for gradient
 end
@@ -15,7 +15,7 @@ If no prior is known, instead provide the dimension `n`:
     LogExpFunction(n)
 """
 function LogExpFunction(q::Vector) 
-    @assert all(ζ->ζ≥0, q) && sum(q) ≈ 1
+    @assert (all(ζ->ζ≥0, q) && sum(q) ≈ 1) "prior is not on the simplex"
     LogExpFunction(q, similar(q))
 end
 LogExpFunction(n::Int) = LogExpFunction(fill(1/n, n))
@@ -71,7 +71,7 @@ end
 #=
 KLLSData - data structure and methods for dual objective
 =#
-mutable struct KLLSData{T<:Real}
+mutable struct KLLSData{T<:AbstractFloat}
     A::Matrix{T}
     b::Vector{T}
     q::Vector{T}
@@ -90,14 +90,14 @@ function KLLSData(A, b, q; λ=1e-6)
     KLLSData(A, b, q, LogExpFunction(q), λ, similar(q))
 end
 
-function dObj!(data::KLLSData{T}, y::Vector{T}) where T<:Real
+function dObj!(data::KLLSData{T}, y::Vector{T}) where T<:AbstractFloat
     @unpack A, b, λ, w, lse = data
     mul!(w, A', y)
     f = obj!(lse, w)
     return f + 0.5λ * y⋅y - b⋅y
 end
 
-function dGrad!(data::KLLSData{T}, y::Vector{T}, ∇f::Vector{T}) where T<:Real
+function dGrad!(data::KLLSData{T}, y::Vector{T}, ∇f::Vector{T}) where T<:AbstractFloat
     @unpack A, b, λ, lse = data
     p = grad(lse)
     @tullio ∇f[i] = λ*y[i] - b[i]
@@ -115,7 +115,7 @@ function dHess(data::KLLSData)
     return ∇²dObj
 end
 
-function dHess_prod!(data::KLLSData{T}, y::Vector{T}, v::Vector{T}) where T<:Real
+function dHess_prod!(data::KLLSData{T}, y::Vector{T}, v::Vector{T}) where T<:AbstractFloat
     @unpack A, λ, w, lse = data
     # H = hess(lse)
     # v .= (A*(H*(A')*y)) + λ*y
