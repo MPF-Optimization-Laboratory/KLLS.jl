@@ -68,6 +68,7 @@ function callback(
     # r = norm(solver.gx)
     Δ = solver.tr.radius
     cgits = solver.subsolver.stats.niter
+    cgexit = cg_msg[solver.subsolver.stats.status]
 
     # Test exit conditions
     tired = k >= max_iter
@@ -78,16 +79,16 @@ function callback(
         # print a header with
         # - problem dimensions
         # Print a line of = signs
-        println("  ","="^60)
-        @printf("  KLLS\n")
+        println("  ","="^64)
+        @printf("  KL-regularized least squares\n")
         @printf("  m = %5d\t atol = %9.1e\t  bNrm = %9.1e\n", size(nlp.data.A, 1), atol, nlp.data.bNrm)
         @printf("  n = %5d\t rtol = %9.1e\n", size(nlp.data.A, 2), rtol)
-        println("  ","="^60)
-        @printf("%8s   %9s   %9s   %9s   %6s\n",
-                "iter","objective","∥λy∥","Δ","cg its")
+        println("  ","="^64,"\n")
+        @printf("%8s   %9s   %9s   %9s   %6s   %10s\n",
+                "iter","objective","∥λy∥","Δ","cg its","cg msg")
     end
     if logging > 0 && (mod(k, logging) == 0 || done)
-        @printf("%8d   %9.2e   %9.2e   %9.1e   %6d\n", k, f, r, Δ, cgits)
+        @printf("%8d   %9.2e   %9.2e   %9.1e   %6d   %10s\n", k, f, r, Δ, cgits, cgexit)
     end
 
     if done
@@ -105,3 +106,14 @@ function callback(
        end
     end
 end
+
+const cg_msg = Dict(
+    "on trust-region boundary" => "⊕",
+    "nonpositive curvature detected" => "neg curv",
+    "solution good enough given atol and rtol" => "✓",
+    "zero curvature detected" => "zer curv",
+    "maximum number of iterations exceeded" => "⤒",
+    "user-requested exit" => "user exit",
+    "time limit exceeded" => "time exit",
+    "unknown" => ""
+)
