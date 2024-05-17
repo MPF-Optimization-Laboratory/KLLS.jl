@@ -1,3 +1,8 @@
 /Manifest.toml
 derivations_files
 .DS_Store
+/.jupyter*
+/klsolve_files
+
+KLLS.code-workspace
+klsolve.html

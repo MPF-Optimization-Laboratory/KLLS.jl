@@ -1,6 +1,6 @@
-struct LogExpFunction{T<:AbstractFloat}
-    q::Vector{T}  # prior
-    g::Vector{T}  # buffer for gradient
+struct LogExpFunction{V <: AbstractVector}
+    q::V  # prior
+    g::V  # buffer for gradient
 end
 
 """
@@ -14,7 +14,7 @@ If no prior is known, instead provide the dimension `n`:
 
     LogExpFunction(n)
 """
-function LogExpFunction(q::Vector) 
+function LogExpFunction(q::AbstractVector) 
     @assert (all(ζ->ζ≥0, q) && sum(q) ≈ 1) "prior is not on the simplex"
     LogExpFunction(q, similar(q))
 end
@@ -31,7 +31,7 @@ This implementation safeguards against numerical under/overflow:
 
 https://github.com/baggepinnen/MonteCarloMeasurements.jl/blob/4f9b688d298157dc24a5b0a518d971221fbe15dd/src/resampling.jl#L10
 """
-function obj!(lse::LogExpFunction, p::Vector)
+function obj!(lse::LogExpFunction, p)
     @unpack q, g = lse
     maxval, maxind = findmax(p)
     @tullio g[j] = q[j]*exp(p[j] - maxval)
@@ -41,7 +41,9 @@ function obj!(lse::LogExpFunction, p::Vector)
     return f
 end
 
-
+"""
+Special all-but-i sum used by logΣexp.
+"""
 function sum_all_but(w, i)
     w[i] -= 1
     s = sum(w)
@@ -68,36 +70,48 @@ function hess(lse::LogExpFunction)
     return Diagonal(g) - g * g'
 end
 
-#=
-KLLSData - data structure and methods for dual objective
-=#
-mutable struct KLLSData{T<:AbstractFloat}
-    A::Matrix{T}
-    b::Vector{T}
-    q::Vector{T}
-    lse::LogExpFunction{T}
-    λ::T
-    w::Vector{T} # n-buffer for Hessian-vector product
+"""
+Structure for KLLS data
+    - `A` is the matrix of constraints
+    - `b` is the right-hand side
+    - `q` is the prior (default: uniform)
+    - `lse` is the log-sum-exp function
+    - `λ` is the regularization parameter
+    - `w` is an n-buffer for the Hessian-vector product 
+    - `bNrm` is the norm of the right-hand side
+    - `name` is the name of the problem
+"""
+
+@kwdef mutable struct KLLSData{T<:AbstractFloat, M<:AbstractMatrix{T}, V<:AbstractVector{T}}
+    A::M
+    b::V
+    q::V = fill(eltype(A)(1/size(A, 2)), size(A, 2))
+    lse::LogExpFunction{V} = LogExpFunction(q)
+    λ::T = √eps(eltype(A))
+    w::V = similar(q)
+    bNrm::T = norm(b)
+    name::String = ""
 end
 
-function KLLSData(A, b; kwargs...)
-    n = size(A, 2)
-    q = fill(1/n, n)
-    KLLSData(A, b, q; kwargs...)
+KLLSData(A, b; kwargs...) = KLLSData(A=A, b=b; kwargs...)
+
+function Base.show(io::IO, data::KLLSData)
+    if data.name != ""
+        @printf(io, "KLLS data for %s\n", data.name)
+    else
+        println(io, "KLLS data")
+    end
+    println(io, "m = $(size(data.A, 1)), n = $(size(data.A, 2))")
 end
 
-function KLLSData(A, b, q; λ=1e-6)
-    KLLSData(A, b, q, LogExpFunction(q), λ, similar(q))
-end
-
-function dObj!(data::KLLSData{T}, y::Vector{T}) where T<:AbstractFloat
+function dObj!(data::KLLSData{T}, y::V) where {T<:AbstractFloat, V<:AbstractVector{T}}
     @unpack A, b, λ, w, lse = data
     mul!(w, A', y)
     f = obj!(lse, w)
     return f + 0.5λ * y⋅y - b⋅y
 end
 
-function dGrad!(data::KLLSData{T}, y::Vector{T}, ∇f::Vector{T}) where T<:AbstractFloat
+function dGrad!(data::KLLSData{T}, y::V, ∇f::V) where {T<:AbstractFloat, V<:AbstractVector{T}}
     @unpack A, b, λ, lse = data
     p = grad(lse)
     @tullio ∇f[i] = λ*y[i] - b[i]
@@ -115,7 +129,7 @@ function dHess(data::KLLSData)
     return ∇²dObj
 end
 
-function dHess_prod!(data::KLLSData{T}, y::Vector{T}, v::Vector{T}) where T<:AbstractFloat
+function dHess_prod!(data::KLLSData{T}, y::V, v::V) where {T<:AbstractFloat, V<:AbstractVector{T}}
     @unpack A, λ, w, lse = data
     # H = hess(lse)
     # v .= (A*(H*(A')*y)) + λ*y

@@ -1,14 +1,10 @@
-import NLPModels: NLPModels, NLPModelMeta, AbstractNLPModel, Counters, increment!
+import NLPModels: NLPModels, NLPModelMeta, AbstractNLPModel, Counters, increment!, neval_jprod, neval_jtprod
 import JSOSolvers: trunk
 
-struct KLLSModel{T, S} <: AbstractNLPModel{T, S}
+struct KLLSModel{T, M, S} <: AbstractNLPModel{T, S}
     meta::NLPModelMeta{T, S}
     counters::Counters
-    data::KLLSData{T}
-end
-
-function Base.show(io::IO, data::KLLSData)
-    println(io, "KLLS Data with $(size(data.A, 1)) rows and $(size(data.A, 2)) columns")
+    data::KLLSData{T, M, S}
 end
 
 function KLLSModel(data)
@@ -73,17 +69,20 @@ function callback(
     Δ = solver.tr.radius
     cgits = solver.subsolver.stats.niter
 
+    # Test exit conditions
     tired = k >= max_iter
-    optimal = r < atol + rtol * max(1, norm(nlp.data.b))  
+    optimal = r < atol + rtol * nlp.data.bNrm  
     done = tired || optimal
 
     if logging > 0 && k == 0
         # print a header with
         # - problem dimensions
-        @printf("KLLS\n")
-        @printf("m = %5d\t atol = %9.1e\n", size(nlp.data.A, 1), atol)
-        @printf("n = %5d\t rtol = %9.1e\n", size(nlp.data.A, 2), rtol)
-        @printf("\n")
+        # Print a line of = signs
+        println("  ","="^60)
+        @printf("  KLLS\n")
+        @printf("  m = %5d\t atol = %9.1e\t  bNrm = %9.1e\n", size(nlp.data.A, 1), atol, nlp.data.bNrm)
+        @printf("  n = %5d\t rtol = %9.1e\n", size(nlp.data.A, 2), rtol)
+        println("  ","="^60)
         @printf("%8s   %9s   %9s   %9s   %6s\n",
                 "iter","objective","∥λy∥","Δ","cg its")
     end
@@ -100,8 +99,8 @@ function callback(
            elseif optimal
                @printf("Optimality conditions satisfied\n")
            end
-           @printf("Products with A   : %9d\n", nlp.counters.neval_jprod)
-           @printf("Products with A'  : %9d\n", nlp.counters.neval_jtprod)
+           @printf("Products with A   : %9d\n", neval_jprod(nlp))
+           @printf("Products with A'  : %9d\n", neval_jtprod(nlp))
            @printf("Time elapsed (sec): %9.1f\n", stats.elapsed_time)
        end
     end
