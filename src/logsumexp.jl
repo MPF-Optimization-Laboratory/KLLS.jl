@@ -102,6 +102,7 @@ function Base.show(io::IO, data::KLLSData)
         println(io, "KLLS data")
     end
     println(io, "m = $(size(data.A, 1)), n = $(size(data.A, 2))")
+    @printf(io, "λ = %9.2e, ∥b∥ = %9.2e\n", data.λ, data.bNrm)
 end
 
 function dObj!(data::KLLSData{T}, y::V) where {T<:AbstractFloat, V<:AbstractVector{T}}

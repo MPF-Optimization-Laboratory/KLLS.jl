@@ -28,7 +28,7 @@ function NLPModels.hprod!(nlp::KLLSModel, y::AbstractVector, z::AbstractVector, 
     return Hz = dHess_prod!(nlp.data, z, Hz)
 end
 
-function newtoncg(data::KLLSData{T}; kwargs...) where T
+function newtoncg(data::KLLSData{T}; M=I, kwargs...) where T
 
     # Build the NLP model from the KL data
     nlp = KLLSModel(data)
@@ -38,7 +38,7 @@ function newtoncg(data::KLLSData{T}; kwargs...) where T
 
     # Call the Trunk solver
     # stats = tron(nlp; kwargs...) 
-    stats = trunk(nlp; callback=cb, atol=0., rtol=0.) 
+    stats = trunk(nlp; M=M, callback=cb, atol=0., rtol=0.) 
 
     # Return the primal and dual solutions
     p = copy(grad(data.lse))
