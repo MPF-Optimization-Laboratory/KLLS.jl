@@ -20,31 +20,35 @@ end
 import LinearAlgebra: mul!, ldiv!
 
 """
-    mul!(z, M::Preconditioner{<:Cholesky}, b)
+    mul!(z, M::Preconditioner{<:Cholesky}, d)
 
-Multiply the preconditioner `M = inv(R'R)` by the vector `b` and store the result in `z`. Here, `R` is triangular. 
+Calculate the product `z=M*d` with the Cholesky preconditioner `M = R'R` and the vector `d` and store in-place the result in `z`. The factor `R` is upper triangular. 
 """
-function mul!(z, M::Preconditioner{<:Cholesky}, b)
+function mul!(z, M::Preconditioner{<:Cholesky}, d)
    @unpack M, v = M
    R = M.U
-   ldiv!(v, R', b)
-   ldiv!(z, R, v) 
+   mul!(v, R, d)
+   mul!(z, R', v) 
    return z
 end
 
 """
    ldiv!(z, M::Preconditioner{<:Cholesky}, b)
 
-Compute `z=M\b` with the preconditioner `M = inv(R'R)` and the RHS `b` and store the result in `z`. Here, `R` is triangular. 
+Solve the linear system `z=M\b` with the Cholesky preconditioner `M = R'R` and the RHS `b` and store in-place the result in `z`. The factor `R` is upper triangular. 
 """
-function ldiv!(z, P::Preconditioner{<:Cholesky}, x)
+function ldiv!(z, P::Preconditioner{<:Cholesky}, b)
    @unpack M, v = P
    R = M.U
-   mul!(v, R, x)
-   mul!(z, R', v)
+   ldiv!(v, R', b)
+   ldiv!(z, R, v)
    return z
 end
 
 ## Preconditioner for general matrix
-mul!(z, P::Preconditioner{<:Matrix}, x) = z .= P.M * x
+mul!(z, P::Preconditioner{<:Matrix}, d) = mul!(z, P.M, d)
 ldiv!(z, P::Preconditioner{<:Matrix}, b) = z .= P.M \ b
+
+## Diagonal preconditioner
+mul!(z, P::Preconditioner{<:Diagonal}, d) = mul!(z, P.M, d)
+ldiv!(z, P::Preconditioner{<:Diagonal}, b) = ldiv!(z, P.M, b)

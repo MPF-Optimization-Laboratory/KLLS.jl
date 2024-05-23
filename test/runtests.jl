@@ -45,12 +45,11 @@ end
     @test sti.niter > stm.niter
 
     # Create custom preconditioner
-    P = KLLS.Preconditioner((M))
-    @test all(M*d .≈ mul!(copy(d), P, d))
-    @test all(M\d .≈ ldiv!(copy(d), P, d))
-    P = KLLS.Preconditioner(cholesky(M))
-    @test all(M*d .≈ mul!(copy(d), P, d))
-    @test all(M\d .≈ ldiv!(copy(d), P, d))
+    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(M)])
+        P = KLLS.Preconditioner(f(M))
+        @test all(Q*d ≈ mul!(copy(d), P, d))
+        @test all(Q\d ≈ ldiv!(copy(d), P, d))
+    end
 
     # # Add a radius
     Δ = 0.1*norm(xi)
@@ -79,8 +78,6 @@ end
 
     # Add preconditioning
     M = KLLS.Preconditioner(cholesky(A*A'))
-    x, y, st = newtoncg(data, M=M, logging=1, atol=atol, rtol=rtol)
-
-    cg(A*A', b)
+    x, y, st = newtoncg(data, M=M, logging=0, atol=atol, rtol=rtol)
 
 end
