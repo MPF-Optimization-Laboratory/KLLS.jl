@@ -30,34 +30,41 @@ end
     norm(H*xi-d) < 1e-10
     @test sti.status == "solution good enough given atol and rtol"
 
-    # Now preconditioned CG on the same system
+    # Construct an inverse
     Λ, U = eigen(H) # H = UΛU'
     M = U * pinv(diagm(Λ)) * U'; M = 0.5*(M+M')
     @test norm(M - H^-1) < 1e-10
     @test norm(M*H - I) < 1e-10
  
+    # M ≈ inv(H), which requires ldiv=false
     Λ[1] = 0.5 
     M = U * pinv(diagm(Λ)) * U'; M = 0.5*(M+M')
-    xm, stm = cg(H,d,M=M)
+    xm, stm = cg(H,d,M=M,ldiv=false)
     @test norm(H*xm-d) < 1e-10
     @test stm.status == "solution good enough given atol and rtol"
     @test all(xi .≈ xm)
     @test sti.niter > stm.niter
 
     # Create custom preconditioner
-    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(M)])
-        P = KLLS.Preconditioner(f(M))
+    M = U * diagm(Λ) * U'; M = 0.5*(M+M')
+    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(H)])
+        P = KLLS.Preconditioner(f(Q))
         @test all(Q*d ≈ mul!(copy(d), P, d))
         @test all(Q\d ≈ ldiv!(copy(d), P, d))
+        xm, stm = cg(H,d,M=P,ldiv=true)
+        @test stm.status == "solution good enough given atol and rtol"
+        @test all(xi .≈ xm)
+        @test sti.niter ≥ stm.niter
     end
 
     # # Add a radius
     Δ = 0.1*norm(xi)
-    xt, stt = cg(H,d,M=KLLS.Preconditioner(M), radius=Δ, verbose=0)
-    @test xt'*(M\xt) ≈ Δ^2
-    xt, stt = cg(H,d,M=KLLS.Preconditioner(cholesky(M)), radius=Δ, verbose=0)
-    @test xt'*(M\xt) ≈ Δ^2
-
+    M = U * diagm(Λ) * U'; M = 0.5*(M+M')
+    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(H)])
+        P = KLLS.Preconditioner(f(Q))
+        xt, stt = cg(H,d,M=P,radius=Δ,verbose=0,ldiv=true)
+        @test xt'*(Q*xt) ≈ Δ^2
+    end
 end
 
 @testset "Newton CG" begin
