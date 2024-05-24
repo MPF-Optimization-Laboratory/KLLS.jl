@@ -4,6 +4,7 @@ using LinearAlgebra
 using Printf
 using Tullio
 using UnPack
+using DataFrames
 
 export newtoncg, solve!
 export mul!, ldiv!

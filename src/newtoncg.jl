@@ -33,17 +33,19 @@ function newtoncg(data::KLLSData{T}; M=I, kwargs...) where T
     # Build the NLP model from the KL data
     nlp = KLLSModel(data)
 
+    # Tracer
+    tracer = DataFrame(iter=Int[], dual_obj=Float64[], r=Float64[], Δ=Float64[], Δₐ_Δₚ=Float64[], cgits=Int[], cgmsg=String[])
+
     # Callback routine
-    cb(nlp, solver, stats) = callback(T, nlp, solver, stats; kwargs...)
+    cb(nlp, solver, stats) = callback(T, nlp, solver, stats, tracer; kwargs...)
 
     # Call the Trunk solver
-    # stats = tron(nlp; kwargs...) 
     stats = trunk(nlp; M=M, callback=cb, atol=0., rtol=0.) 
 
     # Return the primal and dual solutions
     p = copy(grad(data.lse))
     y = copy(stats.solution)
-    return p, y, stats
+    return p, y, stats, tracer
 end
 
 """
@@ -55,11 +57,13 @@ function callback(
     ttype::Type{T},
     nlp,
     solver,
-    stats;
+    stats,
+    tracer;
     atol::T = √eps(T),
     rtol::T = √eps(T),
     max_iter::Int = typemax(Int),
-    logging::Int = 0
+    logging::Int = 0,
+    trace::Bool = false
     ) where T
 
     f = stats.objective 
@@ -67,6 +71,7 @@ function callback(
     r = stats.dual_feas # = ||∇ dual obj(x)|| = ||λy||
     # r = norm(solver.gx)
     Δ = solver.tr.radius
+    actual_to_predicted = solver.tr.ratio
     cgits = solver.subsolver.stats.niter
     cgexit = cg_msg[solver.subsolver.stats.status]
 
@@ -75,6 +80,7 @@ function callback(
     optimal = r < atol + rtol * nlp.data.bNrm  
     done = tired || optimal
 
+    trace && push!(tracer, (k, f, r, Δ, actual_to_predicted, cgits, cgexit))
     if logging > 0 && k == 0
         # print a header with
         # - problem dimensions
@@ -84,11 +90,11 @@ function callback(
         @printf("  m = %5d\t atol = %9.1e\t  bNrm = %9.1e\n", size(nlp.data.A, 1), atol, nlp.data.bNrm)
         @printf("  n = %5d\t rtol = %9.1e\n", size(nlp.data.A, 2), rtol)
         println("  ","="^64,"\n")
-        @printf("%8s   %9s   %9s   %9s   %6s   %10s\n",
-                "iter","objective","∥λy∥","Δ","cg its","cg msg")
+        @printf("%8s   %9s   %9s   %9s   %9s   %6s   %10s\n",
+                "iter","objective","∥λy∥","Δ","Δₐ/Δₚ","cg its","cg msg")
     end
     if logging > 0 && (mod(k, logging) == 0 || done)
-        @printf("%8d   %9.2e   %9.2e   %9.1e   %6d   %10s\n", k, f, r, Δ, cgits, cgexit)
+        @printf("%8d   %9.2e   %9.2e   %9.1e  %9.1e   %6d   %10s\n", k, f, r, Δ, actual_to_predicted, cgits, cgexit)
     end
 
     if done
