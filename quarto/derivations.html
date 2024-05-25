@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en">
 
-<meta charset="utf-8">
-<meta name="generator" content="quarto-1.4.554">
+<head>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<meta charset="utf-8" />
+<meta name="generator" content="quarto-1.4.554" />
 
-<meta name="dcterms.date" content="2024-04-03">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
 
-<title>Quarto - Cross Entropy under Linear Constraints</title>
+<meta name="dcterms.date" content="2024-04-03" />
+
+<title>Quarto – Cross Entropy under Linear Constraints</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -23,23 +25,7 @@ ul.task-list li input[type="checkbox"] {
 }
 </style>
 
-
-<script src="site_libs/quarto-nav/quarto-nav.js"></script>
-<script src="site_libs/quarto-nav/headroom.min.js"></script>
-<script src="site_libs/clipboard/clipboard.min.js"></script>
-<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
-<script src="site_libs/quarto-search/fuse.min.js"></script>
-<script src="site_libs/quarto-search/quarto-search.js"></script>
-<meta name="quarto:offset" content="./">
-<script src="site_libs/quarto-html/quarto.js"></script>
-<script src="site_libs/quarto-html/popper.min.js"></script>
-<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
-<script src="site_libs/quarto-html/anchor.min.js"></script>
-<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="site_libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="site_libs/bootstrap/bootstrap.min.js"></script>
-<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="site_libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+<!-- htmldependencies:E3FAD763 -->
 <script id="quarto-search-options" type="application/json">{
   "location": "navbar",
   "copy-button": false,
@@ -98,28 +84,30 @@ window.Quarto = {
 };
 </script>
 
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="styles.css" />
 </head>
 
-<body class="nav-fixed">
+<body>
 
 <div id="quarto-search-results"></div>
   <header id="quarto-header" class="headroom fixed-top">
     <nav class="navbar navbar-expand-lg " data-bs-theme="dark">
       <div class="navbar-container container-fluid">
       <div class="navbar-brand-container mx-auto">
-    <a class="navbar-brand" href="./index.html">
+    <a class="navbar-brand" href="/index.html">
     <span class="navbar-title">Quarto</span>
     </a>
   </div>
             <div id="quarto-search" class="" title="Search"></div>
-          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse"
+  aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation"
+  onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
   <span class="navbar-toggler-icon"></span>
 </button>
           <div class="collapse navbar-collapse" id="navbarCollapse">
             <ul class="navbar-nav navbar-nav-scroll me-auto">
   <li class="nav-item">
-    <a class="nav-link" href="./index.html"> 
+    <a class="nav-link" href="/index.html"> 
 <span class="menu-text">Home</span></a>
   </li>  
 </ul>
@@ -134,17 +122,7 @@ window.Quarto = {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#problem-statement" id="toc-problem-statement" class="nav-link active" data-scroll-target="#problem-statement">Problem statement</a></li>
-  <li><a href="#implicit-approach" id="toc-implicit-approach" class="nav-link" data-scroll-target="#implicit-approach">Implicit approach</a>
-  <ul class="collapse">
-  <li><a href="#optimality-conditions" id="toc-optimality-conditions" class="nav-link" data-scroll-target="#optimality-conditions">Optimality conditions</a></li>
-  </ul></li>
-  </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="derivations.pdf"><i class="bi bi-file-pdf"></i>Typst</a></li></ul></div></nav>
+        <div id="quarto-toc-target"></div>
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -188,9 +166,19 @@ window.Quarto = {
 
 </header>
 
-
+<nav id="TOC" role="doc-toc">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#problem-statement" id="toc-problem-statement">Problem statement</a></li>
+  <li><a href="#implicit-approach" id="toc-implicit-approach">Implicit approach</a>
+  <ul>
+  <li><a href="#optimality-conditions" id="toc-optimality-conditions">Optimality conditions</a></li>
+  </ul></li>
+  </ul>
+</nav>
 <section id="problem-statement" class="level2">
-<h2 class="anchored" data-anchor-id="problem-statement">Problem statement</h2>
+<h2>Problem statement</h2>
 <p>Define the cross-entropy and log-exponential functions by <span class="math display">\[
 \begin{aligned}
 \mathop{\mathrm{cent}}(p \mid q) &amp;= \sum_{i=1}^n p_i \log(p_i/q_i), \\
@@ -204,9 +192,9 @@ window.Quarto = {
 \]</span> where <span class="math inline">\(A\)</span> is an <span class="math inline">\(m\)</span>-by-<span class="math inline">\(n\)</span> matrix, <span class="math inline">\(b\)</span> is an <span class="math inline">\(m\)</span>-vector, and <span class="math inline">\(\lambda\)</span> is a nonnegative regularization parameter.</p>
 </section>
 <section id="implicit-approach" class="level2">
-<h2 class="anchored" data-anchor-id="implicit-approach">Implicit approach</h2>
+<h2>Implicit approach</h2>
 <section id="optimality-conditions" class="level3">
-<h3 class="anchored" data-anchor-id="optimality-conditions">Optimality conditions</h3>
+<h3>Optimality conditions</h3>
 <p>A pair <span class="math inline">\((p, y)\)</span> is primal-dual optimal if and only if it satisfies the optimality conditions <span class="math display">\[
 \begin{aligned}
 b &amp;= Ax + \lambda y, \\
@@ -214,13 +202,17 @@ x_j &amp;= \frac{1}{\sigma(x)}{q_j\exp(\langle a_j,y \rangle)}, \quad j\in[n],\\
 \sigma(x) &amp;= \sum_{j=1}^n q_j\exp(\langle a_j,y \rangle),
 \end{aligned}
 \]</span></p>
-
-
+<div id="quarto-navigation-envelope" class="hidden">
+<p><span class="hidden" data-render-id="quarto-int-sidebar-title">Quarto</span> <span class="hidden" data-render-id="quarto-int-navbar-title">Quarto</span> <span class="hidden" data-render-id="quarto-int-navbar:Home">Home</span> <span class="hidden" data-render-id="quarto-int-navbar:/index.html">/index.html</span></p>
+</div>
+<div id="quarto-meta-markdown" class="hidden">
+<p><span class="hidden" data-render-id="quarto-metatitle">Quarto - Cross Entropy under Linear Constraints</span> <span class="hidden" data-render-id="quarto-twittercardtitle">Quarto - Cross Entropy under Linear Constraints</span> <span class="hidden" data-render-id="quarto-ogcardtitle">Quarto - Cross Entropy under Linear Constraints</span> <span class="hidden" data-render-id="quarto-metasitename">Quarto</span> <span class="hidden" data-render-id="quarto-twittercarddesc">A dual Newton solver</span> <span class="hidden" data-render-id="quarto-ogcardddesc">A dual Newton solver</span></p>
+</div>
 </section>
 </section>
 
 </main> <!-- /main -->
-<script id="quarto-html-after-body" type="application/javascript">
+<script id = "quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {
     const mode = bsSheetEl.getAttribute("data-mode");
@@ -631,7 +623,6 @@ window.document.addEventListener("DOMContentLoaded", function (event) {
 </script>
 </div> <!-- /content -->
 
+</body>
 
-
-
-</body></html>
+</html>

@@ -3,16 +3,16 @@ project:
   output-dir: docs
 
 website:
-  title: "Quarto"
+  title: "MaxEnt"
   navbar:
     left:
-      - href: index.qmd
+      - href: quarto/index.qmd
         text: Home
 
 format:
   html:
     theme: cosmo
-    css: styles.css
+    css: quarto/styles.css
     toc: true
 
 execute: 

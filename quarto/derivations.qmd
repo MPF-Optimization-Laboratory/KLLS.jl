@@ -9,7 +9,6 @@ date-modified: last-modified
 date: April 3, 2024 
 format:
   html: default
-  typst: default
 execute:
   cache: true
   freeze: auto
