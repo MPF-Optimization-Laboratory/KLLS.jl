@@ -42,11 +42,11 @@ There are three data sets available:
 1. `synthetic_data.npz`
 1. `Tobias_data.npz`
 
-:::{.callout-warning}
-The `Tobias_data.npz` file doesn't seem to be any different from `synthetic_data.npz`.
+### Questions
 
-@TC or @Tobias: please provide more information on which data set we should use? For now, we'll focus only on the first two data sets.
-:::
+1.  The `Tobias_data.npz` file doesn't seem to be any different from `synthetic_data.npz`. Are these geniunely different data sets?
+2. What is the meaning of the `b` vector in `synthetic_data.npz`?
+3. How do we normalize the data in `synthetic_data.npz`?
 
 #### PhysicsData:
 ```{julia}
