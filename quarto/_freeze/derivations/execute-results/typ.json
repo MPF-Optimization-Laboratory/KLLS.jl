@@ -1,0 +1,11 @@
+{
+  "hash": "930d77ca011b97f87b2bee1525c47ab7",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Cross Entropy under Linear Constraints\"\nsubtitle: \"A dual Newton solver\"\nauthors:\n  - name: \"Nicholas Barnfield\"\n  - name: \"Michael P. Friedlander\"\n  - name: \"Tim Hoheisel\"\ndate-modified: last-modified\ndate: April 3, 2024 \nformat:\n  html: default\n  typst: default\nexecute:\n  cache: true\n  freeze: auto\n---\n\n\\newcommand{\\logexp}{\\mathop{\\mathrm{logexp}}}\n\\newcommand{\\cent}{\\mathop{\\mathrm{cent}}}\n\\newcommand{\\ip}[1]{\\langle #1 \\rangle}\n\n::: {.cell execution_count=1}\n``` {.julia .cell-code}\nimport Pkg\nPkg.activate(\"..\")\n```\n\n::: {.cell-output .cell-output-stderr}\n```\n  Activating project at `~/Documents/projects/Software/KLLS`\n```\n:::\n:::\n\n\n## Problem statement\n\nDefine the cross-entropy and log-exponential functions by\n$$\n\\begin{aligned}\n\\cent(p \\mid q) &= \\sum_{i=1}^n p_i \\log(p_i/q_i), \\\\\n\\logexp(p \\mid q) &= \\log\\sum_{i=1}^n q_i\\exp(p_i),\n\\end{aligned}\n$$\nwhich form a conjugate pair.  We consider the pair of dual optimization problems\n$$\n\\begin{aligned}\n\\min_{p,\\, y } &\\enspace\\left\\{\\cent(p \\mid q) + \\lambda/2\\|y\\|^2 \\mid Ax + \\lambda y = b\\right\\}\\\\\n\\min_{y} &\\enspace\\left\\{\\logexp(A^Ty \\mid q) + \\lambda/2\\|y\\|^2 - \\ip{b,y}\\right\\},\n\\end{aligned}\n$$\nwhere $A$ is an $m$-by-$n$ matrix, $b$ is an $m$-vector, and $\\lambda$ is a nonnegative regularization parameter.\n\n## Implicit approach\n\n### Optimality conditions\n\nA pair $(p, y)$ is primal-dual optimal if and only if it satisfies the optimality conditions\n$$\n\\begin{aligned}\nb &= Ax + \\lambda y, \\\\\nx_j &= \\frac{1}{\\sigma(x)}{q_j\\exp(\\ip{a_j,y})}, \\quad j\\in[n],\\\\\n\\sigma(x) &= \\sum_{j=1}^n q_j\\exp(\\ip{a_j,y}),\n\\end{aligned}\n$$\n\n",
+    "supporting": [
+      "derivations_files/figure-typst"
+    ],
+    "filters": []
+  }
+}

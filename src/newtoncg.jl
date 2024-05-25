@@ -77,7 +77,7 @@ function callback(
 
     # Test exit conditions
     tired = k >= max_iter
-    optimal = r < atol + rtol * nlp.data.bNrm  
+    optimal = r < atol + rtol * nlp.data.bNrm 
     done = tired || optimal
 
     trace && push!(tracer, (k, f, r, Δ, actual_to_predicted, cgits, cgexit))

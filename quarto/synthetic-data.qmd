@@ -1,0 +1,180 @@
+---
+title: "KL-Regularized Least Squares"
+subtitle: "Physics and synthetic data sets"
+authors:
+  - Nicholas Barnield
+  - Thomas Chuma
+  - Tobias Dornheim
+  - Michael P. Friedlander
+  - Tim Hoheisel
+ 
+date: last-modified
+# format: typst
+format: html
+execute:
+  cache: true
+---
+
+```{julia}
+#| echo: false
+#| output: false 
+import Pkg; Pkg.activate(".."); Pkg.instantiate()
+```
+
+```{julia}
+#| echo: true
+#| code-fold: true
+#| code-summary: "Import packages" 
+using Revise
+using KLLS
+using NPZ
+using Plots
+using Printf
+using UnPack
+using LinearAlgebra
+```
+
+## Data sets
+
+There are three data sets available:
+
+1. `PhysicsData.npz`
+1. `synthetic_data.npz`
+1. `Tobias_data.npz`
+
+:::{.callout-warning}
+The `Tobias_data.npz` file doesn't seem to be any different from `synthetic_data.npz`.
+
+@TC or @Tobias: please provide more information on which data set we should use? For now, we'll focus only on the first two data sets.
+:::
+
+#### PhysicsData:
+```{julia}
+#| output: true
+dataPhy = npzread("../data/PhysicsData.npz", ["A", "b", "x0"])
+probPhy = KLLSData(dataPhy["A"], dataPhy["b"], name="Physics")
+```
+Check normalization:
+```{julia}
+sum(dataPhy["x0"])
+```
+
+#### Synthetic data:
+
+For this dataset, the ground truth seems to be named `x` instead of `x0`, as in the other data sets. We'll rename it for consistency:
+```{julia}
+#| output: true
+dataSyn = npzread("../data/synthetic_data.npz", ["A", "b", "x"])
+dataSyn["x0"] = dataSyn["x"] # convenient
+probSyn = KLLSData(dataSyn["A"], dataSyn["b"], name="Synthetic Data")
+```
+
+Check normalization:
+```{julia}
+sum(dataSyn["x0"])
+```
+
+:::{.callout-important title="Normalization"}
+The synthetic data doesn't appear to be normalized. As agreed, we normalize the data such that the first element of the right-hand side vector $b$ is 1:
+
+```{julia}
+#| output: false
+probSyn.b ./= probSyn.b[1]
+probSyn.A ./= probSyn.b[1]
+dataSyn["x0"] ./= probSyn.b[1]
+```
+Questions:
+
+1. Note that this normalization still doesn't put `x0` into the simplex:
+```{julia}
+sum(dataSyn["x0"])
+```
+2. Why is `x0` for this test set stored as single precision float? (See "f" in line above.)
+:::
+
+Here are the signals to be recovered:
+```{julia}
+#| echo: false
+plot(
+  title = "Ground truth", 
+  plot(dataPhy["x0"], label="Physics"),
+  plot(dataSyn["x0"], label="Synthetic"),
+)
+```
+
+### Recovery
+
+Recover the signals as the solution of the KL-regularized least squares problem
+$$
+\min_p \frac{1}{2} \|Ap - b\|^2 + \lambda \sum_{i=1}^n p_i \log(p_i)
+$$
+
+```{julia}
+#| output: false
+#| code-fold: true
+#| code-summary: "Implement test functions"
+logrange(start, stop, length) = exp10.(range(start, stop=stop, length=length))
+solve_range(prob, λs) = map(λs) do λ
+        prob.λ = λ
+        p, y, stats = newtoncg(prob)
+        (λ=λ, p=p, iters=stats.iter, solve_time=stats.elapsed_time)
+end
+function plot_results(stats, x0; title="Recovered distributions")
+    lab = hcat([@sprintf("λ = %6.0e", λ) for λ in getfield.(stats, :λ)]...)
+    default(lw=2, title=title)
+    plot(getfield.(stats, :p), label=lab)
+    plot!(x0, label="ground truth")
+end
+```
+
+#### Physics data
+
+Solve the problem for a range of logarithmically spaced regularization parameters $\lambda$ between $10^{-16}$ and $10^{-5}$.
+
+
+```{julia}
+statsPhy = solve_range(probPhy, logrange(-16, -5, 3))
+plot_results(statsPhy, dataPhy["x0"])
+```
+
+Report results for smallest value of $\lambda$:
+```{julia}
+#| output: false
+#| code-fold: true
+#| code-summary: "Implement report function" 
+function report_errors(stats, data)
+  @unpack A, b, x0 = data
+  p = stats.p
+  m, n = size(A)
+  @printf("%20s: %11.2e\n", "rms(p-x0)", norm(p - x0)/√n)
+  @printf("%20s: %11.2e\n", "rms(Ap-b)", norm(A*p - b)/√m)
+  @printf("%20s: %11.2e\n", "rms(Ax0-b)", norm(A*x0 - b)/√m)
+  @printf("%20s: %11f\n", "Solve time (sec)", stats.solve_time)
+end
+```
+```{julia}
+report_errors(statsPhy[1], dataPhy)
+```
+
+#### Synthetic data
+
+Here we try to recover the solution from the synthetic data set. But as we see here, we get garbage:
+
+```{julia}
+p, y, statsSyn = newtoncg(probSyn)
+plot([p, dataSyn["x0"]], label=["Recovered" "Ground truth"])
+```
+:::{.callout-important}
+It seems that the vector `b` in that data set isn't correct. What is `b` the meaning of `b` in this data set?
+:::
+
+As a test, we construct `b` from the ground truth (forcibly normalized) `x0`:
+```{julia}
+let
+  @unpack A, x0 = dataSyn
+  x0 = x0/sum(x0)
+  b = A*x0
+  p, y, stats = newtoncg(KLLSData(A, b))
+  plot([p, x0], label=["Recovered" "Ground truth"])
+end
+```

@@ -1,8 +1,10 @@
 /Manifest.toml
 derivations_files
 .DS_Store
-/.jupyter*
+**/.jupyter_cache/
 /klsolve_files
 
 KLLS.code-workspace
 klsolve.html
+
+/.quarto/

@@ -1,0 +1,6 @@
+---
+title: "Maximum Entropy Linear Inversion Project"
+---
+
+## Test sets
+- [synthetic data](synthetic-data.qmd)

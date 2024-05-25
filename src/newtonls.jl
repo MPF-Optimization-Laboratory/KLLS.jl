@@ -23,7 +23,7 @@ function newton_opt(
     max_iter::Int = 100,
     μ::Real = 1e-4)
 
-    tracer = Tracer()
+    tracer = DataFrame(iter=[], obj=[], gNorm=[], ls_its=[])
     y = copy(y0)
     ls_its = 0
 
@@ -40,10 +40,10 @@ function newton_opt(
     for k ∈ 0:max_iter
 
         # Newton direction
-        d = -((dHes+1e-2I) \ dGrd)
+        d = -((dHes) \ dGrd)
 
         # Log and test for exit
-        logger!(tracer, k, dObj, dGrd, dHes, ls_its, d)
+        push!(tracer, (k, dObj, norm(dGrd), ls_its))
         if norm(dGrd, Inf) < ϵ
             break
         end
@@ -54,11 +54,6 @@ function newton_opt(
             error("no descent")
         end
 
-        # Line search
-        # suff_descent = dot(dGrd, d) ≤ -(1e-4)norm(d)^(2.1)
-        # if !suff_descent
-        #     d = -dGrd
-        # end
         α, ls_its = armijo(y->evaldual(y)[1], dGrd, y, d, μ=μ)
 
         # Update y and evaluate objective quantities
@@ -77,15 +72,4 @@ function armijo(f, ∇fx, x, d; μ=1e-5, α=1, ρ=0.5, maxits=10)
        α *= ρ
     end
     error("$(dot(∇fx,d))   backtracking linesearch failed")
-end
-
-function logger!(tracer, k, dObj, dGrd, dHes, ls_its, d)
-    nrmdGrd = norm(dGrd)
-    F = eigen(Symmetric(dHes))
-    λmin, λmax = F.values[1], F.values[end]
-    if k == 0
-       @printf("%4s: %11s %11s %8s %11s %11s %11s\n", "iter", "obj", "|grd|", "line its", "lmin", "lmax", "d⋅dG")
-    end
-    @printf("%4d: %11.4e %11.4e %8d %11.4e %11.4e %11.4e\n", k, dObj, nrmdGrd, ls_its, λmin, λmax, dot(dGrd, d))
-    push!(tracer, dObj, nrmdGrd)
 end

@@ -97,12 +97,15 @@ KLLSData(A, b; kwargs...) = KLLSData(A=A, b=b; kwargs...)
 
 function Base.show(io::IO, data::KLLSData)
     if data.name != ""
-        @printf(io, "KLLS data for %s\n", data.name)
+        @printf(io, "KLLS data: %s\n", data.name)
     else
         println(io, "KLLS data")
     end
-    println(io, "m = $(size(data.A, 1)), n = $(size(data.A, 2))")
-    @printf(io, "λ = %9.2e, ∥b∥ = %9.2e\n", data.λ, data.bNrm)
+    @printf(io, "%-3s = %5d   ", "m", size(data.A, 1))
+    @printf(io, "%-10s = %9.2e\n", "norm(b)", norm(data.b))
+    @printf(io, "%-3s = %5d   ", "n", size(data.A, 2))
+    @printf(io, "%-10s = %9.2e\n", "sum(b)", sum(data.b))
+    # @printf(io, "%-3s = %9.2e\n", "λ", data.λ)
 end
 
 function dObj!(data::KLLSData{T}, y::V) where {T<:AbstractFloat, V<:AbstractVector{T}}
