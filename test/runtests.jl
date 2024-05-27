@@ -1,5 +1,6 @@
 using Test
-using LinearAlgebra, Random, Krylov
+using LinearAlgebra, Random
+import Krylov: cg
 # using ADNLPModels, JSOSolvers
 using KLLS
 
@@ -18,7 +19,7 @@ using KLLS
     @test data.λ == λ
 end
 
-@testset "Preconditioning" begin
+@testset failfast=true "Preconditioning" begin
 
     Random.seed!(1234)
 
@@ -50,8 +51,8 @@ end
     M = U * diagm(Λ) * U'; M = 0.5*(M+M')
     @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(H)])
         P = KLLS.Preconditioner(f(Q))
-        @test all(Q*d ≈ mul!(copy(d), P, d))
-        @test all(Q\d ≈ ldiv!(copy(d), P, d))
+        @test all(Q*d ≈ mul!(similar(d), P, d))
+        @test all(Q\d ≈ ldiv!(similar(d), P, d))
         xm, stm = cg(H,d,M=P,ldiv=true)
         @test stm.status == "solution good enough given atol and rtol"
         @test all(xi .≈ xm)
@@ -66,6 +67,26 @@ end
         xt, stt = cg(H,d,M=P,radius=Δ,verbose=0,ldiv=true)
         @test xt'*(Q*xt) ≈ Δ^2
     end
+
+    # DiagAAtPreconditioner
+    A = randn(10, 20)
+    b = randn(10)
+    λ = rand()
+    data = KLLSData(A, b, λ=λ)
+    M = KLLS.DiagAAPreconditioner(data)
+    P = Diagonal(diag(A*A')) + λ*I 
+    @test all(P*d ≈ mul!(similar(d), M, d))
+    @test all(P\d ≈ ldiv!(similar(d), M, d))
+
+    # DiagASAtPreconditioner
+    KLLS.dObj!(data, randn(size(A,1)))
+    M = KLLS.DiagASAPreconditioner(data)
+    g = KLLS.grad(data.lse)
+    S = Diagonal(g) - g*g'
+    P = Diagonal(A*S*A') + λ*I
+    @test all(P*d ≈ mul!(similar(d), M, d))
+    @test all(P\d ≈ ldiv!(similar(d), M, d))
+
 end
 
 @testset "Newton CG" begin
