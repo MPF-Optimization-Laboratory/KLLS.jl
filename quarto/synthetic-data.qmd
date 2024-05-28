@@ -48,6 +48,32 @@ There are three data sets available:
 2. What is the meaning of the `b` vector in `synthetic_data.npz`?
 3. How do we normalize the data in `synthetic_data.npz`?
 
+#### Rho-meson
+
+```{julia}
+#| output: true
+dataRho = npzread("../data/rho-meson_testproblem.npz", ["A", "x", "b_avg"]) 
+probRho = KLLSData(dataRho["A"], dataRho["b_avg"], name="Rho-meson")
+```
+
+Check normalization:
+```{julia}
+sum(dataRho["x"])
+```
+
+#### Synthetic UEG
+
+```{julia}
+#| output: true
+dataUEG = npzread("../data/synthetic-UEG_testproblem.npz", ["A", "x", "b_avg", "mu"]) 
+probUEG = KLLSData(dataUEG["A"], dataUEG["b_avg"], name="UEG")
+```
+
+Check normalization:
+```{julia}
+sum(dataUEG["x"])
+```
+
 #### PhysicsData:
 ```{julia}
 #| output: true
@@ -92,13 +118,16 @@ sum(dataSyn["x0"])
 2. Why is `x0` for this test set stored as single precision float? (See "f" in line above.)
 :::
 
+### Visualizing signals
+
 Here are the signals to be recovered:
 ```{julia}
 #| echo: false
-plot(
-  title = "Ground truth", 
+plot(title="Signals to be recovered",
   plot(dataPhy["x0"], label="Physics"),
   plot(dataSyn["x0"], label="Synthetic"),
+  plot(dataRho["x"], label="Rho-meson"),
+  plot(dataUEG["x"], label="Synthetic UEG"),
 )
 ```
 
@@ -176,5 +205,15 @@ let
   b = A*x0
   p, y, stats = newtoncg(KLLSData(A, b))
   plot([p, x0], label=["Recovered" "Ground truth"])
+end
+```
+
+### UEG
+
+```{julia}
+let
+  probUEG.λ = 1e-6
+  p, y, stats = newtoncg(probUEG)
+  plot([p, dataUEG["x"]], label=["Recovered" "Ground truth"])
 end
 ```
