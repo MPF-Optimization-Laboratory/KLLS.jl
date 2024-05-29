@@ -6,7 +6,7 @@ using Tullio
 using UnPack
 using DataFrames
 
-export newtoncg
+export solve!
 export KLLSData
 
 include("logsumexp.jl")

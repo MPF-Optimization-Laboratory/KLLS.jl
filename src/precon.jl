@@ -14,24 +14,25 @@ ldiv!(z, P::AbstractDiagPreconditioner, w) = (z .= w ./ P.d)
 ######################################################
 struct DiagAAPreconditioner{T, K<:KLLSData{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     data::K
+    α::T
     d::V
 end
 
 """
-    DiagAAtPreconditioner(data::KLLSData)
+    DiagAAPreconditioner(data::KLLSData)
 
 Construct a diagonal preconditioner for the KLLS problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
-    M = Diag(diag(AA') + λ ))
+    M = Diag(diag(AA')) + (λ + α)I,
 
-The preconditioner is stored as a vector `d`. It's computed only once at construction.
+where λ is the regularizer defined in the KLLSData object and α is an additional nonnegative shift. The preconditioner is stored as a vector `d`. It's computed only once at construction.
 
 See also [`mul!`](@ref), [`ldiv!`](@ref).
 """
-function DiagAAPreconditioner(data::KLLSData) 
+function DiagAAPreconditioner(data::KLLSData{T}; α::T=zero(T)) where T 
     @unpack A, λ = data
-    d = map(a->dot(a,a)+λ, eachrow(A))
-    DiagAAPreconditioner(data, d)
+    d = map(a->dot(a,a)+λ+α, eachrow(A))
+    DiagAAPreconditioner(data, α, d)
 end
 
 ######################################################

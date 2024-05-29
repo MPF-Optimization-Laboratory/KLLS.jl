@@ -101,11 +101,10 @@ function Base.show(io::IO, data::KLLSData)
     else
         println(io, "KLLS data")
     end
-    @printf(io, "%-3s = %5d   ", "m", size(data.A, 1))
-    @printf(io, "%-10s = %9.2e\n", "norm(b)", norm(data.b))
-    @printf(io, "%-3s = %5d   ", "n", size(data.A, 2))
-    @printf(io, "%-10s = %9.2e\n", "sum(b)", sum(data.b))
-    # @printf(io, "%-3s = %9.2e\n", "λ", data.λ)
+    @printf(io, "size: m = %d, n = %d\n", size(data.A)...)
+    @printf(io, "%-8s = %9.2e\n", "norm(b)", norm(data.b))
+    @printf(io, "%-8s = %9.2e\n", "sum(b)", sum(data.b))
+    @printf(io, "%-8s = %9.2e\n", "λ", data.λ)
 end
 
 function dObj!(data::KLLSData{T}, y::V) where {T<:AbstractFloat, V<:AbstractVector{T}}

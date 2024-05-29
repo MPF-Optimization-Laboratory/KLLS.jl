@@ -145,7 +145,7 @@ $$
 logrange(start, stop, length) = exp10.(range(start, stop=stop, length=length))
 solve_range(prob, λs) = map(λs) do λ
         prob.λ = λ
-        p, y, stats = newtoncg(prob)
+        p, y, stats = solve!(prob)
         (λ=λ, p=p, iters=stats.iter, solve_time=stats.elapsed_time)
 end
 function plot_results(stats, x0; title="Recovered distributions")
@@ -190,7 +190,7 @@ report_errors(statsPhy[1], dataPhy)
 Here we try to recover the solution from the synthetic data set. But as we see here, we get garbage:
 
 ```{julia}
-p, y, statsSyn = newtoncg(probSyn)
+p, y, statsSyn = solve!(probSyn)
 plot([p, dataSyn["x0"]], label=["Recovered" "Ground truth"])
 ```
 :::{.callout-important}
@@ -203,7 +203,7 @@ let
   @unpack A, x0 = dataSyn
   x0 = x0/sum(x0)
   b = A*x0
-  p, y, stats = newtoncg(KLLSData(A, b))
+  p, y, stats = solve!(KLLSData(A, b))
   plot([p, x0], label=["Recovered" "Ground truth"])
 end
 ```
@@ -213,7 +213,7 @@ end
 ```{julia}
 let
   probUEG.λ = 1e-6
-  p, y, stats = newtoncg(probUEG)
+  p, y, stats = solve!(probUEG)
   plot([p, dataUEG["x"]], label=["Recovered" "Ground truth"])
 end
 ```

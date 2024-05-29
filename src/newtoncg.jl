@@ -28,7 +28,7 @@ function NLPModels.hprod!(nlp::KLLSModel, y::AbstractVector, z::AbstractVector, 
     return Hz = dHess_prod!(nlp.data, z, Hz)
 end
 
-function newtoncg(data::KLLSData{T}; M=I, kwargs...) where T
+function solve!(data::KLLSData{T}; M=I, kwargs...) where T
 
     # Build the NLP model from the KL data
     nlp = KLLSModel(data)
@@ -47,6 +47,7 @@ function newtoncg(data::KLLSData{T}; M=I, kwargs...) where T
     y = copy(stats.solution)
     return p, y, stats, tracer
 end
+const newtoncg = solve!
 
 """
     callback(nlp, solver, stats, logging)

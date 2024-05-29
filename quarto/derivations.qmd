@@ -9,9 +9,6 @@ date-modified: last-modified
 date: April 3, 2024 
 format:
   html: default
-execute:
-  cache: true
-  freeze: auto
 ---
 
 \newcommand{\logexp}{\mathop{\mathrm{logexp}}}

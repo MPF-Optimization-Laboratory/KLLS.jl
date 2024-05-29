@@ -1,0 +1,62 @@
+---
+title: Preconditioning
+---
+
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\Diag}{\operatorname{Diag}}
+\newcommand{\ip}[1]{\langle #1 \rangle}
+****
+Each iteration of the preconditioned Newton CG method approximately solves the trust-region subproblem
+$$
+\min_{s} \{\tfrac{1}{2} \ip{s, H_k s} + \ip{\nabla f_k,s } \mid \|s\|_M \leq \Delta\}
+$$
+where $\nabla f_k$ and $H_k$ are the current gradient and Hessian, and $M\approx H$ is a positive definite preconditioner. For the KL regularized LS problem,
+$$
+H_k = A S_k A^T + \lambda I, \quad S_k:= X_k - x_k x_k^T
+$$
+where $x_k$ is the current primal iterate and $X_k=\Diag(x_k)$.
+
+We consider these preconditioners:
+
+1. Diagonal, constant: $M = \Diag(AA^T) + \lambda I$
+1. Diagonal, variable: $M = \Diag(AS_kA^T) + \lambda I$
+1. Cholesky, constant: $M = AA^T + \lambda I$
+
+The first two preconditioners have complexity $O(mn)$ to compute and $O(m)$ to apply. The third has cubic complexity, but that cost can be amortized over the Newton iterations.
+
+```{julia}
+#| code-fold: true
+#| output: false 
+using LinearAlgebra, NPZ, StatsPlots
+import KLLS: KLLSData, DiagAAPreconditioner, solve!
+```
+
+```{julia}
+data = npzread("../data/synthetic-UEG_testproblem.npz")
+kldata = KLLSData(data["A"], data["b_avg"])
+```
+
+Build the preconditioner object:
+```{julia}
+MAA = DiagAAPreconditioner(kldata; α=1e-3)
+MASA = DiagAAPreconditioner(kldata)
+```
+
+Solve the problem with and without preconditioning:
+```{julia}
+kldata.λ=1e-12
+p, y, stats, tracerI = solve!(kldata, atol=1e-5, rtol = 1e-5, logging=100, M=I)
+plot(p)
+# p, y, stats, tracerM = solve!(kldata, trace=true, M=MAA)
+```
+
+
+```{julia}
+@df tracerI begin
+    plot(:iter,abs.(:dual_obj), label="Dual Objective", ylabel="Dual Objective", lw=2, left_margin=5Plots.mm, yscale=:log10)
+end
+# @df tracerM begin
+#     plot!(:iter,abs.(:dual_obj), label="Diag(AA')", ylabel="Dual Objective", lw=2, left_margin=5Plots.mm, yscale=:log10)
+# end
+```
+
