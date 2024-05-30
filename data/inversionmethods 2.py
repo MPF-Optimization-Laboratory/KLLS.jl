@@ -1,5 +1,5 @@
 import numpy as np
-#import cvxpy as cp
+# import cvxpy
 import math
 from numba import njit
 #import numba_special
@@ -9,9 +9,8 @@ from scipy.linalg import lu_factor, lu_solve
 #from scipy.special import erf
 from math import erf
 import matplotlib.pyplot as plt
-import newDualAlg 
 
-def generate_data(taus, omegas, x, noise_level, Nsamples, kernel='Gaussian', beta=1):
+def generate_data(taus, omegas, x, noise_level, Nsamples, kernel='Gaussian', gamma=0.01):
     # This function takes in two linspaces and then returns a kernel
     # taus:
     # omegas:
@@ -31,21 +30,14 @@ def generate_data(taus, omegas, x, noise_level, Nsamples, kernel='Gaussian', bet
         A=TT-EE 
         for i in range(Ntau):
             for j in range (Nomega):
-                A[i,j]= np.exp( -beta/2. * A[i,j]**2 )
+                A[i,j]= np.exp(-(A[i,j]**2)/(2*gamma**2))
+    #K =  sqrt(1/(2* pi*s**2)) * K # normalize
 
     if (kernel=='DoubleLaplace'):
         A=np.abs(TT*EE) 
         for i in range(Ntau):
             for j in range (Nomega):
-                A[i,j]= np.exp(-A[i,j])
-                
-    if (kernel=='PeriodicDoubleLaplace'):
-        A = TT*EE 
-        B = (beta - TT)*EE
-        for i in range(Ntau):
-            for j in range (Nomega):
-                A[i,j]= np.exp(-A[i,j]) + np.exp( - B[i,j] ) 
-#                A[i,j]= np.exp(-np.abs(A[i,j])) + np.exp( -np.abs( B[i,j]) ) 
+                A[i,j]= np.exp(-A[i,j]/gamma)
 
     if (kernel=='Boson' or kernel=='Fermion'):
         # gamma is a temperature here 
@@ -55,7 +47,7 @@ def generate_data(taus, omegas, x, noise_level, Nsamples, kernel='Gaussian', bet
             sgn= -1
         for i in range(Ntau):
             for j in range (Nomega):
-                A[i,j]= np.exp(-A[i,j]) / (1 + sgn*np.exp( - beta * EE ))
+                A[i,j]= np.exp(-A[i,j]) / (1 + sgn*np.exp( - EE / gamma ))
     
     if (kernel=='ScalarParticle'):
         # gamma is a temperature here 
@@ -63,14 +55,13 @@ def generate_data(taus, omegas, x, noise_level, Nsamples, kernel='Gaussian', bet
         print("ATTENTION: omega integration bounds are set to [0, inf)" )
         print("ATTENTION: kernel mltiplied by w**2" )
         A = TT*EE
-        B = (beta - TT)*EE
+        B = (1./gamma - TT)*EE
         for i in range(Ntau):
             for j in range (Nomega):
                 # Finite Temp
-                #A[i,j]= omegas[j]**2 * ( np.exp(-A[i,j]) + np.exp(- B[i,j]) ) / ( 1 - np.exp( - EE[i,j] / beta ) )
+                #A[i,j]= omegas[j]**2 * ( np.exp(-A[i,j]) + np.exp(- B[i,j]) ) / ( 1 - np.exp( - EE[i,j] / gamma ) )
                 # Zero Temp
-                A[i,j]= np.exp(-A[i,j]) * omegas[j]**2  
-                # 
+                A[i,j]= omegas[j]**2 *np.exp(-A[i,j]) 
     
     # Construct Data
     data0 = A @ x
@@ -131,7 +122,6 @@ def TIK_solve(A, b, lam = -1, cond_upperbound = 1000, proj_flag=0, MaxIt=1000, e
 
     else:
         # project b vector into column space
-        print(np.shape(U.T),np.shape(b))
         B=U.T@b
         if (lam < 0): 
             # Compute the GCV using Wahba method for setting regularizer mu
@@ -223,7 +213,7 @@ def TIK_solve_via_dual(K, G, alpha=-1, R=None, cond_upperbound=1000):
   else:
     sol = R_inv @ R_inv @ K.T @ y.value
 
-  #sol = sol / np.sum(sol) # we need convert to a prob vector
+  sol = sol / np.sum(sol) # we need convert to a prob vector
 
   print("Solution:", prob.status)
 
@@ -267,7 +257,7 @@ def BGM_solve(A, b, C, omegas):
             if ( objfxn[index] <= minval):
                 minval = objfxn[index]
                 minindex = index
-        #print("BGM: ", lams[minindex])
+        print(lams[minindex])
         y = solve( (1-lams[minindex])*W + lams[minindex]*C, R)
         q = y / (R.T @ y );
         q_list.append(q)
@@ -311,7 +301,7 @@ def SmearedBGM_solve(A, b, Cov, omegas, sigma=.2):
             if ( objfxn[index] <= minval):
                 minval = objfxn[index]
                 minindex = index
-        #print("sBGM: ", lams[minindex])
+        print("smeared", lams[minindex])
         z = solve( (1-lams[minindex])*W + lams[minindex]*Cov / b[0]**2, (1-lams[minindex])*f)
         y = solve( (1-lams[minindex])*W + lams[minindex]*Cov / b[0]**2, R)
         g = z + y*( 1 - R.T@z) / (R.T @ y ); # eqn 22
@@ -319,48 +309,48 @@ def SmearedBGM_solve(A, b, Cov, omegas, sigma=.2):
         x[i]=(b.T @ g)[0];
     return x, g_list, obj_list
 
-# def KL_via_dual(K, G, rho, alpha, cond_upperbound):
-#     """
-#     This code takes the dual approach to solve primal problem
-#     min || K @ sol - G ||^2 + alpha_1 * KL( sol | m)
-#     Input:
-#         K:   (m,d) numpy array, kernel to be inverted
-#         G:   (m,1) numpy array, convolved data
-#         rho: (d,1) numpy array, prior (strictly postive entries and in unit simplex)
-#         alpha: postive scalar
-#     Output:
-#         sol: (d,1) solution, numpy array --- "recovered probability vector"
-#     """
-#     #if (np.sum(rho) != 1 ):
-#     #    print("not probability vector!")
-#     #    rho /= np.sum(rho)
-#     if (np.any(rho <= 0) ):
-#         print("rho less than zero!")
-#         rho[ rho <0 ] = 1e-2
+def KL_via_dual(K, G, rho, alpha, cond_upperbound):
+    """
+    This code takes the dual approach to solve primal problem
+    min || K @ sol - G ||^2 + alpha_1 * KL( sol | m)
+    Input:
+        K:   (m,d) numpy array, kernel to be inverted
+        G:   (m,1) numpy array, convolved data
+        rho: (d,1) numpy array, prior (strictly postive entries and in unit simplex)
+        alpha: postive scalar
+    Output:
+        sol: (d,1) solution, numpy array --- "recovered probability vector"
+    """
+    #if (np.sum(rho) != 1 ):
+    #    print("not probability vector!")
+    #    rho /= np.sum(rho)
+    if (np.any(rho <= 0) ):
+        print("rho less than zero!")
+        rho[ rho <0 ] = 1e-2
 
-#     m, d = K.shape
-#     V, S, Uh = svd(K); U=Uh.T 
-#     for i in range(m):
-#         if cond_upperbound > S[0]/S[i] :
-#             r=i+1
-#     V=V[:,0:r]; U=U[:,0:r]; S = diag(S[0:r])
-#     K_reduced = V@S@U.T
-#     #K_reduced = np.copy(K)
-#     y = cp.Variable((m,1))
-#     fid = (1./2.) * cp.sum_squares(y) - y.T @ G
-#     b = (1./alpha) * K_reduced.T @ y + np.log(rho)
-#     reg = alpha*cp.log_sum_exp(b)
+    m, d = K.shape
+    V, S, Uh = svd(K); U=Uh.T 
+    for i in range(m):
+        if cond_upperbound > S[0]/S[i] :
+            r=i+1
+    V=V[:,0:r]; U=U[:,0:r]; S = diag(S[0:r])
+    K_reduced = V@S@U.T
+    #K_reduced = np.copy(K)
+    y = cp.Variable((m,1))
+    fid = (1./2.) * cp.sum_squares(y) - y.T @ G
+    b = (1./alpha) * K_reduced.T @ y + np.log(rho)
+    reg = alpha*cp.log_sum_exp(b)
 
-#     obj = cp.Minimize(fid + reg) # minimize the dual objective function
-#     prob = cp.Problem(obj)
-#     prob.solve( solver=cp.SCS) #, verbose=True )
+    obj = cp.Minimize(fid + reg) # minimize the dual objective function
+    prob = cp.Problem(obj)
+    prob.solve( solver=cp.SCS) #, verbose=True )
 
-#     w = np.exp(K_reduced.T @ y.value )
-#     sol =  (rho * w) / rho.T @ w
-#     #sol = sol / np.sum(sol) # we need convert to a prob vector
+    w = np.exp(K_reduced.T @ y.value )
+    sol =  (rho * w) / rho.T @ w
+    sol = sol / np.sum(sol) # we need convert to a prob vector
 
-#     print("Solution:", prob.status)
-#     return sol
+    print("Solution:", prob.status)
+    return sol
     
 @njit
 def calcerror(A, b, eigvals_inv_matrix, m, U, y):
@@ -459,7 +449,7 @@ def Bryans_alg(A, b, C, m, alpha, cond_upperbound, MaxIt, MaxFail):
     return x, err_list
 
 
-def MEM_solve(A, b, C, m, alpha_min=1e-12, alpha_max=1e-5, Nalpha=50, cond_upperbound = 1e10, MaxIt=1000, MaxFail=1000, dual=0):
+def MEM_solve(A, b, C, m, alpha_min=1e-7, alpha_max=1e2, Nalpha=50, cond_upperbound = 1e6, MaxIt=1000, MaxFail=1000, dual=0):
     # Nalpha: Total number of alphas to check
     plt.figure()
     x_list = [];
@@ -468,67 +458,37 @@ def MEM_solve(A, b, C, m, alpha_min=1e-12, alpha_max=1e-5, Nalpha=50, cond_upper
     N = len(alphas); 
     for alpha, num in zip( alphas, range(len(alphas)) ):
         if(dual):
-            #x = KL_via_dual(A, b, m, alpha, cond_upperbound)
-            x = newDualAlg.GlobalNewton(A, m, b, lmda=alpha, eps=1e-6, max_iters=1000, 
-                                                 verbose=True, rho=1e-14, p=1.0001, beta=0.11, s= 0.25)
-            #x = KL_via_dual(A, b, m/np.sum(m), alpha, cond_upperbound)
+            x = KL_via_dual(A, b, m, alpha, cond_upperbound)
         else:
             x, err_list = Bryans_alg(A, b, C, m, alpha, cond_upperbound, MaxIt, MaxFail)
-        if ( ( not any(np.isnan(x)) ) and not any(x<0.0) ): # Check if there are NaN's in the reconstruction 
-            xtmp = np.reshape(x,(-1,1))
-            btmp = np.reshape(b,(-1,1))
-            # Shannon Jaynes Entropy eqn 3.13 assuming that A and m are normalized 
-            S = -np.sum(x+m) - np.sum( np.nan_to_num(x * np.log( x / m ), np.nan==0.0, np.inf==0.0, -np.inf==0.0)) 
-            # eqn 3.20 - A.T@C@A is the 2nd derivative of L w.r.t. A
-            LAMBDA = np.sqrt(x) *  (A.T@ C @ A) * np.sqrt(x).T 
+        if (not any( np.isnan(x) )): # Check if there are NaN's in the reconstruction 
+            x_list.append(x); # if no NaN's save the reconstruction
+            xtmp= np.reshape(x,(-1,1))
+            btmp= np.reshape(b,(-1,1))
+            L = 1./2. * ( A@xtmp - btmp ).T @ ( A@xtmp - btmp ) # eqn 3.6
+            tmp = np.nan_to_num(x*np.log(x/m), np.nan==0.0, np.inf==0.0, -np.inf==0.0)
+            S = - np.sum(tmp) # eqn 3.13 assuming that A and m are normalized 
+            LAMBDA = A.T @ C @ A
+            tmp = np.sqrt(x)
+            for i in range(len(x)):
+                for j in range(len(x)):
+                    LAMBDA[i,j] = tmp[i]*LAMBDA[i,j]*tmp[j] 
+            #test = np.sqrt(x) *  (A.T@ C @ A) * np.sqrt(x).T # eqn 3.20 - A.T@C@A is the 2nd derivative of L w.r.t. A
+            #print("LAMBDA", np.allclose(LAMBDA,test))
             L_eigvals, trash = eigh(LAMBDA)
             # Compute eqn 3.19  
-            if(dual):
-                L = (1./2. * ( A@xtmp - btmp ).T @ ( A@xtmp - btmp ) )[0,0] # eqn 3.6
-                PalphaHm= 1./alpha # Jeffery's Rule
-            else:
-                L = (1./2. * ( A@xtmp - btmp ).T @ np.linalg.inv(C) @ ( A@xtmp - btmp ) )[0,0] # eqn 3.6
-                PalphaHm= 1 # Laplace's Rule; 
-            #objfxn = 0.5*np.sum( np.log(alpha / (alpha + L_eigvals))) + alpha*S - L #PalphaHm*np.exp (0.5*np.sum( np.log(alpha / (alpha + L_eigvals))) + alpha*S - L)
-            #Palpha = PalphaHm*np.exp (- L)
+            PalphaHm= 1 #1./alpha # Jeffery's Rule
+            Palpha = PalphaHm*np.exp (0.5*np.sum( np.log(alpha / (alpha + L_eigvals))) + alpha*S - L)
             # Print out the cost functions to see where the major contributions are.
-            print("Sum: %.3e | term 1, a*S, L: %.2e %.2e %.4e"%( 
-                            0.5*np.sum( np.log( alpha / (alpha + L_eigvals))) + alpha*S - L,
-                            0.5*np.sum( np.log( alpha / (alpha + L_eigvals))), 
-                            alpha*S, 
-                            L)
-                 )
-            print("Sum x: %.3e sum m: %.3e"%(np.sum(x), np.sum(m)) )
+            print("P: %.2e | term 1, a*S, L: %.2e %.2e %.4e"%(Palpha, 0.5*np.sum( np.log( alpha / (alpha + L_eigvals))), alpha*S, L) )
             #print("P(alpha)", Palpha)
-            if (num//10==0):
-                plt.plot(x, label='alpha %.3e'%alpha, ls=':')
-            elif (num//10==1):
-                plt.plot(x, label='alpha %.3e'%alpha, ls='-.')
-            elif (num//10==2):
-                plt.plot(x, label='alpha %.3e'%alpha, ls='-')
-
-            # if no NaN's in the probability save the reconstruction
-            #if (  0.5*np.sum( np.log(alpha / (alpha + L_eigvals))) == 0.5*np.sum( np.log(alpha / (alpha + L_eigvals)))  ):
-            x_list.append(x); 
-            P_list.append([alpha, 0.5*np.sum( np.log(alpha / (alpha + L_eigvals))), alpha*S, - L])
-    plt.legend(loc='lower right')
-    plt.ylim([0,.05])
-    # step 2: averaging over alpha (pg 12)
+            plt.plot(x)
+            P_list.append([alpha, Palpha])
     P_list = np.array(P_list)
-    print(P_list)
-    objfxn = np.sum(P_list[:,2:],axis=1) # sum all terms in the exponent
-    #objfxn = P_list[:,3] # use only the likelihood function
-    maxalpha = np.argmax( objfxn )
-    x_avg = np.zeros_like(x_list[0]) 
-    P_tot = 0.0
-    for i in range( len(P_list) ):
-        #if ( objfxn[i] == objfxn[i] ):
-        #    x_avg += x_list[i]*np.exp(objfxn[i] - objfxn[maxalpha]) 
-        #    P_tot += np.exp( objfxn[i] - objfxn[maxalpha] )
-        if (np.exp (objfxn[i] - objfxn[maxalpha] ) > .1):
-            x_avg += x_list[i]*np.exp(P_list[i,3] - P_list[maxalpha,3]) 
-            P_tot += np.exp( P_list[i,3] - P_list[maxalpha,3] ) 
-    x_avg /= P_tot
+    P_list[:,1] = P_list[:,1] / np.sum(P_list[:,1])
+    x_avg = x_list[0]*P_list[0,1]
+    for i in range(1, len(P_list)):
+        x_avg += x_list[i]*P_list[i,1]
     return x_avg, P_list
 
 def SD_solve( A, b, cond_upperbound=1e3, tol=1e-16, proj_flag=0, MaxIt=10000 ):
@@ -609,3 +569,5 @@ def CG_solve( A, b, tol=1e-16, flag=0, MaxIt=0 ):
 # Shu-Ding Stochastic Approach https://arxiv.org/abs/1510.02901
 # Variational Method https://iopscience.iop.org/article/10.1088/0954-3899/36/6/064027
 #                    https://journals.aps.org/prd/abstract/10.1103/PhysRevD.84.094504
+
+

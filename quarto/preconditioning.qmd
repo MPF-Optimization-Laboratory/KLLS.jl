@@ -44,8 +44,8 @@ MASA = DiagAAPreconditioner(kldata)
 
 Solve the problem with and without preconditioning:
 ```{julia}
-kldata.λ=1e-12
-p, y, stats, tracerI = solve!(kldata, atol=1e-5, rtol = 1e-5, logging=100, M=I)
+kldata.λ=1e-3
+p, y, stats, tracerI = solve!(kldata, atol=1e-5, rtol = 1e-5, logging=100, M=MAA)
 plot(p)
 # p, y, stats, tracerM = solve!(kldata, trace=true, M=MAA)
 ```
