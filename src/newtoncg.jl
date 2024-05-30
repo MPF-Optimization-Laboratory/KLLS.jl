@@ -40,7 +40,11 @@ function solve!(data::KLLSData{T}; M=I, kwargs...) where T
     cb(nlp, solver, stats) = callback(T, nlp, solver, stats, tracer; kwargs...)
 
     # Call the Trunk solver
-    stats = trunk(nlp; M=M, callback=cb, atol=0., rtol=0.) 
+    if M === I
+       stats = trunk(nlp; callback=cb, atol=0., rtol=0.) 
+    else
+       stats = trunk(nlp; M=M, callback=cb, atol=0., rtol=0.) 
+    end
 
     # Return the primal and dual solutions
     p = copy(grad(data.lse))
