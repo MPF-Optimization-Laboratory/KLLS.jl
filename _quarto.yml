@@ -11,9 +11,12 @@ website:
 
 format:
   html:
-    theme: cosmo
+    theme: darkly
     css: quarto/styles.css
     toc: true
+    include-in-header:
+      - text: |
+          <meta name="robots" content="noindex">
 
 execute: 
   freeze: auto
