@@ -28,7 +28,7 @@ function NLPModels.hprod!(nlp::KLLSModel, y::AbstractVector, z::AbstractVector, 
     return Hz = dHess_prod!(nlp.data, z, Hz)
 end
 
-function solve!(data::KLLSData{T}; M=I, logging=0, kwargs...) where T
+function solve!(data::KLLSData{T}; M=I, logging=0, monotone=true, max_time::Float64=30.0, kwargs...) where T
     
     # Build the NLP model from the KL data
     nlp = KLLSModel(data)
@@ -43,9 +43,9 @@ function solve!(data::KLLSData{T}; M=I, logging=0, kwargs...) where T
     
     # Call the Trunk solver
     if M === I
-        trunk_stats = trunk(nlp; callback=cb, atol=0., rtol=0.) 
+        trunk_stats = trunk(nlp; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
     else
-        trunk_stats = trunk(nlp; M=M, callback=cb, atol=0., rtol=0.) 
+        trunk_stats = trunk(nlp; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
     end
     
     stats = ExecutionStats(

@@ -1,4 +1,4 @@
-using KLLS
+import KLLS: DiagAAPreconditioner, KLLSData, solve!
 using LinearAlgebra, NPZ, StatsPlots
 
 data = try # needed because of vscode quirks while developing
@@ -8,7 +8,7 @@ catch
 end
 kldata = KLLSData(data["A"], data["b_avg"])
 
-# MAA = DiagAAPreconditioner(kldata; α=1e-3)
+MAA = DiagAAPreconditioner(kldata)
 # MASA = DiagAAPreconditioner(kldata)
 
 kldata.λ=1e-4
