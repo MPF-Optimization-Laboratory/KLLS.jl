@@ -7,6 +7,10 @@ import LinearAlgebra: mul!, ldiv!
 mul!(z, P::AbstractDiagPreconditioner, v) = (z .= v .* P.d)
 ldiv!(z, P::AbstractDiagPreconditioner, w) = (z .= w ./ P.d) 
 
+# Default update routines
+update!(P::AbstractDiagPreconditioner) = nothing
+update!(P::UniformScaling) = nothing
+
 ######################################################
 # Diagonal of Graham matrix:
 #     M = Diag(diag(AA') + λ ))
@@ -43,6 +47,7 @@ end
 ######################################################
 struct DiagASAPreconditioner{T, K<:KLLSData{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     data::K
+    α::T
     d::V
 end
 
@@ -57,10 +62,10 @@ where G := diagm(g), and g is the LSE gradient at the current iterate. The preco
 
 See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
-function DiagASAPreconditioner(data::KLLSData) 
-    @unpack A, b, λ = data
-    d = diag_ASA!(similar(b), A, grad(data.lse), λ)
-    DiagASAPreconditioner(data, d)
+function DiagASAPreconditioner(data::KLLSData; α::T=zero(T)) where T
+    @unpack A, b, λ, α = data
+    d = diag_ASA!(similar(b), A, grad(data.lse), λ+α)
+    DiagASAPreconditioner(data, α, d)
 end
 
 """
@@ -85,8 +90,8 @@ function diag_ASA!(d, A, g, λ)
 end
 
 function update!(P::DiagASAPreconditioner)
-    d = P.d; A = P.data.A; λ = P.data.λ; g = grad(P.data.lse)
-    diag_ASA!(d, A, g, λ)
+    d = P.d; α = P.α; A = P.data.A; λ = P.data.λ; g = grad(P.data.lse)
+    diag_ASA!(d, A, g, λ+α)
 end
 
 

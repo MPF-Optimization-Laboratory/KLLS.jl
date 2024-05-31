@@ -85,7 +85,8 @@ function callback(
     optimal = r < atol + rtol * nlp.data.bNrm 
     done = tired || optimal
 
-    trace && push!(tracer, (k, f, r, Δ, actual_to_predicted, cgits, cgexit))
+    log_items = (k, f, r, Δ, actual_to_predicted, cgits, cgexit) 
+    trace && push!(tracer, log_items)
     if logging > 0 && k == 0
         # print a header with
         # - problem dimensions
@@ -99,7 +100,7 @@ function callback(
                 "iter","objective","∥λy∥","Δ","Δₐ/Δₚ","cg its","cg msg")
     end
     if logging > 0 && (mod(k, logging) == 0 || done)
-        @printf("%8d   %9.2e   %9.2e   %9.1e  %9.1e   %6d   %10s\n", k, f, r, Δ, actual_to_predicted, cgits, cgexit)
+        @printf("%8d   %9.2e   %9.2e   %9.1e  %9.1e   %6d   %10s\n", (log_items...))
     end
 
     if done
@@ -116,6 +117,9 @@ function callback(
            @printf("Time elapsed (sec): %9.1f\n", stats.elapsed_time)
        end
     end
+
+    # Update the preconditioner
+    update!(M)
 end
 
 const cg_msg = Dict(
