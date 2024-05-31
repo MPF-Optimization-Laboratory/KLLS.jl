@@ -4,6 +4,7 @@ project:
 
 website:
   title: "MaxEnt"
+  search: false
   navbar:
     left:
       - href: quarto/index.qmd

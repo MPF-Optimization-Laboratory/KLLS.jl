@@ -10,6 +10,7 @@ ldiv!(z, P::AbstractDiagPreconditioner, w) = (z .= w ./ P.d)
 # Default update routines
 update!(P::AbstractDiagPreconditioner) = nothing
 update!(P::UniformScaling) = nothing
+update!(P::Preconditioner) = nothing
 
 ######################################################
 # Diagonal of Graham matrix:
@@ -52,18 +53,18 @@ struct DiagASAPreconditioner{T, K<:KLLSData{T}, V<:AbstractVector{T}} <: Abstrac
 end
 
 """
-    DiagASAPreconditioner(data::KLLSData)
+    DiagASAPreconditioner(data::KLLSData{T}; α::T=zero(T))
 
 Construct a diagonal preconditioner for the KLLS problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
-    M = Diag(diag(A(G-gg')A') + λ ))
+    M = Diag(diag(A(G-gg')A') + λ + α))
 
 where G := diagm(g), and g is the LSE gradient at the current iterate. The preconditioner is stored as a vector `d`. It's computed at construction and at each call to `update!`
 
 See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
-function DiagASAPreconditioner(data::KLLSData; α::T=zero(T)) where T
-    @unpack A, b, λ, α = data
+function DiagASAPreconditioner(data::KLLSData{T}; α::T=zero(T)) where T
+    @unpack A, b, λ = data
     d = diag_ASA!(similar(b), A, grad(data.lse), λ+α)
     DiagASAPreconditioner(data, α, d)
 end

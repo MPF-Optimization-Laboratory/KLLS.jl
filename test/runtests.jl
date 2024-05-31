@@ -102,12 +102,13 @@ end
     λ = 1e-3
     data = KLLSData(A, b, λ=λ)
     atol = rtol = 1e-6
-    x, y, st = solve!(data, atol=atol, rtol=rtol)
-    @test norm(A*x + λ*y - b) < atol + rtol*norm(b)
+    st = solve!(data, atol=atol, rtol=rtol)
+    x = st.solution; r = st.residual
+    @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
     M = KLLS.Preconditioner(cholesky(A*A'))
-    x, y, st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
+    st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
 
 end
 

@@ -1,23 +1,24 @@
-struct Tracer
-    dObj::Vector{Float64} # dual objective
-    pResid::Vector{Float64} # primal residuals
-    cgits::Vector{Int} # number of CG iterations
+mutable struct ExecutionStats{T<:AbstractFloat, V<:AbstractVector{T}, DF}
+    status::Symbol
+    elapsed_time::T
+    iter::Int
+    neval_jprod::Int
+    neval_jtprod::Int
+    primal_obj::T
+    dual_obj::T
+    solution::V
+    residual::V
+    tracer::DF
 end
 
-# Empty tracer
-Tracer() = Tracer([], [], [])
-
-import Base: push!
-
-function push!(t::Tracer, dObj, nrmdGrd, cgits)
-    push!(t.dObj, dObj)
-    push!(t.pResid, nrmdGrd)
-    push!(t.cgits, cgits)
+function Base.show(io::IO, s::ExecutionStats)
+    @printf("\n")
+    if s.status == :max_iter 
+        @printf("Maximum number of iterations reached\n")
+    elseif s.status == :optimal
+        @printf("Optimality conditions satisfied\n")
+    end
+    @printf("Products with A   : %9d\n", s.neval_jprod)
+    @printf("Products with A'  : %9d\n", s.neval_jtprod)
+    @printf("Time elapsed (sec): %9.1f\n", s.elapsed_time)
 end
-
-import Base: getindex
-getindex(t::Tracer, i::Int) = (t.dObj[i], t.pResid[i], t.cgits[i])
-
-import Base: length
-length(t::Tracer) = length(t.dObj)
-
