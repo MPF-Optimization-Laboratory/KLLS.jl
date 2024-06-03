@@ -11,7 +11,7 @@ using KLLS
     A = randn(m, n)
     b = randn(m) 
     λ = 1e-3
-    data = KLLSData(A, b, q=q, λ=λ)
+    data = KLLSModel(A, b, q=q, λ=λ)
 
     @test size(data.A) == (m, n)
     @test size(data.b) == (m,)
@@ -72,7 +72,7 @@ end
     A = randn(10, 20)
     b = randn(10)
     λ = rand()
-    data = KLLSData(A, b, λ=λ)
+    data = KLLSModel(A, b, λ=λ)
     M = KLLS.DiagAAPreconditioner(data)
     P = Diagonal(diag(A*A')) + λ*I 
     @test all(P*d ≈ mul!(similar(d), M, d))
@@ -100,7 +100,7 @@ end
 
     b = randn(m)#A*x0
     λ = 1e-3
-    data = KLLSData(A, b, λ=λ)
+    data = KLLSModel(A, b, λ=λ)
     atol = rtol = 1e-6
     st = solve!(data, atol=atol, rtol=rtol)
     x = st.solution; r = st.residual

@@ -17,8 +17,8 @@ Newton's method for minimizing unconstrained optimization problems
 - `(p, y)` approximate primal-dual pair
 """
 function newton_opt(
-    data::KLLSData;
-    y0::Vector = zeros(size(data.A, 1)),
+    kl::KLLSModel;
+    y0::Vector = zeros(size(kl.A, 1)),
     optTol::Real = 1e-6,
     max_iter::Int = 100,
     μ::Real = 1e-4)
@@ -28,9 +28,9 @@ function newton_opt(
     ls_its = 0
 
     evaldual(y) = begin
-        dObj = dObj!(data, y) 
-        dGrd = dGrad!(data, y, similar(y))
-        dHes = dHess(data)
+        dObj = dObj!(kl, y) 
+        dGrd = dGrad!(kl, y, similar(y))
+        dHes = dHess(kl)
         return dObj, dGrd, dHes
     end
 
@@ -61,7 +61,7 @@ function newton_opt(
         dObj, dGrd, dHes = evaldual(y)
 
     end
-    return grad(data.lse), y, tracer
+    return grad(kl.lse), y, tracer
 end
 
 function armijo(f, ∇fx, x, d; μ=1e-5, α=1, ρ=0.5, maxits=10)

@@ -10,16 +10,14 @@ ldiv!(z, P::AbstractDiagPreconditioner, w) = (z .= w ./ P.d)
 # Default update routines
 update!(P::AbstractDiagPreconditioner) = nothing
 update!(P::UniformScaling) = nothing
-update!(P::Preconditioner) = nothing
 
 ######################################################
 # Diagonal of Graham matrix:
 #     M = Diag(diag(AA') + λ ))
 #       = Diag(||aᵢ||² + λ, i∈[1,m])
 ######################################################
-struct DiagAAPreconditioner{T, K<:KLLSData{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
+struct DiagAAPreconditioner{T, K<:KLLSModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     data::K
-    α::T
     d::V
 end
 
@@ -28,16 +26,16 @@ end
 
 Construct a diagonal preconditioner for the KLLS problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
-    M = Diag(diag(AA')) + (λ + α)I,
+    M = Diag(diag(AA')) + λI,
 
-where λ is the regularizer defined in the KLLSData object and α is an additional nonnegative shift. The preconditioner is stored as a vector `d`. It's computed only once at construction.
+where λ is the regularizer defined in the KLLSData object. The preconditioner is stored as a vector `d`. It's computed only once at construction.
 
 See also [`mul!`](@ref), [`ldiv!`](@ref).
 """
-function DiagAAPreconditioner(data::KLLSData{T}; α::T=zero(T)) where T 
-    @unpack A, λ = data
-    d = map(a->dot(a,a)+λ+α, eachrow(A))
-    DiagAAPreconditioner(data, α, d)
+function DiagAAPreconditioner(kl::KLLSModel)
+    @unpack A, λ = kl
+    d = map(a->dot(a,a)+λ, eachrow(A))
+    DiagAAPreconditioner(kl, d)
 end
 
 ######################################################
@@ -46,9 +44,8 @@ end
 # with
 #     S = diagm(g) - gg'.
 ######################################################
-struct DiagASAPreconditioner{T, K<:KLLSData{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
-    data::K
-    α::T
+struct DiagASAPreconditioner{T, K<:KLLSModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
+    kl::K
     d::V
 end
 
@@ -63,38 +60,39 @@ where G := diagm(g), and g is the LSE gradient at the current iterate. The preco
 
 See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
-function DiagASAPreconditioner(data::KLLSData{T}; α::T=zero(T)) where T
-    @unpack A, b, λ = data
-    d = diag_ASA!(similar(b), A, grad(data.lse), λ+α)
-    DiagASAPreconditioner(data, α, d)
+function DiagASAPreconditioner(kl::KLLSModel)
+    @unpack A, b, λ = kl
+    d = diag_ASA!(similar(b), A, grad(kl.lse), λ)
+    DiagASAPreconditioner(kl, d)
 end
 
 """
-    diag_ASAt(d, A, g, λ) -> v
+    diag_ASA(d, A, g, λ) -> v
 
 Compute the diagonals of the matrix
 
-    M = Diag(diag(A(G-gg')A') + λI ))
+    M = Diag(diag(ASA') + λI ))
 
-where G := diagm(g), and g is the LSE gradient. Thus,
-M = M1 - M2 + λI, with
+where S := diagm(g), and g is the LSE gradient. Thus,
 
-    M1 = Diag(AGA')  = Diag(v), v = [<aᵢ,g∘a>, i∈[1,m]]
-    M2 = Diag(Agg'A) = Diag(w), w = (Ag).^2.
+    Diag(AGA')  = Diag(v), v = [<aᵢ,g∘a>, i∈[1,m]]
 """
 function diag_ASA!(d, A, g, λ)
-    mul!(d, A, g)
-    d .*= -d                         # v  = -M2
-    @tullio d[i] += g[j]*(A[i,j])^2  # v +=  M1 + λ
-    d .+= λ
+    for i in eachindex(d)
+        for j in eachindex(g)
+            d[i] = g[j]*A[i,j]^2
+        end
+    end
+    if λ > 0
+        @. d += λ
+    end
     return d
 end
 
 function update!(P::DiagASAPreconditioner)
-    d = P.d; α = P.α; A = P.data.A; λ = P.data.λ; g = grad(P.data.lse)
-    diag_ASA!(d, A, g, λ+α)
+    d = P.d; A = P.kl.A; λ = P.kl.λ; g = grad(P.kl.lse)
+    diag_ASA!(d, A, g, λ)
 end
-
 
 struct Preconditioner{Mat, Vec}
     M::Mat     # Preconditioner
@@ -106,6 +104,8 @@ function Preconditioner(M)
     v = Vector{eltype(M)}(undef, n)
     Preconditioner(M, v)
 end
+
+update!(P::Preconditioner) = nothing
 
 function Base.show(io::IO, P::Preconditioner)
     println(io, "Preconditioner $(typeof(P.M))")

@@ -6,11 +6,11 @@ data = try # needed because of vscode quirks while developing
 catch
     npzread("./data/synthetic-UEG_testproblem.npz")
 end
-kldata = KLLSData(data["A"], data["b_avg"])
+kl = KLLSModel(data["A"], data["b_avg"])
 
-MAA = DiagAAPreconditioner(kldata)
-# MASA = DiagAAPreconditioner(kldata)
+MAA = DiagAAPreconditioner(kl)
+MASA = DiagAAPreconditioner(kldata)
 
-kldata.λ=1e-4
+kl.λ=1e-4
 
-stats = solve!(kldata, atol=1e-5, rtol = 1e-5, logging=100, trace=true)
+stats = solve!(kl, atol=1e-5, rtol = 1e-5, logging=100, trace=true)

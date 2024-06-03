@@ -6,7 +6,7 @@
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
-<meta name="dcterms.date" content="2024-05-29">
+<meta name="dcterms.date" content="2024-05-30">
 
 <title>MaxEnt - KL-Regularized Least Squares</title>
 <style>
@@ -213,7 +213,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">May 29, 2024</p>
+      <p class="date">May 30, 2024</p>
     </div>
   </div>
   
@@ -225,7 +225,7 @@ window.Quarto = {
 </header>
 
 
-<div id="310ca4bb" class="cell" data-execution_count="2">
+<div id="310ca4bb" class="cell" data-execution_count="3">
 <details class="code-fold">
 <summary>Import packages</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">Revise</span></span>
@@ -254,7 +254,7 @@ window.Quarto = {
 </ol>
 <section id="rho-meson" class="level4">
 <h4 class="anchored" data-anchor-id="rho-meson">Rho-meson</h4>
-<div id="86abab42" class="cell" data-execution_count="3">
+<div id="86abab42" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>dataRho <span class="op">=</span> <span class="fu">npzread</span>(<span class="st">"../data/rho-meson_testproblem.npz"</span>, [<span class="st">"A"</span>, <span class="st">"x"</span>, <span class="st">"b_avg"</span>]) </span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>probRho <span class="op">=</span> <span class="fu">KLLSData</span>(dataRho[<span class="st">"A"</span>], dataRho[<span class="st">"b_avg"</span>], name<span class="op">=</span><span class="st">"Rho-meson"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="4">
@@ -266,7 +266,7 @@ sum(b)   =  8.65e+00
 </div>
 </div>
 <p>Check normalization:</p>
-<div id="9c853c87" class="cell" data-execution_count="4">
+<div id="9c853c87" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(dataRho[<span class="st">"x"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="5">
 <pre><code>1.0</code></pre>
@@ -275,7 +275,7 @@ sum(b)   =  8.65e+00
 </section>
 <section id="synthetic-ueg" class="level4">
 <h4 class="anchored" data-anchor-id="synthetic-ueg">Synthetic UEG</h4>
-<div id="08a22df1" class="cell" data-execution_count="5">
+<div id="08a22df1" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>dataUEG <span class="op">=</span> <span class="fu">npzread</span>(<span class="st">"../data/synthetic-UEG_testproblem.npz"</span>, [<span class="st">"A"</span>, <span class="st">"x"</span>, <span class="st">"b_avg"</span>, <span class="st">"mu"</span>]) </span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>probUEG <span class="op">=</span> <span class="fu">KLLSData</span>(dataUEG[<span class="st">"A"</span>], dataUEG[<span class="st">"b_avg"</span>], name<span class="op">=</span><span class="st">"UEG"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="6">
@@ -287,7 +287,7 @@ sum(b)   =  3.74e+01
 </div>
 </div>
 <p>Check normalization:</p>
-<div id="f8fc7d65" class="cell" data-execution_count="6">
+<div id="f8fc7d65" class="cell" data-execution_count="7">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(dataUEG[<span class="st">"x"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="7">
 <pre><code>0.9999999f0</code></pre>
@@ -296,7 +296,7 @@ sum(b)   =  3.74e+01
 </section>
 <section id="physicsdata" class="level4">
 <h4 class="anchored" data-anchor-id="physicsdata">PhysicsData:</h4>
-<div id="68d93dd1" class="cell" data-execution_count="7">
+<div id="68d93dd1" class="cell" data-execution_count="8">
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>dataPhy <span class="op">=</span> <span class="fu">npzread</span>(<span class="st">"../data/PhysicsData.npz"</span>, [<span class="st">"A"</span>, <span class="st">"b"</span>, <span class="st">"x0"</span>])</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>probPhy <span class="op">=</span> <span class="fu">KLLSData</span>(dataPhy[<span class="st">"A"</span>], dataPhy[<span class="st">"b"</span>], name<span class="op">=</span><span class="st">"Physics"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="8">
@@ -308,7 +308,7 @@ sum(b)   =  8.65e+00
 </div>
 </div>
 <p>Check normalization:</p>
-<div id="bea62a3c" class="cell" data-execution_count="8">
+<div id="bea62a3c" class="cell" data-execution_count="9">
 <div class="sourceCode cell-code" id="cb12"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(dataPhy[<span class="st">"x0"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="9">
 <pre><code>1.0</code></pre>
@@ -318,7 +318,7 @@ sum(b)   =  8.65e+00
 <section id="synthetic-data" class="level4">
 <h4 class="anchored" data-anchor-id="synthetic-data">Synthetic data:</h4>
 <p>For this dataset, the ground truth seems to be named <code>x</code> instead of <code>x0</code>, as in the other data sets. We’ll rename it for consistency:</p>
-<div id="91316679" class="cell" data-execution_count="9">
+<div id="91316679" class="cell" data-execution_count="10">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>dataSyn <span class="op">=</span> <span class="fu">npzread</span>(<span class="st">"../data/synthetic_data.npz"</span>, [<span class="st">"A"</span>, <span class="st">"b"</span>, <span class="st">"x"</span>])</span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>dataSyn[<span class="st">"x0"</span>] <span class="op">=</span> dataSyn[<span class="st">"x"</span>] <span class="co"># convenient</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>probSyn <span class="op">=</span> <span class="fu">KLLSData</span>(dataSyn[<span class="st">"A"</span>], dataSyn[<span class="st">"b"</span>], name<span class="op">=</span><span class="st">"Synthetic Data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -331,7 +331,7 @@ sum(b)   =  3.25e+02
 </div>
 </div>
 <p>Check normalization:</p>
-<div id="ba92eac9" class="cell" data-execution_count="10">
+<div id="ba92eac9" class="cell" data-execution_count="11">
 <div class="sourceCode cell-code" id="cb16"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(dataSyn[<span class="st">"x0"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="11">
 <pre><code>6.3280697f0</code></pre>
@@ -348,7 +348,7 @@ Normalization
 </div>
 <div class="callout-body-container callout-body">
 <p>The synthetic data doesn’t appear to be normalized. As agreed, we normalize the data such that the first element of the right-hand side vector <span class="math inline">\(b\)</span> is 1:</p>
-<div id="ee9154eb" class="cell" data-execution_count="11">
+<div id="ee9154eb" class="cell" data-execution_count="12">
 <div class="sourceCode cell-code" id="cb18"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>probSyn.b <span class="op">./=</span> probSyn.b[<span class="fl">1</span>]</span>
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>probSyn.A <span class="op">./=</span> probSyn.b[<span class="fl">1</span>]</span>
 <span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>dataSyn[<span class="st">"x0"</span>] <span class="op">./=</span> probSyn.b[<span class="fl">1</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -357,7 +357,7 @@ Normalization
 <ol type="1">
 <li>Note that this normalization still doesn’t put <code>x0</code> into the simplex:</li>
 </ol>
-<div id="fb5c9a6d" class="cell" data-execution_count="12">
+<div id="fb5c9a6d" class="cell" data-execution_count="13">
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(dataSyn[<span class="st">"x0"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="13">
 <pre><code>6.3280697f0</code></pre>
@@ -373,7 +373,7 @@ Normalization
 <section id="visualizing-signals" class="level3">
 <h3 class="anchored" data-anchor-id="visualizing-signals">Visualizing signals</h3>
 <p>Here are the signals to be recovered:</p>
-<div id="85ff8634" class="cell" data-execution_count="13">
+<div id="85ff8634" class="cell" data-execution_count="14">
 <div class="cell-output cell-output-display" data-execution_count="14">
 <!--?xml version="1.0" encoding="utf-8"?-->
 <svg xmlns="http://www.w3.org/2000/svg" xlink="http://www.w3.org/1999/xlink" width="672" height="480" viewbox="0 0 2688 1920">
@@ -531,7 +531,7 @@ Normalization
 <p>Recover the signals as the solution of the KL-regularized least squares problem <span class="math display">\[
 \min_p \frac{1}{2} \|Ap - b\|^2 + \lambda \sum_{i=1}^n p_i \log(p_i)
 \]</span></p>
-<div id="836cd284" class="cell" data-execution_count="14">
+<div id="836cd284" class="cell" data-execution_count="15">
 <details class="code-fold">
 <summary>Implement test functions</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">logrange</span>(start, stop, length) <span class="op">=</span> <span class="fu">exp10</span>.(<span class="fu">range</span>(start, stop<span class="op">=</span>stop, length<span class="op">=</span>length))</span>
@@ -551,7 +551,7 @@ Normalization
 <section id="physics-data" class="level4">
 <h4 class="anchored" data-anchor-id="physics-data">Physics data</h4>
 <p>Solve the problem for a range of logarithmically spaced regularization parameters <span class="math inline">\(\lambda\)</span> between <span class="math inline">\(10^{-16}\)</span> and <span class="math inline">\(10^{-5}\)</span>.</p>
-<div id="6ef27d58" class="cell" data-execution_count="15">
+<div id="6ef27d58" class="cell" data-execution_count="16">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>statsPhy <span class="op">=</span> <span class="fu">solve_range</span>(probPhy, <span class="fu">logrange</span>(<span class="op">-</span><span class="fl">16</span>, <span class="op">-</span><span class="fl">5</span>, <span class="fl">3</span>))</span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot_results</span>(statsPhy, dataPhy[<span class="st">"x0"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="16">
@@ -612,7 +612,7 @@ Normalization
 </div>
 </div>
 <p>Report results for smallest value of <span class="math inline">\(\lambda\)</span>:</p>
-<div id="d795c948" class="cell" data-execution_count="16">
+<div id="d795c948" class="cell" data-execution_count="17">
 <details class="code-fold">
 <summary>Implement report function</summary>
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">report_errors</span>(stats, data)</span>
@@ -626,7 +626,7 @@ Normalization
 <span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<div id="6e903390" class="cell" data-execution_count="17">
+<div id="6e903390" class="cell" data-execution_count="18">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">report_errors</span>(statsPhy[<span class="fl">1</span>], dataPhy)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>           rms(p-x0):    4.57e-04
@@ -639,7 +639,7 @@ Normalization
 <section id="synthetic-data-1" class="level4">
 <h4 class="anchored" data-anchor-id="synthetic-data-1">Synthetic data</h4>
 <p>Here we try to recover the solution from the synthetic data set. But as we see here, we get garbage:</p>
-<div id="76d7a86c" class="cell" data-execution_count="18">
+<div id="76d7a86c" class="cell" data-execution_count="19">
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>p, y, statsSyn <span class="op">=</span> <span class="fu">solve!</span>(probSyn)</span>
 <span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>([p, dataSyn[<span class="st">"x0"</span>]], label<span class="op">=</span>[<span class="st">"Recovered"</span> <span class="st">"Ground truth"</span>])</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-display" data-execution_count="19">
@@ -711,7 +711,7 @@ Important
 </div>
 </div>
 <p>As a test, we construct <code>b</code> from the ground truth (forcibly normalized) <code>x0</code>:</p>
-<div id="5cb37fb3" class="cell" data-execution_count="19">
+<div id="5cb37fb3" class="cell" data-execution_count="20">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
 <span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="pp">@unpack</span> A, x0 <span class="op">=</span> dataSyn</span>
 <span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  x0 <span class="op">=</span> x0<span class="op">/</span><span class="fu">sum</span>(x0)</span>
@@ -774,7 +774,7 @@ Important
 </section>
 <section id="ueg" class="level3">
 <h3 class="anchored" data-anchor-id="ueg">UEG</h3>
-<div id="19dcf081" class="cell" data-execution_count="20">
+<div id="19dcf081" class="cell" data-execution_count="21">
 <div class="sourceCode cell-code" id="cb28"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="kw">let</span></span>
 <span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  probUEG.λ <span class="op">=</span> <span class="fl">1e-6</span></span>
 <span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  p, y, stats <span class="op">=</span> <span class="fu">solve!</span>(probUEG)</span>

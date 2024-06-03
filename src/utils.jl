@@ -8,10 +8,12 @@ mutable struct ExecutionStats{T<:AbstractFloat, V<:AbstractVector{T}, DF}
     dual_obj::T
     solution::V
     residual::V
+    optimality::T
     tracer::DF
 end
 
 function Base.show(io::IO, s::ExecutionStats)
+    rel_res = norm(s.residual, Inf)
     @printf("\n")
     if s.status == :max_iter 
         @printf("Maximum number of iterations reached\n")
@@ -21,4 +23,6 @@ function Base.show(io::IO, s::ExecutionStats)
     @printf("Products with A   : %9d\n", s.neval_jprod)
     @printf("Products with A'  : %9d\n", s.neval_jtprod)
     @printf("Time elapsed (sec): %9.1f\n", s.elapsed_time)
+    @printf("Residual norm     : %9.1e\n", rel_res)
+    @printf("Optimality        : %9.1e\n", s.optimality)
 end

@@ -19,8 +19,8 @@ where $x_k$ is the current primal iterate and $X_k=\Diag(x_k)$.
 We consider these preconditioners:
 
 1. Diagonal, constant: $M = \Diag(AA^T) + \lambda I$
-1. Diagonal, variable: $M = \Diag(AS_kA^T) + \lambda I$
-1. Cholesky, constant: $M = AA^T + \lambda I$
+1. (not working) Diagonal, variable: $M = \Diag(AX_kA^T) + \lambda I$
+1. (not yet implemented) Cholesky, constant: $M = AA^T + \lambda I$
 
 The first two preconditioners have complexity $O(mn)$ to compute and $O(m)$ to apply. The third has cubic complexity, but that cost can be amortized over the Newton iterations.
 
@@ -28,35 +28,42 @@ The first two preconditioners have complexity $O(mn)$ to compute and $O(m)$ to a
 #| code-fold: true
 #| output: false 
 using LinearAlgebra, NPZ, StatsPlots
-import KLLS: KLLSData, DiagAAPreconditioner, solve!
+import KLLS: KLLSModel, DiagAAPreconditioner, DiagASAPreconditioner, solve!
 ```
-
+Load the synthetic UEG test problem:
 ```{julia}
-data = npzread("../data/synthetic-UEG_testproblem.npz")
-kldata = KLLSData(data["A"], data["b_avg"])
+data = try # needed because of vscode quirks while developing
+    npzread("../data/synthetic-UEG_testproblem.npz")
+catch
+    npzread("./data/synthetic-UEG_testproblem.npz")
+end
+kldata = KLLSModel(data["A"], data["b_avg"])
 ```
 
 Build the preconditioner object:
 ```{julia}
-MAA = DiagAAPreconditioner(kldata; α=1e-3)
-MASA = DiagAAPreconditioner(kldata)
+MAA = DiagAAPreconditioner(kldata);
+# MASA = DiagASAPreconditioner(kldata) # NOT WORKING! 😢
 ```
 
 Solve the problem with and without preconditioning:
 ```{julia}
-kldata.λ=1e-3
-p, y, stats, tracerI = solve!(kldata, atol=1e-5, rtol = 1e-5, logging=100, M=MAA)
-plot(p)
-# p, y, stats, tracerM = solve!(kldata, trace=true, M=MAA)
+kldata.λ=1e-6
+statsI = solve!(kldata, trace=true)
+statsMAA = solve!(kldata, trace=true, M=MAA)
+# statsMASA = solve!(kldata, trace=true, M=MASA)
 ```
 
-
+Plot the dual objective value and cumulative CG iterations.
 ```{julia}
-@df tracerI begin
-    plot(:iter,abs.(:dual_obj), label="Dual Objective", ylabel="Dual Objective", lw=2, left_margin=5Plots.mm, yscale=:log10)
-end
-# @df tracerM begin
-#     plot!(:iter,abs.(:dual_obj), label="Diag(AA')", ylabel="Dual Objective", lw=2, left_margin=5Plots.mm, yscale=:log10)
-# end
+#|echo: false
+label = ["no precon" "Diag(AA')"]
+pCG = plot([cumsum(statsI.tracer.cgits), cumsum(statsMAA.tracer.cgits)], xlabel="Iteration", ylabel="cumulative CG Iterations", label=label, lw=2)
+pObj = plot([
+    statsI.tracer.dual_obj,
+    statsMAA.tracer.dual_obj],
+    xlabel="Iteration",
+    ylabel="dual objective",
+    label=label, lw=2)
+plot(pObj, pCG, layout=(1,2))
 ```
-
