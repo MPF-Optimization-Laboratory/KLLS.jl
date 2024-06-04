@@ -1,0 +1,14 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "julia",
+			"command": "test",
+			"problemMatcher": [
+				""
+			],
+			"group": "test",
+			"label": "Julia: Run tests"
+		}
+	]
+}
