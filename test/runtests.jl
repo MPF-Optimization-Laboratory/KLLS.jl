@@ -21,14 +21,19 @@ end
 
 @testset failfast=true "Preconditioning" begin
 
+    # Generate random data for tests
     Random.seed!(1234)
-
-    # To start: unconditioned CG on any PSD Hp=d system
     m, n = 10, 30
     A = randn(m, n)
     H = A*A'
     d = randn(m)
+    b = randn(10)
+    λ = rand()
+    data = KLLSModel(A, b, λ=λ)
+
+    # To start: unconditioned CG on any PSD Hp=d system
     xi, sti = cg(H,d)
+    Δ = 0.1*norm(xi)
     norm(H*xi-d) < 1e-10
     @test sti.status == "solution good enough given atol and rtol"
 
@@ -47,45 +52,31 @@ end
     @test all(xi .≈ xm)
     @test sti.niter > stm.niter
 
-    # Create custom preconditioner
-    M = U * diagm(Λ) * U'; M = 0.5*(M+M')
-    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(H)])
-        P = KLLS.Preconditioner(f(Q))
-        @test all(Q*d ≈ mul!(similar(d), P, d))
-        @test all(Q\d ≈ ldiv!(similar(d), P, d))
-        xm, stm = cg(H,d,M=P,ldiv=true)
-        @test stm.status == "solution good enough given atol and rtol"
-        @test all(xi .≈ xm)
-        @test sti.niter ≥ stm.niter
-    end
-
-    # # Add a radius
-    Δ = 0.1*norm(xi)
-    M = U * diagm(Λ) * U'; M = 0.5*(M+M')
-    @testset for (f, Q) in zip([Matrix, cholesky, Diagonal], [M, M, Diagonal(H)])
-        P = KLLS.Preconditioner(f(Q))
-        xt, stt = cg(H,d,M=P,radius=Δ,verbose=0,ldiv=true)
-        @test xt'*(Q*xt) ≈ Δ^2
-    end
-
-    # DiagAAtPreconditioner
-    A = randn(10, 20)
-    b = randn(10)
-    λ = rand()
-    data = KLLSModel(A, b, λ=λ)
+    # Diag(AA') preconditioner
     M = KLLS.DiagAAPreconditioner(data)
-    P = Diagonal(diag(A*A')) + λ*I 
+    P = Diagonal(diag(A*A'))
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))
+    xt, stt = cg(H,d,M=P,radius=Δ,verbose=0,ldiv=true)
+    @test xt'*P*xt ≈ Δ^2
 
     # DiagASAtPreconditioner
-    KLLS.dObj!(data, randn(size(A,1)))
     M = KLLS.DiagASAPreconditioner(data)
     g = KLLS.grad(data.lse)
-    S = Diagonal(g) - g*g'
-    P = Diagonal(A*S*A') + λ*I
+    S = Diagonal(g)
+    P = Diagonal(A*S*A')
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))
+    xt, stt = cg(H,d,M=P,radius=Δ,verbose=0,ldiv=true)
+    @test xt'*P*xt ≈ Δ^2
+
+    # AA' preconditioner
+    M = KLLS.AAPreconditioner(data)
+    P = A*A' + λ*I
+    @test all(P*d ≈ mul!(similar(d), M, d))
+    @test all(P\d ≈ ldiv!(similar(d), M, d))
+    xt, stt = cg(H,d,M=M,radius=Δ,verbose=0,ldiv=true)
+    @test xt'*P*xt ≈ Δ^2
 
 end
 
@@ -107,7 +98,7 @@ end
     @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
-    M = KLLS.Preconditioner(cholesky(A*A'))
+    M = KLLS.AAPreconditioner(data)
     st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
 
 end

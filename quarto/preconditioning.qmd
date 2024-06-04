@@ -28,7 +28,8 @@ The first two preconditioners have complexity $O(mn)$ to compute and $O(m)$ to a
 #| code-fold: true
 #| output: false 
 using LinearAlgebra, NPZ, StatsPlots
-import KLLS: KLLSModel, DiagAAPreconditioner, DiagASAPreconditioner, solve!
+using KLLS
+import KLLS: KLLSModel, solve!
 ```
 Load the synthetic UEG test problem:
 ```{julia}
@@ -42,26 +43,41 @@ kldata = KLLSModel(data["A"], data["b_avg"])
 
 Build the preconditioner object:
 ```{julia}
-MAA = DiagAAPreconditioner(kldata);
-# MASA = DiagASAPreconditioner(kldata) # NOT WORKING! 😢
+MAA = KLLS.DiagAAPreconditioner(kldata);
+# MASA = KLLS.DiagASAPreconditioner(kldata) # NOT WORKING! 😢
+# AA = KLLS.AAPreconditioner(kldata) # NOT ADVISED 😱 (at least for this problem)
 ```
 
 Solve the problem with and without preconditioning:
 ```{julia}
+#|output: false
 kldata.λ=1e-6
-statsI = solve!(kldata, trace=true)
-statsMAA = solve!(kldata, trace=true, M=MAA)
-# statsMASA = solve!(kldata, trace=true, M=MASA)
+solve!(M) = solve!(kldata, M=M, trace=true)
+statsI = solve!(I)
+statsMAA = solve!(MAA)
+# statsMASA = solve!(MASA)
+# statsAA = solve!(AA)
 ```
 
 Plot the dual objective value and cumulative CG iterations.
 ```{julia}
 #|echo: false
-label = ["no precon" "Diag(AA')"]
-pCG = plot([cumsum(statsI.tracer.cgits), cumsum(statsMAA.tracer.cgits)], xlabel="Iteration", ylabel="cumulative CG Iterations", label=label, lw=2)
+label = hcat( 
+    "no precon",
+    "Diag(AA')"
+    # "Diag(AGA')"
+    )
+pCG = plot([
+    cumsum(statsI.tracer.cgits),
+    cumsum(statsMAA.tracer.cgits),
+    # cumsum(statsMASA.tracer.cgits),
+    ],
+    xlabel="Iteration", ylabel="cumulative CG Iterations", label=label, lw=2)
 pObj = plot([
     statsI.tracer.dual_obj,
-    statsMAA.tracer.dual_obj],
+    statsMAA.tracer.dual_obj,
+    # statsMASA.tracer.dual_obj,
+    ],
     xlabel="Iteration",
     ylabel="dual objective",
     label=label, lw=2)

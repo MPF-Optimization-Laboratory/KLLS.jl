@@ -53,7 +53,7 @@ There are three data sets available:
 ```{julia}
 #| output: true
 dataRho = npzread("../data/rho-meson_testproblem.npz", ["A", "x", "b_avg"]) 
-probRho = KLLSData(dataRho["A"], dataRho["b_avg"], name="Rho-meson")
+probRho = KLLSModel(dataRho["A"], dataRho["b_avg"], name="Rho-meson")
 ```
 
 Check normalization:
@@ -66,7 +66,7 @@ sum(dataRho["x"])
 ```{julia}
 #| output: true
 dataUEG = npzread("../data/synthetic-UEG_testproblem.npz", ["A", "x", "b_avg", "mu"]) 
-probUEG = KLLSData(dataUEG["A"], dataUEG["b_avg"], name="UEG")
+probUEG = KLLSModel(dataUEG["A"], dataUEG["b_avg"], name="UEG")
 ```
 
 Check normalization:
@@ -78,7 +78,7 @@ sum(dataUEG["x"])
 ```{julia}
 #| output: true
 dataPhy = npzread("../data/PhysicsData.npz", ["A", "b", "x0"])
-probPhy = KLLSData(dataPhy["A"], dataPhy["b"], name="Physics")
+probPhy = KLLSModel(dataPhy["A"], dataPhy["b"], name="Physics")
 ```
 Check normalization:
 ```{julia}
@@ -92,7 +92,7 @@ For this dataset, the ground truth seems to be named `x` instead of `x0`, as in 
 #| output: true
 dataSyn = npzread("../data/synthetic_data.npz", ["A", "b", "x"])
 dataSyn["x0"] = dataSyn["x"] # convenient
-probSyn = KLLSData(dataSyn["A"], dataSyn["b"], name="Synthetic Data")
+probSyn = KLLSModel(dataSyn["A"], dataSyn["b"], name="Synthetic Data")
 ```
 
 Check normalization:
@@ -145,8 +145,8 @@ $$
 logrange(start, stop, length) = exp10.(range(start, stop=stop, length=length))
 solve_range(prob, λs) = map(λs) do λ
         prob.λ = λ
-        p, y, stats = solve!(prob)
-        (λ=λ, p=p, iters=stats.iter, solve_time=stats.elapsed_time)
+        stats = solve!(prob)
+        (λ=λ, p=stats.solution, iters=stats.iter, solve_time=stats.elapsed_time)
 end
 function plot_results(stats, x0; title="Recovered distributions")
     lab = hcat([@sprintf("λ = %6.0e", λ) for λ in getfield.(stats, :λ)]...)
@@ -190,8 +190,8 @@ report_errors(statsPhy[1], dataPhy)
 Here we try to recover the solution from the synthetic data set. But as we see here, we get garbage:
 
 ```{julia}
-p, y, statsSyn = solve!(probSyn)
-plot([p, dataSyn["x0"]], label=["Recovered" "Ground truth"])
+statsSyn = solve!(probSyn)
+plot([statsSyn.solution, dataSyn["x0"]], label=["Recovered" "Ground truth"])
 ```
 :::{.callout-important}
 It seems that the vector `b` in that data set isn't correct. What is `b` the meaning of `b` in this data set?
@@ -203,8 +203,8 @@ let
   @unpack A, x0 = dataSyn
   x0 = x0/sum(x0)
   b = A*x0
-  p, y, stats = solve!(KLLSData(A, b))
-  plot([p, x0], label=["Recovered" "Ground truth"])
+  stats = solve!(KLLSModel(A, b))
+  plot([stats.solution, x0], label=["Recovered" "Ground truth"])
 end
 ```
 
@@ -213,7 +213,7 @@ end
 ```{julia}
 let
   probUEG.λ = 1e-6
-  p, y, stats = solve!(probUEG)
-  plot([p, dataUEG["x"]], label=["Recovered" "Ground truth"])
+  stats = solve!(probUEG)
+  plot([stats.solution, dataUEG["x"]], label=["Recovered" "Ground truth"])
 end
 ```

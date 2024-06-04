@@ -8,8 +8,8 @@ mul!(z, P::AbstractDiagPreconditioner, v) = (z .= v .* P.d)
 ldiv!(z, P::AbstractDiagPreconditioner, w) = (z .= w ./ P.d) 
 
 # Default update routines
-update!(P::AbstractDiagPreconditioner) = nothing
-update!(P::UniformScaling) = nothing
+update!(::AbstractPreconditioner) = nothing
+update!(::UniformScaling) = nothing
 
 ######################################################
 # Diagonal of Graham matrix:
@@ -32,9 +32,8 @@ where λ is the regularizer defined in the KLLSData object. The preconditioner i
 
 See also [`mul!`](@ref), [`ldiv!`](@ref).
 """
-function DiagAAPreconditioner(kl::KLLSModel)
-    @unpack A, λ = kl
-    d = map(a->dot(a,a)+λ, eachrow(A))
+function DiagAAPreconditioner(kl::KLLSModel{T}; α::T=zero(T)) where T
+    d = map(a->dot(a,a)+α, eachrow(kl.A))
     DiagAAPreconditioner(kl, d)
 end
 
@@ -47,23 +46,25 @@ end
 struct DiagASAPreconditioner{T, K<:KLLSModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     kl::K
     d::V
+    α::T
 end
 
 """
-    DiagASAPreconditioner(data::KLLSData{T}; α::T=zero(T))
+    DiagASAPreconditioner(data::KLLSData{T})
 
 Construct a diagonal preconditioner for the KLLS problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
-    M = Diag(diag(A(G-gg')A') + λ + α))
+    M = Diag(diag(A(G-gg')A') + λ))
 
 where G := diagm(g), and g is the LSE gradient at the current iterate. The preconditioner is stored as a vector `d`. It's computed at construction and at each call to `update!`
 
 See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
-function DiagASAPreconditioner(kl::KLLSModel)
+function DiagASAPreconditioner(kl::KLLSModel{T}; α::T=zero(T)) where T
     @unpack A, b, λ = kl
-    d = diag_ASA!(similar(b), A, grad(kl.lse), λ)
-    DiagASAPreconditioner(kl, d)
+    obj!(kl.lse, A'b)
+    d = diag_ASA!(similar(b), A, grad(kl.lse), α)
+    DiagASAPreconditioner(kl, d, α)
 end
 
 """
@@ -77,10 +78,11 @@ where S := diagm(g), and g is the LSE gradient. Thus,
 
     Diag(AGA')  = Diag(v), v = [<aᵢ,g∘a>, i∈[1,m]]
 """
-function diag_ASA!(d, A, g, λ)
+function diag_ASA!(d::AbstractVector{T}, A, g, λ) where T
     for i in eachindex(d)
+        d[i] = zero(T)
         for j in eachindex(g)
-            d[i] = g[j]*A[i,j]^2
+            d[i] += g[j]*A[i,j]^2
         end
     end
     if λ > 0
@@ -90,58 +92,48 @@ function diag_ASA!(d, A, g, λ)
 end
 
 function update!(P::DiagASAPreconditioner)
-    d = P.d; A = P.kl.A; λ = P.kl.λ; g = grad(P.kl.lse)
-    diag_ASA!(d, A, g, λ)
+    d = P.d; A = P.kl.A; α = P.α; g = grad(P.kl.lse)
+    diag_ASA!(d, A, g, α)
 end
 
-struct Preconditioner{Mat, Vec}
-    M::Mat     # Preconditioner
-    v::Vec     # buffer for linear solves
+###############################
+# Cholesky factorization of AA'
+###############################
+
+struct AAPreconditioner{T, K<:KLLSModel{T}, F<:Cholesky{T}, V<:AbstractVector} <: AbstractPreconditioner{T}
+    kl::K
+    P::F
+    v::V # buffer for linear solves
 end
 
-function Preconditioner(M)
-    n = size(M, 1)
-    v = Vector{eltype(M)}(undef, n)
-    Preconditioner(M, v)
-end
-
-update!(P::Preconditioner) = nothing
-
-function Base.show(io::IO, P::Preconditioner)
-    println(io, "Preconditioner $(typeof(P.M))")
-    println(io, "  size: $(size(P.M))")
+function AAPreconditioner(kl::KLLSModel{T}) where T
+    @unpack A, λ = kl
+    v = Vector{T}(undef, size(A, 1))
+    AAPreconditioner(kl, cholesky(A*A'+λ*I), v)
 end
 
 """
-    mul!(z, M::Preconditioner{<:Cholesky}, d)
+    mul!(z, M::AAPreconditioner, d)
 
 Calculate the product `z=M*d` with the Cholesky preconditioner `M = R'R` and the vector `d` and store in-place the result in `z`. The factor `R` is upper triangular. 
 """
-function mul!(z, M::Preconditioner{<:Cholesky}, d)
-   @unpack M, v = M
-   R = M.U
+function mul!(z, M::AAPreconditioner, d)
+   @unpack P, v = M
+   R = P.U
    mul!(v, R, d)
    mul!(z, R', v) 
    return z
 end
 
 """
-   ldiv!(z, M::Preconditioner{<:Cholesky}, b)
+   ldiv!(z, M::AAPreconditioner, b)
 
 Solve the linear system `z=M\b` with the Cholesky preconditioner `M = R'R` and the RHS `b` and store in-place the result in `z`. The factor `R` is upper triangular. 
 """
-function ldiv!(z, P::Preconditioner{<:Cholesky}, b)
-   @unpack M, v = P
-   R = M.U
+function ldiv!(z, M::AAPreconditioner, b)
+   @unpack P, v = M
+   R = P.U
    ldiv!(v, R', b)
    ldiv!(z, R, v)
    return z
 end
-
-## Preconditioner for general matrix
-mul!(z, P::Preconditioner{<:Matrix}, d) = mul!(z, P.M, d)
-ldiv!(z, P::Preconditioner{<:Matrix}, b) = z .= P.M \ b
-
-## Diagonal preconditioner
-mul!(z, P::Preconditioner{<:Diagonal}, d) = mul!(z, P.M, d)
-ldiv!(z, P::Preconditioner{<:Diagonal}, b) = ldiv!(z, P.M, b)
