@@ -23,6 +23,6 @@ function Base.show(io::IO, s::ExecutionStats)
     @printf("Products with A   : %9d\n", s.neval_jprod)
     @printf("Products with A'  : %9d\n", s.neval_jtprod)
     @printf("Time elapsed (sec): %9.1f\n", s.elapsed_time)
-    @printf("Residual norm     : %9.1e\n", rel_res)
+    @printf("||Ax-b||₂         : %9.1e\n", rel_res)
     @printf("Optimality        : %9.1e\n", s.optimality)
 end

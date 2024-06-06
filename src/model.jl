@@ -26,6 +26,13 @@ end
 
 KLLSModel(A, b; kwargs...) = KLLSModel(A=A, b=b; kwargs...)
 
+# function KLLSModel(A, b, q; kwargs...)
+#     if eltype(b) != eltype(q)
+#         b, q = promote(b, q)        
+#     end
+#     KLLSModel(A, b, q=q; kwargs...)
+# end
+
 function Base.show(io::IO, kl::KLLSModel)
     println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))

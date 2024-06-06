@@ -18,7 +18,9 @@ function LogExpFunction(q::AbstractVector)
     @assert (all(ζ->ζ≥0, q) && sum(q) ≈ 1) "prior is not on the simplex"
     LogExpFunction(q, similar(q))
 end
-LogExpFunction(n::Int) = LogExpFunction(fill(1/n, n))
+
+# TODO: this constructor doesn't respect type stability
+# LogExpFunction(n::Int) = LogExpFunction(fill(1/n, n))
 
 """
 Evaluate logΣexp, its gradient, and Hessian at `p`:
