@@ -10,7 +10,7 @@ function [obj,grad,hess] = KL(x, p)
    logx = log(x);
    logp = log(p);
 
-   obj  = sum( x.*logx );
+   obj  = sum( x.*(logx ./ logp) );
    grad = 1 + logx - logp;
    hess = 1 ./ x;
    hess = diag(sparse(hess));  % Turn diag into a matrix for pdco2.
