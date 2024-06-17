@@ -162,7 +162,7 @@ Solve the problem for a range of logarithmically spaced regularization parameter
 
 
 ```{julia}
-statsPhy = solve_range(probPhy, logrange(-16, -5, 3))
+statsPhy = solve_range(probPhy, logrange(-16, -5, 4))
 plot_results(statsPhy, dataPhy["x0"])
 ```
 

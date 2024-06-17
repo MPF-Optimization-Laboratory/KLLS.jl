@@ -25,6 +25,8 @@ ul.task-list li input[type="checkbox"] {
 
 <script src="../site_libs/quarto-nav/quarto-nav.js"></script>
 <script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/quarto-listing/list.min.js"></script>
+<script src="../site_libs/quarto-listing/quarto-listing.js"></script>
 <script src="../site_libs/clipboard/clipboard.min.js"></script>
 <script src="../site_libs/quarto-html/quarto.js"></script>
 <script src="../site_libs/quarto-html/popper.min.js"></script>
@@ -50,8 +52,66 @@ ul.task-list li input[type="checkbox"] {
     "search-label": "Search"
   }
 }</script>
+<script>
+
+  window.document.addEventListener("DOMContentLoaded", function (_event) {
+    const listingTargetEl = window.document.querySelector('#listing-listing .list');
+    if (!listingTargetEl) {
+      // No listing discovered, do not attach.
+      return; 
+    }
+
+    const options = {
+      valueNames: ['listing-date','listing-title','listing-author','listing-subtitle','listing-image','listing-description',{ data: ['index'] },{ data: ['categories'] },{ data: ['listing-date-sort'] },{ data: ['listing-file-modified-sort'] }],
+      
+      searchColumns: ["listing-date","listing-title","listing-author","listing-subtitle","listing-image","listing-description"],
+    };
+
+    window['quarto-listings'] = window['quarto-listings'] || {};
+    window['quarto-listings']['listing-listing'] = new List('listing-listing', options);
+
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  });
+
+  window.addEventListener('hashchange',() => {
+    if (window['quarto-listing-loaded']) {
+      window['quarto-listing-loaded']();
+    }
+  })
+  </script>
 <meta name="robots" content="noindex">
 
+  <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 <link rel="stylesheet" href="../quarto/styles.css">
 </head>
@@ -88,13 +148,7 @@ ul.task-list li input[type="checkbox"] {
 <!-- sidebar -->
 <!-- margin-sidebar -->
     <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
-        <nav id="TOC" role="doc-toc" class="toc-active">
-    <h2 id="toc-title">On this page</h2>
-   
-  <ul>
-  <li><a href="#test-sets" id="toc-test-sets" class="nav-link active" data-scroll-target="#test-sets">Test sets</a></li>
-  </ul>
-</nav>
+        
     </div>
 <!-- main -->
 <main class="content" id="quarto-document-content">
@@ -118,17 +172,137 @@ ul.task-list li input[type="checkbox"] {
 </header>
 
 
-<section id="test-sets" class="level2">
-<h2 class="anchored" data-anchor-id="test-sets">Test sets</h2>
-<ul>
-<li><a href="../quarto/synthetic-data.html">synthetic data</a></li>
-<li><a href="../quarto/preconditioning.html">preconditioning</a></li>
-</ul>
 
 
-</section>
 
-</main> <!-- /main -->
+
+<div class="quarto-listing quarto-listing-container-default" id="listing-listing">
+<div class="list quarto-listing-default">
+<div class="quarto-post image-right" data-index="0" data-listing-file-modified-sort="1716597821494" data-listing-reading-time-sort="1" data-listing-word-count-sort="3">
+<div class="thumbnail">
+<p><a href="../quarto/about.html" class="no-external"></a></p><a href="../quarto/about.html" class="no-external">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="../quarto/about.html" class="no-external"></a></p>
+</div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../quarto/about.html" class="no-external">About</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../quarto/about.html" class="no-external"></a>
+</div>
+<div class="listing-description">
+<a href="../quarto/about.html" class="no-external">About this site</a>
+</div>
+</div>
+<div class="metadata">
+<p><a href="../quarto/about.html" class="no-external"></a></p><a href="../quarto/about.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="1" data-listing-date-sort="1712127600000" data-listing-file-modified-sort="1717008596364" data-listing-date-modified-sort="1717008596000" data-listing-reading-time-sort="1" data-listing-word-count-sort="103">
+<div class="thumbnail">
+<p><a href="../quarto/derivations.html" class="no-external"></a></p><a href="../quarto/derivations.html" class="no-external">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="../quarto/derivations.html" class="no-external"></a></p>
+</div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../quarto/derivations.html" class="no-external">Cross Entropy under Linear Constraints</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../quarto/derivations.html" class="no-external">A dual Newton solver</a>
+</div>
+<div class="listing-description">
+<a href="../quarto/derivations.html" class="no-external">Define the cross-entropy and log-exponential functions by <span class="math display">\[
+\begin{aligned}
+\mathop{\mathrm{cent}}(p \mid q) &amp;= \sum_{i=1}^n p_i \log(p_i/q_i)…</span><span class="math display"></span><span class="math inline"></span><span class="math inline"></span><span class="math inline"></span><span class="math inline"></span><span class="math inline"></span><span class="math inline"></span></a>
+</div>
+</div>
+<div class="metadata">
+<a href="../quarto/derivations.html" class="no-external">
+<div class="listing-date">
+Apr 3, 2024
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="2" data-listing-date-sort="1717537141000" data-listing-file-modified-sort="1717537141219" data-listing-date-modified-sort="NaN" data-listing-reading-time-sort="3" data-listing-word-count-sort="536">
+<div class="thumbnail">
+<p><a href="../quarto/synthetic-data.html" class="no-external"></a></p><a href="../quarto/synthetic-data.html" class="no-external">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="../quarto/synthetic-data.html" class="no-external"></a></p>
+</div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../quarto/synthetic-data.html" class="no-external">KL-Regularized Least Squares</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../quarto/synthetic-data.html" class="no-external">Physics and synthetic data sets</a>
+</div>
+<div class="listing-description">
+<a href="../quarto/synthetic-data.html" class="no-external">There are three data sets available:</a>
+</div>
+</div>
+<div class="metadata">
+<a href="../quarto/synthetic-data.html" class="no-external">
+<div class="listing-date">
+Jun 4, 2024
+</div>
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="3" data-listing-file-modified-sort="1717537394391" data-listing-reading-time-sort="2" data-listing-word-count-sort="300">
+<div class="thumbnail">
+<p><a href="../quarto/preconditioning.html" class="no-external"></a></p><a href="../quarto/preconditioning.html" class="no-external">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="../quarto/preconditioning.html" class="no-external"></a></p>
+</div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../quarto/preconditioning.html" class="no-external">Preconditioning</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../quarto/preconditioning.html" class="no-external"></a>
+</div>
+<div class="listing-description">
+<a href="../quarto/preconditioning.html" class="no-external">Each iteration of the preconditioned Newton CG method approximately solves the trust-region subproblem <span class="math display">\[
+\min_{s} \{\tfrac{1}{2} \langle s, H_k s \rangle + \langle \nabla…</span><span class="math inline"></span><span class="math inline"></span><span class="math inline"></span><span class="math display"></span><span class="math inline"></span><span class="math inline"></span></a>
+</div>
+</div>
+<div class="metadata">
+<p><a href="../quarto/preconditioning.html" class="no-external"></a></p><a href="../quarto/preconditioning.html" class="no-external">
+</a>
+</div>
+</div>
+<div class="quarto-post image-right" data-index="4" data-listing-file-modified-sort="1717738882576" data-listing-reading-time-sort="1" data-listing-word-count-sort="22">
+<div class="thumbnail">
+<p><a href="../quarto/scale.html" class="no-external"></a></p><a href="../quarto/scale.html" class="no-external">
+<div class="listing-item-img-placeholder card-img-top" >&nbsp;</div>
+</a><p><a href="../quarto/scale.html" class="no-external"></a></p>
+</div>
+<div class="body">
+<h3 class="no-anchor listing-title">
+<a href="../quarto/scale.html" class="no-external">Scaled simplex</a>
+</h3>
+<div class="listing-subtitle">
+<a href="../quarto/scale.html" class="no-external"></a>
+</div>
+<div class="listing-description">
+<a href="../quarto/scale.html" class="no-external">We consider a scaled version of the problem where the variables lie in the scaled simplex: <span class="math display">\[
+\mbox{minimize}_{x\in\tau\Delta}  \sum_{j=1}^n x_j\log x_j +…</span></a>
+</div>
+</div>
+<div class="metadata">
+<p><a href="../quarto/scale.html" class="no-external"></a></p><a href="../quarto/scale.html" class="no-external">
+</a>
+</div>
+</div>
+</div>
+<div class="listing-no-matching d-none">
+No matching items
+</div>
+</div></main> <!-- /main -->
 <script id="quarto-html-after-body" type="application/javascript">
 window.document.addEventListener("DOMContentLoaded", function (event) {
   const toggleBodyColorMode = (bsSheetEl) => {

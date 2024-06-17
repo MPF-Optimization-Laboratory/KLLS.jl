@@ -5,7 +5,7 @@ using Printf
 using UnPack
 using DataFrames
 
-export solve!
+export solve!, scale!
 export KLLSModel
 
 include("logsumexp.jl")

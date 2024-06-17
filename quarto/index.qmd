@@ -1,7 +1,5 @@
 ---
 title: "Maximum Entropy Linear Inversion Project"
+listing:
+   contents: .
 ---
-
-## Test sets
-- [synthetic data](synthetic-data.qmd)
-- [preconditioning](preconditioning.qmd)

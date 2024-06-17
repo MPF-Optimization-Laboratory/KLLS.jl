@@ -1,10 +1,10 @@
 import JSOSolvers: trunk
 
 function dObj!(kl::KLLSModel{T,M,V}, y::V) where {T,M,V}
-    @unpack A, b, λ, w, lse = kl 
+    @unpack A, b, λ, w, lse, scale = kl 
     mul!(w, A', y)
     f = obj!(lse, w)
-    return f + 0.5λ * y⋅y - b⋅y
+    return scale*f - scale*log(scale) + 0.5λ*y⋅y - b⋅y
 end
 
 function NLPModels.obj(kl::KLLSModel{T,M,V}, y::V) where {T,M,V}
@@ -13,10 +13,13 @@ function NLPModels.obj(kl::KLLSModel{T,M,V}, y::V) where {T,M,V}
 end
 
 function dGrad!(kl::KLLSModel{T,M,V}, y::V, ∇f::V) where {T,M,V}
-    @unpack A, b, λ, lse = kl
+    @unpack A, b, λ, lse, scale = kl
     p = grad(lse)
-    @. ∇f = λ*y - b
-    mul!(∇f, A, p, 1, 1)
+    ∇f .= -b
+    if λ > 0
+        ∇f .+= λ*y
+    end
+    mul!(∇f, A, p, scale, 1)
     return ∇f
 end
 
@@ -26,9 +29,9 @@ function NLPModels.grad!(kl::KLLSModel{T,M,V}, y::V, ∇f::V) where {T,M,V}
 end
 
 function dHess(kl::KLLSModel)
-    @unpack A, λ, lse = kl
+    @unpack A, λ, lse, scale = kl
     H = hess(lse)
-    ∇²dObj = A*H*A'
+    ∇²dObj = scale*(A*H*A')
     if λ > 0
         ∇²dObj += λ*I
     end
@@ -36,13 +39,11 @@ function dHess(kl::KLLSModel)
 end
 
 function dHess_prod!(kl::KLLSModel{T, M, V}, y::V, v::V) where {T, M, V}
-    @unpack A, λ, w, lse = kl
-    # H = hess(lse)
-    # v .= (A*(H*(A')*y)) + λ*y
+    @unpack A, λ, w, lse, scale = kl
     g = grad(lse)
-    mul!(w, A', y)       # w =            A'y
-    w .= g.*(w .- (g⋅w)) # w =  (G - gg')(A'y)
-    mul!(v, A, w)        # v = A(G - gg')(A'y)
+    mul!(w, A', y)                 # w =                  A'y
+    w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'y)
+    mul!(v, A, w, scale, zero(T))  # v = scale*A(G - gg')(A'y)
     if λ > 0
         v .+= λ*y
     end
@@ -77,15 +78,15 @@ function solve!(kl::KLLSModel{T}; M=I, logging=0, monotone=true, max_time::Float
     
     stats = ExecutionStats(
         trunk_stats.status,
-        trunk_stats.elapsed_time,
-        trunk_stats.iter,
-        neval_jprod(kl),
-        neval_jtprod(kl),
-        zero(T),
-        trunk_stats.objective,
-        grad(kl.lse),
-        (kl.λ).*(trunk_stats.solution),
-        trunk_stats.dual_feas,
+        trunk_stats.elapsed_time,       # elapsed time
+        trunk_stats.iter,               # number of iterations
+        neval_jprod(kl),                # number of products with A
+        neval_jtprod(kl),               # number of products with A'
+        zero(T),                        # primal objective TODO
+        trunk_stats.objective,          # dual objective
+        (kl.scale).*grad(kl.lse),       # primal solultion `x`
+        (kl.λ).*(trunk_stats.solution), # residual r = λy
+        trunk_stats.dual_feas,          # norm of the gradient of the dual objective
         tracer
     )
 end

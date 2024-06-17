@@ -18,6 +18,7 @@ Structure for KLLS model
     λ::T = √eps(eltype(A))
     w::V = similar(q)
     bNrm::T = norm(b)
+    scale::T = one(eltype(A))
     lse::LogExpFunction{V} = LogExpFunction(q)
     name::String = ""
     meta::NLPModelMeta{T, S} = NLPModelMeta(size(A,1), name="KLLS Model")
@@ -26,13 +27,6 @@ end
 
 KLLSModel(A, b; kwargs...) = KLLSModel(A=A, b=b; kwargs...)
 
-# function KLLSModel(A, b, q; kwargs...)
-#     if eltype(b) != eltype(q)
-#         b, q = promote(b, q)        
-#     end
-#     KLLSModel(A, b, q=q; kwargs...)
-# end
-
 function Base.show(io::IO, kl::KLLSModel)
     println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))
@@ -40,9 +34,14 @@ function Base.show(io::IO, kl::KLLSModel)
     @printf("   n = %5d  λ    = %7.1e\n", size(kl.A, 2), kl.λ)
 end
 
+function scale!(kl::KLLSModel{T}, scale::T) where T
+    kl.scale = scale
+    return kl
+end
+
 function reset!(kl::KLLSModel)
     for f in fieldnames(Counters)
       setfield!(kl.counters, f, 0)
     end
-    return kl  
+    return kl
 end

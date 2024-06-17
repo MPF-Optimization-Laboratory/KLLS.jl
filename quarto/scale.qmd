@@ -1,0 +1,112 @@
+---
+title: Scaled simplex
+data: last-modified
+execute: 
+  cache: true
+---
+
+$$
+\newcommand{\ent}[2]{\text{\bf ent}(#1\mid #2)}
+\newcommand{\KL}[2]{\text{\bf KL}(#1\mid #2)}
+$$
+
+Consider a scaled version of the problem where the variables lie in the scaled simplex:
+$$
+\min_{x\in\tau\Delta}\enspace \ent{p}{q} + \frac{1}{2\lambda}\|Ax-b\|^2,
+$$
+where $\tau$ is any positive scaling. Observe that
+$$
+\begin{aligned}
+\ent{p}{q} + \delta_{\tau\Delta}(p)
+&= \sum_{j=1}^n p_j\log\left(\frac{p_j}{q_j}\right) + \delta_{\tau\Delta}(p)\\
+&= \tau\sum_{j=1}^n \left(\frac{p_j}{\tau}\right)\log\left(\frac{p_j}{\tau}\frac{\tau}{q_j}\right) + \delta_{\Delta}\left(\frac{p}{τ}\right)\\
+&= \tau\KL{p/\tau}{q/\tau},
+\end{aligned}
+$$
+which we recognize as the $\tau$-perspective transform of KL with a rescaled prior. If we wish that this is a well-formed KL problem, we need to have, in addition to nonnegativity of $p$ and $q$,
+$$
+\sum_{j=1}^n p_j = \tau \quad\text{and}\quad \sum_{j=1}^n q_j = \tau.
+$$
+Thus, the dual problem is
+$$
+\min_{y\in\mathbb{R}^m}\enspace \tau\log\sum_{i=1}^m \left(\frac{q_j}{\tau}\right)\exp(A^T y) + \frac{\lambda}{2}\|y\|^2 - \langle b, y \rangle.
+$${#eq-dual-problem}
+
+Let's examine what needs to be implemented to evaluate the scaled log-sum-exp function:
+$$
+\begin{aligned}
+\tau\log\sum_{j=1}^n \left(\frac{q_j}{\tau}\right)\exp(z_j)
+&= \tau\log\frac1\tau\sum_{j=1}^n q_j\exp(z_j)\\
+&= \tau\log\frac1\tau + \tau\log\sum_{j=1}^n q_j\exp(z_j)\\
+&= \tau\log\sum_{j=1}^n q_j\exp(z_j) - \tau\log\tau.
+\end{aligned}
+$${#eq-dual-obj}
+
+
+```{julia}
+#|code-fold: true
+#|code-summary: Import packages
+#|output: false
+using KLLS
+using LinearAlgebra
+using Plots, Random
+```
+
+Generate a small test problem where the solution is on the scaled simplex:
+```{julia}
+Random.seed!(123)
+m, n = 3,5
+τ = 2.0
+A = randn(m,n)
+x = τ*(v=rand(n); v/sum(v))
+b = A*x
+kl = KLLSModel(A, b, λ=1e-4, scale=τ);
+```
+
+Let's solve the problem and verify that the solution looks reasonable.
+```{julia}
+stats = solve!(kl, logging=1, trace=false)
+println(stats)
+println("sum(x) = $(sum(stats.solution))")
+```
+
+Informally, it follows from @eq-dual-problem and @eq-dual-obj that the derivative of the optimal value with respect to the scaling τ is
+$$
+v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
+$$
+
+The following function computes the value and derivative for a given τ.
+
+```{julia}
+function value(τ, kl)
+
+    scale!(kl, τ)
+    λ = kl.λ
+    s = solve!(kl, logging=0, trace=false)
+
+    y = s.residual/λ
+    v = s.dual_obj
+
+    # Linearization: v(t) = v(tₖ) + dv(tₖ)(t - tₖ) 
+    dv = KLLS.obj!(kl.lse, A'y) - log(τ) - 1
+
+    return v, t -> v + dv*(t - τ)
+end;
+```
+
+Plot the optimal objective value as a function of the scaling τ, and as a check of our derivative, plot the linearization at τ=1.5.
+
+```{julia}
+scales = range(1.4, 2.2, length=50)
+
+vals = [value(t, kl)[1] for t in scales]
+
+plot(scales, vals,
+     label="Dual objective", xlabel="Scale", ylabel="Objective value", title="Dual objective vs Scale")
+
+dv = value(1.5, kl)[2]
+
+plot!(dv, 1.4, 1.6, label="Linearization", linestyle=:dash, color=:red)
+```
+
+

@@ -1,4 +1,4 @@
-struct LogExpFunction{V <: AbstractVector}
+struct LogExpFunction{V<:AbstractVector{<:AbstractFloat}}
     q::V  # prior
     g::V  # buffer for gradient
 end
@@ -14,8 +14,8 @@ If no prior is known, instead provide the dimension `n`:
 
     LogExpFunction(n)
 """
-function LogExpFunction(q::AbstractVector) 
-    @assert (all(ζ->ζ≥0, q) && sum(q) ≈ 1) "prior is not on the simplex"
+function LogExpFunction(q::AbstractVector)
+    @assert (all(ζ -> ζ ≥ 0, q) && sum(q) ≈ 1) "prior is not on the simplex"
     LogExpFunction(q, similar(q))
 end
 
@@ -25,7 +25,7 @@ end
 """
 Evaluate logΣexp, its gradient, and Hessian at `p`:
 
-    f, g, H = lse(p)
+    f = obj!(lse, p)
 
 where `p` is a vector of length `n` and `lse` is a LogExpFunction object.
 
@@ -36,10 +36,10 @@ https://github.com/baggepinnen/MonteCarloMeasurements.jl/blob/4f9b688d298157dc24
 function obj!(lse::LogExpFunction, p)
     @unpack q, g = lse
     maxval, maxind = findmax(p)
-    @. g = q*exp(p - maxval)
+    @. g = q * exp(p - maxval)
     Σ = sum_all_but(g, maxind) # Σ = ∑gₑ-1
     f = log1p(Σ) + maxval
-    @. g = g/(Σ+1)
+    @. g = g / (Σ + 1)
     return f
 end
 
