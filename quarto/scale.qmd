@@ -73,7 +73,7 @@ println("sum(x) = $(sum(stats.solution))")
 Informally, it follows from @eq-dual-problem and @eq-dual-obj that the derivative of the optimal value with respect to the scaling τ is
 $$
 v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
-$$
+$${#eq-value-derivative}
 
 The following function computes the value and derivative for a given τ.
 

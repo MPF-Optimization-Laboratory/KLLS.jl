@@ -204,7 +204,7 @@ window.Quarto = {
 &amp;= \tau\log\sum_{j=1}^n q_j\exp(z_j) - \tau\log\tau.
 \end{aligned}
 \tag{2}\]</span></span></p>
-<div id="d949e616" class="cell" data-execution_count="1">
+<div id="d949e616" class="cell" data-execution_count="2">
 <details class="code-fold">
 <summary>Import packages</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">using</span> <span class="bu">KLLS</span></span>
@@ -213,7 +213,7 @@ window.Quarto = {
 </details>
 </div>
 <p>Generate a small test problem where the solution is on the scaled simplex:</p>
-<div id="dcde4f2b" class="cell" data-execution_count="2">
+<div id="dcde4f2b" class="cell" data-execution_count="3">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">Random</span>.<span class="fu">seed!</span>(<span class="fl">123</span>)</span>
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>m, n <span class="op">=</span> <span class="fl">3</span>,<span class="fl">5</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>τ <span class="op">=</span> <span class="fl">2.0</span></span>
@@ -223,7 +223,7 @@ window.Quarto = {
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>kl <span class="op">=</span> <span class="fu">KLLSModel</span>(A, b, λ<span class="op">=</span><span class="fl">1e-4</span>, scale<span class="op">=</span>τ);</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Let’s solve the problem and verify that the solution looks reasonable.</p>
-<div id="9320776a" class="cell" data-execution_count="3">
+<div id="9320776a" class="cell" data-execution_count="4">
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>stats <span class="op">=</span> <span class="fu">solve!</span>(kl, logging<span class="op">=</span><span class="fl">1</span>, trace<span class="op">=</span><span class="cn">false</span>)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(stats)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">println</span>(<span class="st">"sum(x) = </span><span class="sc">$</span>(<span class="fu">sum</span>(stats.solution))<span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -255,11 +255,11 @@ Optimality        :   5.0e-09
 sum(x) = 1.9999999999999998</code></pre>
 </div>
 </div>
-<p>Informally, it follows from <a href="#eq-dual-problem" class="quarto-xref">Equation&nbsp;1</a> and <a href="#eq-dual-obj" class="quarto-xref">Equation&nbsp;2</a> that the derivative of the optimal value with respect to the scaling τ is <span class="math display">\[
+<p>Informally, it follows from <a href="#eq-dual-problem" class="quarto-xref">Equation&nbsp;1</a> and <a href="#eq-dual-obj" class="quarto-xref">Equation&nbsp;2</a> that the derivative of the optimal value with respect to the scaling τ is <span id="eq-value-derivative"><span class="math display">\[
 v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
-\]</span></p>
+\tag{3}\]</span></span></p>
 <p>The following function computes the value and derivative for a given τ.</p>
-<div id="a187c67f" class="cell" data-execution_count="4">
+<div id="a187c67f" class="cell" data-execution_count="5">
 <div class="sourceCode cell-code" id="cb5"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">value</span>(τ, kl)</span>
 <span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale!</span>(kl, τ)</span>
@@ -276,7 +276,7 @@ v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
 <span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a><span class="kw">end</span>;</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>Plot the optimal objective value as a function of the scaling τ, and as a check of our derivative, plot the linearization at τ=1.5.</p>
-<div id="cedd5490" class="cell" data-execution_count="5">
+<div id="cedd5490" class="cell" data-execution_count="6">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode julia code-with-copy"><code class="sourceCode julia"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>scales <span class="op">=</span> <span class="fu">range</span>(<span class="fl">1.4</span>, <span class="fl">2.2</span>, length<span class="op">=</span><span class="fl">50</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>vals <span class="op">=</span> [<span class="fu">value</span>(t, kl)[<span class="fl">1</span>] for t <span class="kw">in</span> scales]</span>
