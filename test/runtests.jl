@@ -103,6 +103,28 @@ end
 
 end
 
+@testset "Modifiers" begin
+    Random.seed!(1234)
+    m, n = 10, 30
+    A = randn(m, n)
+    b = randn(m)
+    data = KLLSModel(A, b)
+    @test try
+        scale!(data, 0.5)
+        true
+    catch
+        false
+    end
+    @test data.scale == 0.5
+    @test try
+        regularize!(data, 1e-3)
+        true
+    catch
+        false
+    end
+    @test data.λ == 1e-3
+end
+
 ### TESTING TRUNK ###
 # struct MyModel{T, S}<:AbstractNLPModel{T, S}
 #     meta::NLPModelMeta{T, S}

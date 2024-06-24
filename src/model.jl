@@ -34,6 +34,11 @@ function Base.show(io::IO, kl::KLLSModel)
     @printf("   n = %5d  λ    = %7.1e\n", size(kl.A, 2), kl.λ)
 end
 
+function regularize!(kl::KLLSModel{T}, λ::T) where T
+    kl.λ = λ
+    return kl
+end
+
 function scale!(kl::KLLSModel{T}, scale::T) where T
     kl.scale = scale
     return kl
