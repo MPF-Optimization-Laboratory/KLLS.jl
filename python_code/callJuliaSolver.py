@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
+#######################################################################
 # IMPORTANT: requires the `juliacall` Python package, eg, from the
 # command line, run `pip install juliacall`.
+#######################################################################
 from juliacall import Main as jl
 
 #######################################################################
@@ -28,7 +30,6 @@ jl.seval("""
          regularize = KLLS.regularize!
          """
          )
-#######################################################################
 
 # Generate some data
 n = 100
@@ -40,12 +41,11 @@ bnp = Anp @ x0
 # Convert data to Julia
 A = jl.convert(jl.Matrix, Anp)
 b = jl.convert(jl.Vector, bnp)
+q = jl.convert(jl.Vector, np.ones(n) / n) # optional prior on the solution
 
 # Create an instance of the KLLSData struct.
-data = jl.KLLSModel(A, b)
-
-# Optionally, install a prior `q` on the solution via
-# data = jl.KLLSModel(A, b, q=q)
+# Default prior is uniform, ie, q = ones(n) / n
+data = jl.KLLSModel(A, b, q=q) 
 
 # Set regularization and scaling parameters other than these defaults:
 # - λ = √ϵ, where ϵ is the machine epsilon.
@@ -56,10 +56,14 @@ jl.scale(data, np.sum(x0)) # reset solution scale
 # Solve the problem.
 p = jl.solve(data, logging=1) # set logging = 0 to turn off logging
 
-# The solution is in p[0]
-x = p.solution
+# Test that the solve was successful
+assert p.status == jl.Symbol("optimal")
 
-print(np.sum(x))
+# Print the solution status
+print(p)
+
+# Extract the solution 
+x = p.solution
 
 # Plot the solution
 plt.plot(x)

@@ -26,3 +26,7 @@ function Base.show(io::IO, s::ExecutionStats)
     @printf("||Ax-b||₂         : %9.1e\n", rel_res)
     @printf("Optimality        : %9.1e\n", s.optimality)
 end
+
+function histogram(stat::ExecutionStats; kwargs...)
+    UnicodePlots.histogram(stat.solution; kwargs...)
+end

@@ -4,8 +4,9 @@ using LinearAlgebra
 using Printf
 using UnPack
 using DataFrames
+using UnicodePlots
 
-export solve!, scale!, regularize!
+export solve!, scale!, regularize!, histogram
 export KLLSModel
 
 include("logsumexp.jl")
