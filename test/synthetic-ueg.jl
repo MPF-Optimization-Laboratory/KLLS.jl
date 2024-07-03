@@ -27,11 +27,9 @@ xP = sP.solution
 # Report on the solution
 histogram(sP, nbins=20, title="Histogram (log10 scale)", xscale=:log10, xlabel="")
 
-# Now solve the problem with a covariance matrix of `b`
+# Create a new problem with a covariance matrix of `b`
 C = inv.(b_std) |> diagm
 klC = KLLSModel(A, b_avg, C=C, q=q, λ=1e-4)
-
-
 # Solve the KL problem
 sP = solve!(klC, atol=1e-5, rtol = 1e-5, logging=1, trace=true)
 histogram(sP, nbins=20, title="Histogram (log10 scale)", xscale=:log10, xlabel="")
