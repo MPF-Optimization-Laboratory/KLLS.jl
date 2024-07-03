@@ -28,5 +28,6 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 function histogram(stat::ExecutionStats; kwargs...)
+    println("")
     UnicodePlots.histogram(stat.solution; kwargs...)
 end

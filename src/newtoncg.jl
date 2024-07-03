@@ -1,51 +1,66 @@
 import JSOSolvers: trunk
 
-function dObj!(kl::KLLSModel{T,M,V}, y::V) where {T,M,V}
-    @unpack A, b, λ, w, lse, scale = kl 
+"""
+Dual objective:
+
+- base case (no scaling, unweighted 2-norm):
+    f(y) = log∑exp(A'y) - 0.5λ||y|| - b'y
+
+- with scaling and weighted 2-norm:
+    f(y) = τ log∑exp(A'y) - τ log τ + 0.5λ y'C y - b'y
+"""
+function dObj!(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
+    @unpack A, b, λ, C, w, lse, scale = kl 
     mul!(w, A', y)
     f = obj!(lse, w)
-    return scale*f - scale*log(scale) + 0.5λ*y⋅y - b⋅y
+    return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
 
-function NLPModels.obj(kl::KLLSModel{T,M,V}, y::V) where {T,M,V}
+function NLPModels.obj(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
     increment!(kl, :neval_jtprod)
     return dObj!(kl, y)
 end
 
-function dGrad!(kl::KLLSModel{T,M,V}, y::V, ∇f::V) where {T,M,V}
-    @unpack A, b, λ, lse, scale = kl
+"""
+Dual objective gradient:
+
+   ∇f(y) = τ A∇log∑exp(A'y) + λCy - b 
+
+"""
+function dGrad!(kl::KLLSModel{T,M,CT,V}, y::V, ∇f::V) where {T,M,CT,V}
+    @unpack A, b, λ, C, lse, scale = kl
     p = grad(lse)
     ∇f .= -b
     if λ > 0
-        ∇f .+= λ*y
+        mul!(∇f, C, y, λ, 1)
     end
     mul!(∇f, A, p, scale, 1)
     return ∇f
 end
 
-function NLPModels.grad!(kl::KLLSModel{T,M,V}, y::V, ∇f::V) where {T,M,V}
+function NLPModels.grad!(kl::KLLSModel{T,M,CT,V}, y::V, ∇f::V) where {T,M,CT,V}
     increment!(kl, :neval_jprod)
     return dGrad!(kl, y, ∇f)
 end
 
 function dHess(kl::KLLSModel)
-    @unpack A, λ, lse, scale = kl
+    @unpack A, λ, C, lse, scale = kl
     H = hess(lse)
     ∇²dObj = scale*(A*H*A')
     if λ > 0
-        ∇²dObj += λ*I
+        ∇²dObj += λ*C
     end
     return ∇²dObj
 end
 
-function dHess_prod!(kl::KLLSModel{T, M, V}, y::V, v::V) where {T, M, V}
-    @unpack A, λ, w, lse, scale = kl
+function dHess_prod!(kl::KLLSModel{T,M,CT,V}, y::V, v::V) where {T,M,CT,V}
+    @unpack A, λ, C, w, lse, scale = kl
     g = grad(lse)
     mul!(w, A', y)                 # w =                  A'y
     w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'y)
     mul!(v, A, w, scale, zero(T))  # v = scale*A(G - gg')(A'y)
     if λ > 0
-        v .+= λ*y
+        mul!(v, C, y, λ, 1)        # v += λCy
     end
     return v
 end

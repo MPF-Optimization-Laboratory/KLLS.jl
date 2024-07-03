@@ -7,15 +7,17 @@ Structure for KLLS model
     - `q` is the prior (default: uniform)
     - `lse` is the log-sum-exp function
     - `λ` is the regularization parameter
+    - `C` is a positive definite scaling matrix
     - `w` is an n-buffer for the Hessian-vector product 
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, V<:AbstractVector{T}, S} <: AbstractNLPModel{T, S}
+@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, V<:AbstractVector{T}, S} <: AbstractNLPModel{T, S}
     A::M = Matrix{Float64}(undef, 0, 0)
     b::V = Vector{Float64}(undef, 0)
     q::V = fill(eltype(A)(1/size(A, 2)), size(A, 2))
     λ::T = √eps(eltype(A))
+    C::CT = I
     w::V = similar(q)
     bNrm::T = norm(b)
     scale::T = one(eltype(A))
