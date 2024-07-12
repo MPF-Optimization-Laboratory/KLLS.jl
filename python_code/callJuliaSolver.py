@@ -37,7 +37,7 @@ n = 100
 m = 200
 x0 = np.random.rand(n)
 Anp = np.random.rand(m, n)
-bnp = Anp @ x0
+bnp = Anp @ x0 + 0.1 * np.random.randn(m)
 
 # Convert data to Julia
 A = jl.convert(jl.Matrix, Anp)
@@ -70,7 +70,8 @@ x = p.solution
 plt.plot(x)
 plt.show()
 
-# Find the scaling factor that maximizes entropy
-p = jl.maximize(data)
+# Find the scaling factor that maximizes entropy.
+# The method is most efficient when the range t=(a,b) is known and tight.
+p = jl.maximize(data, t=(40.0,50.0), atol=1e-2, rtol=1e-2, verbose=True)
 # Print the scale, found in p.scale
 print("Maximized scale: ", p.scale)
