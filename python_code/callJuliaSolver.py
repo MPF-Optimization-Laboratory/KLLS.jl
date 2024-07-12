@@ -28,6 +28,7 @@ jl.seval("""
          solve = KLLS.solve!
          scale = KLLS.scale!
          regularize = KLLS.regularize!
+         maximize = KLLS.maximize!
          """
          )
 
@@ -68,3 +69,8 @@ x = p.solution
 # Plot the solution
 plt.plot(x)
 plt.show()
+
+# Find the scaling factor that maximizes entropy
+p = jl.maximize(data)
+# Print the scale, found in p.scale
+print("Maximized scale: ", p.scale)

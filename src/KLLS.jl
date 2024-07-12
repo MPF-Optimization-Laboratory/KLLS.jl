@@ -5,8 +5,9 @@ using Printf
 using UnPack
 using DataFrames
 using UnicodePlots
+import Roots
 
-export solve!, scale!, regularize!, histogram
+export solve!, scale!, regularize!, histogram, maximize!
 export KLLSModel
 
 include("logsumexp.jl")

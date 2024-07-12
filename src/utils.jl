@@ -31,3 +31,19 @@ function histogram(stat::ExecutionStats; kwargs...)
     println("")
     UnicodePlots.histogram(stat.solution; kwargs...)
 end
+
+function value!(kl::KLLSModel{T}, t::T) where T
+    @unpack λ, A = kl
+    scale!(kl, t)
+    s = solve!(kl)
+    y = s.residual/λ
+    v = s.dual_obj
+    dv = obj!(kl.lse, A'y) - log(t) - 1
+    return v, dv
+end
+
+function maximize!(kl::KLLSModel{T}; t=one(T), kwargs...) where T
+    dv!(t) = value!(kl, t)[2]
+    t = Roots.find_zero(dv!, t; kwargs...)
+    return kl
+end

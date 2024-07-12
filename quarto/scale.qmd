@@ -27,12 +27,14 @@ which we recognize as the $\tau$-perspective transform of KL with a rescaled pri
 $$
 \sum_{j=1}^n p_j = \tau \quad\text{and}\quad \sum_{j=1}^n q_j = \tau.
 $$
-Thus, the dual problem is
+The dual problem corresponding the scaled primal problem is
 $$
 \min_{y\in\mathbb{R}^m}\enspace \tau\log\sum_{i=1}^m \left(\frac{q_j}{\tau}\right)\exp(A^T y) + \frac{\lambda}{2}\|y\|^2 - \langle b, y \rangle.
 $${#eq-dual-problem}
 
-Let's examine what needs to be implemented to evaluate the scaled log-sum-exp function:
+### Objective function
+
+Let's isolate $\tau$ in the objective function to faciliate the computation of the value-function derivative:
 $$
 \begin{aligned}
 \tau\log\sum_{j=1}^n \left(\frac{q_j}{\tau}\right)\exp(z_j)
@@ -42,12 +44,17 @@ $$
 \end{aligned}
 $${#eq-dual-obj}
 
+Informally, it follows from @eq-dual-problem and @eq-dual-obj that the derivative of the optimal value with respect to the scaling τ is
+$$
+v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
+$${#eq-value-derivative}
 
+### Test problem
 ```{julia}
 #|code-fold: true
 #|code-summary: Import packages
 #|output: false
-using KLLS
+using KLLS: KLLS, solve!, KLLSModel, scale!, regularize!
 using LinearAlgebra
 using Plots, Random
 ```
@@ -60,20 +67,20 @@ m, n = 3,5
 A = randn(m,n)
 x = τ*(v=rand(n); v/sum(v))
 b = A*x
-kl = KLLSModel(A, b, λ=1e-4, scale=τ);
+kl = KLLSModel(A, b)
+regularize!(kl, 1e-4)
+scale!(kl, τ)
 ```
 
 Let's solve the problem and verify that the solution looks reasonable.
 ```{julia}
-stats = solve!(kl, logging=1, trace=false)
+stats = solve!(kl)
 println(stats)
 println("sum(x) = $(sum(stats.solution))")
 ```
 
-Informally, it follows from @eq-dual-problem and @eq-dual-obj that the derivative of the optimal value with respect to the scaling τ is
-$$
-v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
-$${#eq-value-derivative}
+
+### Value function and derivative
 
 The following function computes the value and derivative for a given τ.
 
@@ -83,30 +90,48 @@ function value(τ, kl)
     scale!(kl, τ)
     λ = kl.λ
     s = solve!(kl, logging=0, trace=false)
-
     y = s.residual/λ
     v = s.dual_obj
 
-    # Linearization: v(t) = v(tₖ) + dv(tₖ)(t - tₖ) 
+    # Linearization at τ̅: v(τ) = v(τ̅) + dv(τ̅)(τ - τ̅) 
     dv = KLLS.obj!(kl.lse, A'y) - log(τ) - 1
-
-    return v, t -> v + dv*(t - τ)
+    return v, dv 
 end;
 ```
 
 Plot the optimal objective value as a function of the scaling τ, and as a check of our derivative, plot the linearization at τ=1.5.
 
 ```{julia}
-scales = range(1.4, 2.2, length=50)
+let
+  scales = range(1.0, 2.2, length=50)
+  vals = [value(t, kl)[1] for t in scales]
+  plot(scales, vals,
+       label="Dual objective", xlabel="Scale", ylabel="Objective value", title="Dual objective vs Scale")
 
-vals = [value(t, kl)[1] for t in scales]
+  τ = 1.5
+  v, dv = value(τ, kl)
 
-plot(scales, vals,
-     label="Dual objective", xlabel="Scale", ylabel="Objective value", title="Dual objective vs Scale")
-
-dv = value(1.5, kl)[2]
-
-plot!(dv, 1.4, 1.6, label="Linearization", linestyle=:dash, color=:red)
+  plot!(t -> v + dv*(t - τ), 1.4, 1.6, label="Linearization", linestyle=:dash, color=:red)
+end
 ```
 
+### Maximizing the value function
 
+We can use a root-finding procedure to solve the problem
+$$
+\max_{\tau} v(τ),
+$$
+where $v(τ)$ is the value function defined in @eq-value-derivative. The following code snippet finds the optimal scaling τ. Because $v$ is concave in $\tau$ (proof needed), we can simply use a root-finding algorithm to find the point at which $v'(t) = 0$.
+
+```{julia}
+import Roots
+dv(t) = value(t, kl)[2]
+τopt = Roots.find_zero(dv, 1.0, verbose=true, rtol=1e-3, atol=1e-3)
+```
+
+Now use the built-in function:
+```{julia}
+KLLS.maximize!(kl, rtol=1e-3)
+println(kl)
+println(kl.scale)
+```
