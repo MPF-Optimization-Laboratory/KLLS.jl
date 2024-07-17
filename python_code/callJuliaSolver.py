@@ -72,6 +72,5 @@ plt.show()
 
 # Find the scaling factor that maximizes entropy.
 # The method is most efficient when the range t=(a,b) is known and tight.
-p = jl.maximize(data, t=(40.0,50.0), atol=1e-2, rtol=1e-2, verbose=True)
-# Print the scale, found in p.scale
-print("Maximized scale: ", p.scale)
+# Return a solution object corresponding to the maximized entropy over the range t.
+topt, xopt = jl.maximize(data, t=1, atol=1e-2, rtol=1e-2, verbose=True)
