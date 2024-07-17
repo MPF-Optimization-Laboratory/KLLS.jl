@@ -126,12 +126,12 @@ where $v(τ)$ is the value function defined in @eq-value-derivative. The followi
 ```{julia}
 import Roots
 dv(t) = value(t, kl)[2]
-τopt = Roots.find_zero(dv, 1.0, verbose=true, rtol=1e-3, atol=1e-3)
+topt = Roots.find_zero(dv, 1.0, verbose=true, rtol=1e-3, atol=1e-3)
+println("Optimal scaling t = $topt")
 ```
+
 
 Now use the built-in function:
 ```{julia}
-KLLS.maximize!(kl, rtol=1e-3)
-println(kl)
-println(kl.scale)
+topt, xopt = KLLS.maximize!(kl, rtol=1e-3)
 ```

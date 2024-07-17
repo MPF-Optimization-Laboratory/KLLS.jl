@@ -42,8 +42,12 @@ function value!(kl::KLLSModel{T}, t::T) where T
     return v, dv
 end
 
+"""
+Maximize the dual objective of a KLLS model with respect to the scaling parameter `t`.
+Returns the optimal primal solution.
+"""
 function maximize!(kl::KLLSModel{T}; t=one(T), kwargs...) where T
     dv!(t) = value!(kl, t)[2]
     t = Roots.find_zero(dv!, t; kwargs...)
-    return kl
+    return t, t*grad(kl.lse)
 end

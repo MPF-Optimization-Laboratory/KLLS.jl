@@ -1,4 +1,4 @@
-import KLLS: DiagAAPreconditioner, KLLSModel, solve!, histogram, covariate!
+import KLLS: DiagAAPreconditioner, KLLSModel, solve!, histogram
 using LinearAlgebra, NPZ, StatsPlots
 using UnPack
 
