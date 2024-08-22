@@ -1,0 +1,24 @@
+---
+title: NLSModel Experiments
+---
+
+```{julia}
+using NLPModels
+```
+
+```{julia}
+struct NLSModel{T, S} <: AbstractNLPModel{T,S}
+  A::Matrix{T}
+  b::Vector{T}
+  meta::NLPModelMeta{T, S}
+  counters::Counters
+end
+```
+
+```{julia}
+m, n = 2, 3
+A = rand(m, n)
+b = rand(m)
+nls = NLSModel(A, b, NLPModelMeta(n), Counters())
+```
+

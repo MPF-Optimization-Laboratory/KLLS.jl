@@ -1,6 +1,6 @@
-struct LogExpFunction{V<:AbstractVector{<:AbstractFloat}}
-    q::V  # prior
-    g::V  # buffer for gradient
+struct LogExpFunction{T<:AbstractFloat, V1<:AbstractVector{T}, V2<:AbstractVector{T}}
+    q::V1  # prior
+    g::V2  # buffer for gradient
 end
 
 """

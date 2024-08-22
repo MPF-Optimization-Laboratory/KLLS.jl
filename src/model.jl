@@ -1,5 +1,3 @@
-import NLPModels: NLPModels, NLPModelMeta, AbstractNLPModel, Counters, increment!, neval_jprod, neval_jtprod
-
 """
 Structure for KLLS model 
     - `A` is the matrix of constraints
@@ -12,16 +10,16 @@ Structure for KLLS model
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, V<:AbstractVector{T}, S} <: AbstractNLPModel{T, S}
+@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
     A::M = Matrix{Float64}(undef, 0, 0)
-    b::V = Vector{Float64}(undef, 0)
-    q::V = fill(eltype(A)(1/size(A, 2)), size(A, 2))
+    b::S = Vector{Float64}(undef, 0)
+    q::S = fill(eltype(A)(1/size(A, 2)), size(A, 2))
     λ::T = √eps(eltype(A))
     C::CT = I
-    w::V = similar(q)
+    w::S = similar(q)
     bNrm::T = norm(b)
     scale::T = one(eltype(A))
-    lse::LogExpFunction{V} = LogExpFunction(q)
+    lse::LogExpFunction = LogExpFunction(q)
     name::String = ""
     meta::NLPModelMeta{T, S} = NLPModelMeta(size(A,1), name="KLLS Model")
     counters::Counters = Counters()
@@ -32,9 +30,9 @@ KLLSModel(A, b; kwargs...) = KLLSModel(A=A, b=b; kwargs...)
 function Base.show(io::IO, kl::KLLSModel)
     println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))
-    @printf("   m = %5d  bNrm = %7.1e\n", size(kl.A, 1), kl.bNrm)
-    @printf("   n = %5d  λ    = %7.1e\n", size(kl.A, 2), kl.λ)
-    @printf("       %5s  τ    = %7.1e\n"," ", kl.scale)
+    println(io, @sprintf("   m = %5d  bNrm = %7.1e", size(kl.A, 1), kl.bNrm))
+    println(io, @sprintf("   n = %5d  λ    = %7.1e", size(kl.A, 2), kl.λ))
+    println(io, @sprintf("       %5s  τ    = %7.1e"," ", kl.scale))
 end
 
 function regularize!(kl::KLLSModel{T}, λ::T) where T

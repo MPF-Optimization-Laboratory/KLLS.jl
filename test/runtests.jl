@@ -1,6 +1,7 @@
 using Test
 using LinearAlgebra, Random
 import Krylov: cg
+using NLPModels
 # using ADNLPModels, JSOSolvers
 using KLLS
 
@@ -125,29 +126,43 @@ end
     @test data.λ == 1e-3
 end
 
-### TESTING TRUNK ###
-# struct MyModel{T, S}<:AbstractNLPModel{T, S}
-#     meta::NLPModelMeta{T, S}
-#     counters::Counters
-# end
+@testset "NLSModel" begin
+    Random.seed!(1234)
+    m, n = 2, 3
+    kl = KLLS.randKLmodel(m, n)
+    A = kl.A
 
-# x0 = zeros(2)
-# obj(x) = (1 - x[1])^2 + 100 * (x[2] - x[1]^2)^2
+    nl = KLLS.SSModel(kl)
+    @test nl.meta.nvar == m+1
 
-# # Objective and gradient
-# NLPModels.obj(nlp::MyModel, x) = obj(x)
-# function NLPModels.grad!(nlp::MyModel, x, ∇f)
-#     ∇f .= [-2*(1 - x[1]) - 400*x[1]*(x[2] - x[1]^2), 200*(x[2] - x[1]^2)]
-# end
+    ss = KLLS.SSModel(kl)
+    @test ss.meta.nvar == m+1
 
-# # Hessian-vector product
-# function NLPModels.hprod!(
-#     nlp::MyModel, x::AbstractVector, v::AbstractVector, Hv::AbstractVector; obj_weight::Real = one(eltype(x)))
-#     H = [2 - 400*(x[2]-x[1]^2) + 800*x[1]^2 -400*x[1]
-#          -400*x[1]                            200]
-#     Hv .= H*v
-# end
+    y, t = randn(m), 1.0
+    yt = vcat(y, t)
+    Fx = residual!(ss, yt, similar(yt))
+   
+    @test all(Fx[1:m] .== grad!(kl, y, similar(y) ))
 
-# adnlp = ADNLPModel(obj, x0)
-# nlp = MyModel(NLPModelMeta(2), Counters())
-# stats = trunk(nlp, verbose=1)
+    w = randn(m); α = randn(); x = KLLS.grad(kl.lse)
+    Jyt = jprod_residual!(ss, yt, [w;α], similar([w;α]) )
+
+    Hyw = KLLS.dHess_prod!(kl, w, copy(w))
+    @test all( Hyw + (A*x)*α ≈ Jyt[1:m] )
+    @test (A*x)'*w - α/t ≈ Jyt[end]
+
+    # Compare J'r against ∇‖r(x)‖²
+    Fx = residual(ss, yt)
+    g1 = jtprod_residual!(ss, yt, Fx, similar([w;α]) )
+    g2 = grad!(ss, yt, similar(yt))
+    @test all(g1 .≈ g2)
+end
+
+@testset "Self-scaling" begin
+
+
+end
+
+@testset "Synthetic data" begin
+    include("synthetic-ueg.jl")
+end

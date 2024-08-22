@@ -32,22 +32,49 @@ function histogram(stat::ExecutionStats; kwargs...)
     UnicodePlots.histogram(stat.solution; kwargs...)
 end
 
-function value!(kl::KLLSModel{T}, t::T) where T
+"""
+    value!(kl::KLLSModel, t; kwargs...)
+
+Compute the dual objective of a KLLS model with respect to the scaling parameter `t`.
+"""
+function value!(kl::KLLSModel{T}, t::T; kwargs...) where T
     @unpack λ, A = kl
     scale!(kl, t)
-    s = solve!(kl)
+    s = solve!(kl; kwargs...)
     y = s.residual/λ
-    v = s.dual_obj
     dv = obj!(kl.lse, A'y) - log(t) - 1
-    return v, dv
+    return dv
 end
 
 """
 Maximize the dual objective of a KLLS model with respect to the scaling parameter `t`.
 Returns the optimal primal solution.
 """
-function maximize!(kl::KLLSModel{T}; t=one(T), kwargs...) where T
-    dv!(t) = value!(kl, t)[2]
-    t = Roots.find_zero(dv!, t; kwargs...)
+function maximize!(
+    kl::KLLSModel{T};
+    t=one(T),
+    rtol=1e-6,
+    atol=1e-6,
+    xatol=1e-6,
+    xrtol=1e-6,
+    δ=1e-2,
+    zverbose=true,
+    logging=0,
+    ) where T
+    # pop the option `rtol` from `kwargs`
+    dv!(t) = value!(kl, t; atol=δ*atol, rtol=δ*rtol, logging=logging)
+    # dv!(t) = value!(kl, t)
+    t = Roots.find_zero(dv!, t; atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
     return t, t*grad(kl.lse)
+end
+
+"""
+    randKLmodel(m, n)
+
+Generate a random KL model of size `m` x `n`.
+"""
+function randKLmodel(m, n)
+    A = randn(m, n)
+    b = randn(m)
+    return KLLSModel(A, b)
 end

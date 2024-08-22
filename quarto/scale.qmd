@@ -1,55 +1,84 @@
 ---
-title: Scaled simplex
+title: Scaling and nonnegative KL
 data: last-modified
+number-sections: true
 execute: 
   cache: true
 ---
 
+## Scaled simplex
+
 $$
 \newcommand{\ent}[2]{\text{\bf ent}(#1\mid #2)}
 \newcommand{\KL}[2]{\text{\bf KL}(#1\mid #2)}
+\newcommand{\logexp}{\text{\bf logexp}}
 $$
 
 Consider a scaled version of the problem where the variables lie in the scaled simplex:
 $$
-\min_{x\in\tau\Delta}\enspace \ent{p}{q} + \frac{1}{2\lambda}\|Ax-b\|^2,
+\min_{x\in\tau\Delta}\enspace \ent{x}{q} + \frac{1}{2\lambda}\|Ax-b\|^2,
 $$
-where $\tau$ is any positive scaling. Observe that
+where $\tau$ is a positive scaling, and
+$$
+\ent{x}{q}:=\sum_{j=1}^n x_j\log\left(\frac{x_j}{q_j}\right)
+$$
+is the relative entropy between $p$ and $q$.
+
+## Perspective transform
+
+Observe the following identity between the relative entropy over the scaled simplex and the Kullback-Leibler divergence, which is defined over the unit simplex:
 $$
 \begin{aligned}
-\ent{p}{q} + \delta_{\tau\Delta}(p)
-&= \sum_{j=1}^n p_j\log\left(\frac{p_j}{q_j}\right) + \delta_{\tau\Delta}(p)\\
-&= \tau\sum_{j=1}^n \left(\frac{p_j}{\tau}\right)\log\left(\frac{p_j}{\tau}\frac{\tau}{q_j}\right) + \delta_{\Delta}\left(\frac{p}{τ}\right)\\
-&= \tau\KL{p/\tau}{q/\tau},
+\ent{x}{q} + \delta_{\tau\Delta}(x)
+&= \sum_{j=1}^n x_j\log\left(\frac{x_j}{q_j}\right) + \delta_{\tau\Delta}(x)\\
+&= \tau\sum_{j=1}^n \left(\frac{x_j}{\tau}\right)\log\left(\frac{x_j}{\tau}\frac{\tau}{q_j}\right) + \delta_{\Delta}\left(\frac{x}{τ}\right)\\
+&= \tau\KL{x/\tau}{q/\tau},
 \end{aligned}
 $$
-which we recognize as the $\tau$-perspective transform of KL with a rescaled prior. If we wish that this is a well-formed KL problem, we need to have, in addition to nonnegativity of $p$ and $q$,
+which we recognize as the $\tau$-perspective transform of KL with a rescaled prior $q/τ$. Note that for $x$ and $q$ to be in the domain of the KL divergence function, we require, in addition to nonnegativity of $x$ and $q$,
 $$
-\sum_{j=1}^n p_j = \tau \quad\text{and}\quad \sum_{j=1}^n q_j = \tau.
+\sum_{j=1}^n x_j = \tau \quad\text{and}\quad \sum_{j=1}^n q_j = \tau.
 $$
-The dual problem corresponding the scaled primal problem is
-$$
-\min_{y\in\mathbb{R}^m}\enspace \tau\log\sum_{i=1}^m \left(\frac{q_j}{\tau}\right)\exp(A^T y) + \frac{\lambda}{2}\|y\|^2 - \langle b, y \rangle.
-$${#eq-dual-problem}
 
-### Objective function
+The scaled primal problem can then be formulated as
+$$
+\min_{x\in\tau\Delta}\enspace \tau\KL{x/\tau}{q/\tau} + \frac{1}{2\lambda}\|Ax-b\|^2.
+$$
 
-Let's isolate $\tau$ in the objective function to faciliate the computation of the value-function derivative:
+
+Observe the conjugate of the KL function:
+$$
+\KL{\cdot}{q}^*(z) = \logexp(z\mid q),
+$$
+where the log-sum-exp function is defined as
+$$
+\logexp(z\mid q) := \log\sum_{j=1}^n q_j\exp(z_j).
+$$
+These identities will be useful:
 $$
 \begin{aligned}
-\tau\log\sum_{j=1}^n \left(\frac{q_j}{\tau}\right)\exp(z_j)
-&= \tau\log\frac1\tau\sum_{j=1}^n q_j\exp(z_j)\\
-&= \tau\log\frac1\tau + \tau\log\sum_{j=1}^n q_j\exp(z_j)\\
-&= \tau\log\sum_{j=1}^n q_j\exp(z_j) - \tau\log\tau.
+\logexp(z\mid q/\tau) &= \logexp(z\mid q) - \log\tau,\\
+\nabla_x \logexp(z\mid q/\tau) &= \nabla_x\logexp(z\mid q)=\frac{q_j\exp(z_j)}{\sum_{i=1}^n q_i\exp(z_i)},\\
+τ\KL{\cdot/τ}{q/τ}^*(z) &= \tau\logexp(z\mid q/\tau) = \tau\logexp(z\mid q) - \tau\log\tau.
 \end{aligned}
 $${#eq-dual-obj}
 
+## Dual problem
+
+The dual problem corresponding the scaled primal problem is
+$$
+\min_{y\in\mathbb{R}^m}\enspace
+\tau\logexp(A^T y\mid q) - \tau\log\tau + \frac{\lambda}{2}\|y\|^2 - \langle b, y \rangle.
+$${#eq-dual-problem}
+
+## Value function and its derivative
+
 Informally, it follows from @eq-dual-problem and @eq-dual-obj that the derivative of the optimal value with respect to the scaling τ is
 $$
-v'(τ) = \log\sum_{j=1}^n q_j\exp(A^Ty) - \log\tau - 1.
+v'(τ) = \logexp(A^Ty\mid q) - \log\tau - 1.
 $${#eq-value-derivative}
 
-### Test problem
+## Numerical test
 ```{julia}
 #|code-fold: true
 #|code-summary: Import packages
@@ -130,8 +159,46 @@ topt = Roots.find_zero(dv, 1.0, verbose=true, rtol=1e-3, atol=1e-3)
 println("Optimal scaling t = $topt")
 ```
 
-
 Now use the built-in function:
 ```{julia}
 topt, xopt = KLLS.maximize!(kl, rtol=1e-3)
+```
+
+## Self-scaling
+
+We now consider an approach where the maximizing scaling is computed as part of the optimization process. This is done by adding $\tau$ as a variable to the optimality conditions of the daul problem, and adding a constraint that requires $v'(τ) = 0$. 
+
+
+The following set of $(m+1)$ nonlinear equations in $(y, \tau)$ characterize a solution that maximizes the primal problem:
+$$
+\begin{aligned}
+A x_y + \lambda y &= b, \quad x_{(y,q,τ)}:=\tau\nabla\logexp(A^Ty\mid q)\\
+\logexp(A^Ty\mid q) - \log\tau &= 1.
+\end{aligned}
+$$
+The corresponding Newton equations are given by
+$$
+\begin{bmatrix}
+\tau A S A^T + \lambda I & Ax_{(y,q,\tau)}\\
+(Ax_{(y,q,\tau)})^T & - 1/\tau
+\end{bmatrix}
+\begin{bmatrix}
+\Delta y\\
+\Delta \tau
+\end{bmatrix}
+=
+\begin{bmatrix}
+b - A x_{(y,q,\tau)} - \lambda y\\
+1 - \logexp(A^Ty\mid q) + \log\tau
+\end{bmatrix}.
+$$
+ 
+```{julia}
+function foo!(x)
+  n = length(x)
+  x .= ones(n)
+end
+x = zeros(3)
+foo!(@view x[1:2])
+x
 ```

@@ -1,13 +1,11 @@
-import JSOSolvers: trunk
-
 """
 Dual objective:
 
 - base case (no scaling, unweighted 2-norm):
-    f(y) = log∑exp(A'y) - 0.5λ||y|| - b'y
+    f(y) = log∑exp(A'y) - 0.5λ y∙Cy - b∙y
 
 - with scaling and weighted 2-norm:
-    f(y) = τ log∑exp(A'y) - τ log τ + 0.5λ y'C y - b'y
+    f(y) = τ log∑exp(A'y) - τ log τ + 0.5λ y∙Cy - b∙y
 """
 function dObj!(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
     @unpack A, b, λ, C, w, lse, scale = kl 
@@ -22,12 +20,13 @@ function NLPModels.obj(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
 end
 
 """
-Dual objective gradient:
+Dual objective gradient
 
    ∇f(y) = τ A∇log∑exp(A'y) + λCy - b 
 
+evaluated at `y`. Assumes that the objective was last evaluated at the same point `y`.
 """
-function dGrad!(kl::KLLSModel{T,M,CT,V}, y::V, ∇f::V) where {T,M,CT,V}
+function dGrad!(kl::KLLSModel, y::AbstractVector, ∇f::AbstractVector)
     @unpack A, b, λ, C, lse, scale = kl
     p = grad(lse)
     ∇f .= -b
@@ -52,15 +51,21 @@ function dHess(kl::KLLSModel)
     end
     return ∇²dObj
 end
+"""
+Product of the dual objective Hessian with a vector `z`
 
-function dHess_prod!(kl::KLLSModel{T,M,CT,V}, y::V, v::V) where {T,M,CT,V}
+    v ← ∇²d(y)z = τ A∇²log∑exp(A'y)Az + λCz,
+
+where `y` is the point at which the objective was last evaluated.
+"""
+function dHess_prod!(kl::KLLSModel{T}, z, v) where T
     @unpack A, λ, C, w, lse, scale = kl
     g = grad(lse)
-    mul!(w, A', y)                 # w =                  A'y
-    w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'y)
-    mul!(v, A, w, scale, zero(T))  # v = scale*A(G - gg')(A'y)
+    mul!(w, A', z)                 # w =                  A'z
+    w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'z)
+    mul!(v, A, w, scale, zero(T))  # v = scale*A(G - gg')(A'z)
     if λ > 0
-        mul!(v, C, y, λ, 1)        # v += λCy
+        mul!(v, C, z, λ, 1)        # v += λCz
     end
     return v
 end
