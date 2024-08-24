@@ -27,11 +27,6 @@ function Base.show(io::IO, s::ExecutionStats)
     @printf("Optimality        : %9.1e\n", s.optimality)
 end
 
-function histogram(stat::ExecutionStats; kwargs...)
-    println("")
-    UnicodePlots.histogram(stat.solution; kwargs...)
-end
-
 """
     value!(kl::KLLSModel, t; kwargs...)
 
@@ -78,3 +73,10 @@ function randKLmodel(m, n)
     b = randn(m)
     return KLLSModel(A, b)
 end
+
+"""
+    histogram(s:ExecutionStats; kwargs...)
+
+Plot a histogram of the solution.
+"""
+function histogram end

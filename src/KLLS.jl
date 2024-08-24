@@ -4,7 +4,6 @@ using LinearAlgebra
 using Printf
 using UnPack
 using DataFrames
-using UnicodePlots
 import Roots
 using JSOSolvers: trunk
 using NLPModels

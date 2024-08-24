@@ -1,4 +1,4 @@
-using Test
+using Test, NPZ, UnPack
 import KLLS: KLLSModel, solve!
 
 data = try # needed because of vscode quirks while developing
