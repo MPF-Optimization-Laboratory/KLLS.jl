@@ -10,10 +10,15 @@ Structure for KLLS model
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
-    A::M = Matrix{Float64}(undef, 0, 0)
-    b::S = Vector{Float64}(undef, 0)
-    q::S = fill(eltype(A)(1/size(A, 2)), size(A, 2))
+@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
+    A::M
+    b::SB
+    q::S = begin
+             m, n = size(A)
+             q = similar(b, n)
+             q .= 1/n
+             q
+           end
     λ::T = √eps(eltype(A))
     C::CT = I
     w::S = similar(q)
@@ -21,7 +26,10 @@ Structure for KLLS model
     scale::T = one(eltype(A))
     lse::LogExpFunction = LogExpFunction(q)
     name::String = ""
-    meta::NLPModelMeta{T, S} = NLPModelMeta(size(A,1), name="KLLS Model")
+    meta::NLPModelMeta{T, S} = begin
+        m = size(A, 1)
+        NLPModelMeta(m, name="KLLS Model")
+    end
     counters::Counters = Counters()
 end
 

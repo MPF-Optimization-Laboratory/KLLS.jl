@@ -34,12 +34,8 @@ jl.seval("""
 n = 100
 m = 200
 x0 = np.random.rand(n)
-Anp = np.random.rand(m, n)
-bnp = Anp @ x0
-
-# Convert data to Julia
-A = jl.convert(jl.Matrix, Anp)
-b = jl.convert(jl.Vector, bnp)
+A = np.random.rand(m, n)
+b = A @ x0
 
 # Create an instance of the KLLSData struct.
 kl = jl.KLLSModel(A, b)

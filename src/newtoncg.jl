@@ -7,14 +7,14 @@ Dual objective:
 - with scaling and weighted 2-norm:
     f(y) = τ log∑exp(A'y) - τ log τ + 0.5λ y∙Cy - b∙y
 """
-function dObj!(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
+function dObj!(kl::KLLSModel, y)
     @unpack A, b, λ, C, w, lse, scale = kl 
     mul!(w, A', y)
     f = obj!(lse, w)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
 
-function NLPModels.obj(kl::KLLSModel{T,M,CT,V}, y::V) where {T,M,CT,V}
+function NLPModels.obj(kl::KLLSModel, y)
     increment!(kl, :neval_jtprod)
     return dObj!(kl, y)
 end
@@ -26,7 +26,7 @@ Dual objective gradient
 
 evaluated at `y`. Assumes that the objective was last evaluated at the same point `y`.
 """
-function dGrad!(kl::KLLSModel, y::AbstractVector, ∇f::AbstractVector)
+function dGrad!(kl::KLLSModel, y, ∇f)
     @unpack A, b, λ, C, lse, scale = kl
     p = grad(lse)
     ∇f .= -b
@@ -37,7 +37,7 @@ function dGrad!(kl::KLLSModel, y::AbstractVector, ∇f::AbstractVector)
     return ∇f
 end
 
-function NLPModels.grad!(kl::KLLSModel{T,M,CT,V}, y::V, ∇f::V) where {T,M,CT,V}
+function NLPModels.grad!(kl::KLLSModel, y, ∇f)
     increment!(kl, :neval_jprod)
     return dGrad!(kl, y, ∇f)
 end
@@ -70,7 +70,7 @@ function dHess_prod!(kl::KLLSModel{T}, z, v) where T
     return v
 end
 
-function NLPModels.hprod!(kl::KLLSModel, y::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(eltype(y)))
+function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(T)) where T
     increment!(kl, :neval_jprod)
     increment!(kl, :neval_jtprod)
     return Hz = dHess_prod!(kl, z, Hz)
