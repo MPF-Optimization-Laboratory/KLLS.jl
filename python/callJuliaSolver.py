@@ -27,6 +27,8 @@ jl.seval("""
          scale = KLLS.scale!
          regularize = KLLS.regularize!
          lse = KLLS.obj!
+         dObj = KLLS.dObj!
+         dGrad = KLLS.dGrad!
          """)
 #######################################################################
 
@@ -69,3 +71,18 @@ def gradlogexp(x):
 
 logexp(x) # log-sum-exp at x
 gradlogexp(x) # gradient of log-sum-exp at x
+
+
+# Evaluate the dual objective and gradient
+y = np.zeros(m)
+g = np.zeros(m)
+kl = jl.KLLSModel(A, b)
+
+def dualobj(y):
+    return jl.dObj(kl, y)
+def dualgrad(y):
+    return jl.dGrad(kl, y, g)
+
+dualobj(y) # dual objective at y
+dualgrad(y) # gradient of dual objective at y
+
