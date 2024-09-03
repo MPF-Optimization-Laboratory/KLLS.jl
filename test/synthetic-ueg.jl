@@ -1,5 +1,5 @@
-using Test, NPZ, UnPack
-import KLLS: KLLSModel, solve!
+using Test, NPZ, UnPack, LinearAlgebra
+import KLLS: KLLSModel, solve!, maximize!
 
 data = try # needed because of vscode quirks while developing
     npzread("../data/synthetic-UEG_testproblem.npz")

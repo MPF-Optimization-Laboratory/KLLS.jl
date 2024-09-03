@@ -13,11 +13,14 @@ Structure for KLLS model
 @kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
     A::M
     b::SB
+    c::SB = begin
+              m, n = size(A)
+              c = ones(eltype(A), n)
+            end
     q::S = begin
              m, n = size(A)
              q = similar(b, n)
              q .= 1/n
-             q
            end
     λ::T = √eps(eltype(A))
     C::CT = I

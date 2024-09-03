@@ -2,14 +2,15 @@
 Dual objective:
 
 - base case (no scaling, unweighted 2-norm):
-    f(y) = log∑exp(A'y) - 0.5λ y∙Cy - b∙y
+    f(y) = log∑exp(A'y - c) - 0.5λ y∙Cy - b∙y
 
 - with scaling and weighted 2-norm:
-    f(y) = τ log∑exp(A'y) - τ log τ + 0.5λ y∙Cy - b∙y
+    f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
 """
 function dObj!(kl::KLLSModel, y)
-    @unpack A, b, λ, C, w, lse, scale = kl 
-    mul!(w, A', y)
+    @unpack A, b, c, λ, C, w, lse, scale = kl 
+    w .= c
+    mul!(w, A', y, 1, -1) # w = A'y - c
     f = obj!(lse, w)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
