@@ -41,11 +41,12 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
     r = @view Fx[1:m]
 	y = @view yt[1:m]
 	t = yt[end]
-	
-	mul!(w, A', y)
+
+    w .= ss.kl.c
+	mul!(w, A', y, 1, -1) # w = A'y - c
     logsumexp = KLLS.obj!(lse, w)
 	
-	dGrad!(ss.kl, y, r)	
+	dGrad!(ss.kl, y, r) # Fx[1:m] = ∇f(y)	
 	Fx[end] = logsumexp - log(t) - 1
 	
 	return Fx

@@ -30,5 +30,5 @@ sP = solve!(klC, atol=1e-5, rtol = 1e-5, logging=0, trace=true)
 @test sP.optimality < 1e-5*klC.bNrm
 
 # Relax the simplex constraint to the nonnegative orthant.
-t, _ = maximize!(klC, zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
+t, _ = maximize!(klC, zverbose=true, rtol=1e-6, logging=0, δ=1e-1)
 @test KLLS.value!(klC, t) < 1e-6

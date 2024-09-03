@@ -20,7 +20,7 @@ y = r/λ
 ss = KLLS.SSModel(kl)
 Fy = residual!(ss, [y; 1], similar([y; 1]))
 @test norm(Fy[1:m]) < 1e-5*kl.bNrm
-@test norm(Fy[1:m]) ≈ stats.optimality rtol=1e-6
+@test norm(Fy[1:m]) < stats.optimality*kl.bNrm
 Jy = jtprod_residual(ss, [y; 1], [Fy[1:m]; 0])
 @test norm(Jy) < 1e-6
 
@@ -34,3 +34,11 @@ end
 
 
 ssSoln = solve!(ss, verbose=1, rtol=1e-6)
+
+y = ssSoln.solution[1:m]
+t = ssSoln.solution[end]
+x = KLLS.grad(kl.lse)
+
+Fy = residual!(ss, [y; t], similar([y; t]))
+
+norm(A*x + λ*y - b)

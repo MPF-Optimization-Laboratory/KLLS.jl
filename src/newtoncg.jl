@@ -9,8 +9,8 @@ Dual objective:
 """
 function dObj!(kl::KLLSModel, y)
     @unpack A, b, c, λ, C, w, lse, scale = kl 
-    w .= c
-    mul!(w, A', y, 1, -1) # w = A'y - c
+    w .= -c
+    mul!(w, A', y, 1, 1) # w = A'y - c
     f = obj!(lse, w)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
@@ -23,7 +23,7 @@ end
 """
 Dual objective gradient
 
-   ∇f(y) = τ A∇log∑exp(A'y) + λCy - b 
+   ∇f(y) = τ A∇log∑exp(A'y-c) + λCy - b 
 
 evaluated at `y`. Assumes that the objective was last evaluated at the same point `y`.
 """
