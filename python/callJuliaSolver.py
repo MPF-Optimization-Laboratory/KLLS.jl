@@ -11,6 +11,7 @@ from juliacall import Main as jl
 jl.seval("""
          import Pkg
          Pkg.add(url=\"git@github.com:MPF-Optimization-Laboratory/KLLS.jl.git\")
+         Pkg.resolve()
          """)
 
 #######################################################################
@@ -26,6 +27,7 @@ jl.seval("""
          solve = KLLS.solve!
          scale = KLLS.scale!
          regularize = KLLS.regularize!
+         maximize = KLLS.maximize!
          lse = KLLS.obj!
          dObj = KLLS.dObj!
          dGrad = KLLS.dGrad!
@@ -86,3 +88,21 @@ def dualgrad(y):
 dualobj(y) # dual objective at y
 dualgrad(y) # gradient of dual objective at y
 
+# Solve the synthetic UEG test problem using the self-scaling approach
+data = np.load("./data/synthetic-UEG_testproblem.npz")
+A = data["A"]
+b_avg = data["b_avg"]
+b_std = data["b_std"]
+mu = data["mu"]
+
+q = np.array(mu, dtype=np.float64)
+q = np.maximum(q, 1e-13)
+q = q / np.sum(q)
+
+A = jl.convert(jl.Matrix, A)
+b = jl.convert(jl.Vector, b_avg)
+q = jl.convert(jl.Vector, q)
+
+klP = jl.KLLSModel(A, b, q=q, λ=1e-4)
+ss = jl.KLLS.SSModel(klP)
+x, t = jl.solve(ss, verbose=1)
