@@ -35,18 +35,21 @@ Compute the residual in the self-scaling optimality conditions augmented problem
 function NLPModels.residual!(ss::SSModel, yt, Fx)
   	
 	increment!(ss, :neval_residual)
-	@unpack A, w, lse = ss.kl
-	m = ss.kl.meta.nvar
-
+    kl = ss.kl
+	@unpack A, c, w, lse = kl
+	m = kl.meta.nvar
+ 
     r = @view Fx[1:m]
 	y = @view yt[1:m]
 	t = yt[end]
 
-    w .= ss.kl.c
-	mul!(w, A', y, 1, -1) # w = A'y - c
-    logsumexp = KLLS.obj!(lse, w)
-	
-	dGrad!(ss.kl, y, r) # Fx[1:m] = ∇f(y)	
+    # Compute w = A'y - c
+    w .= -c
+	mul!(w, A', y, 1, 1)
+    logsumexp = obj!(lse, w)
+
+    scale!(kl, t)
+	dGrad!(kl, y, r) # Fx[1:m] = ∇f(y)	
 	Fx[end] = logsumexp - log(t) - 1
 	
 	return Fx
@@ -93,6 +96,24 @@ function NLPModels.jtprod_residual!(ss::SSModel, yt, wα, Jyt)
 end
 
 
-function solve!(ss::SSModel; kwargs...)
-    trunk(ss; kwargs...)
+function solve!(ss::SSModel{T}; kwargs...) where T
+    trunk_stats = trunk(ss; kwargs...)
+
+    kl = ss.kl
+    # stats = ExecutionStats(
+    #     trunk_stats.status,
+    #     trunk_stats.elapsed_time,       # elapsed time
+    #     trunk_stats.iter,               # number of iterations
+    #     neval_jprod(kl),                # number of products with A
+    #     neval_jtprod(kl),               # number of products with A'
+    #     zero(T),                        # TODO: primal objective
+    #     trunk_stats.objective,          # dual objective
+    #     (kl.scale).*grad(kl.lse),       # primal solultion `x`
+    #     (kl.λ).*(trunk_stats.solution), # residual r = λy
+    #     trunk_stats.dual_feas,          # norm of the gradient of the dual objective
+    #     DataFrame()                     # TODO: tracer 
+    # )
+    x = kl.scale.*grad(kl.lse)
+    t = trunk_stats.solution[end]
+    return (x, t)
 end

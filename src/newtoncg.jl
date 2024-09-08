@@ -103,7 +103,7 @@ function solve!(kl::KLLSModel{T}; M=I, logging=0, monotone=true, max_time::Float
         trunk_stats.iter,               # number of iterations
         neval_jprod(kl),                # number of products with A
         neval_jtprod(kl),               # number of products with A'
-        zero(T),                        # primal objective TODO
+        zero(T),                        # TODO: primal objective
         trunk_stats.objective,          # dual objective
         (kl.scale).*grad(kl.lse),       # primal solultion `x`
         (kl.λ).*(trunk_stats.solution), # residual r = λy

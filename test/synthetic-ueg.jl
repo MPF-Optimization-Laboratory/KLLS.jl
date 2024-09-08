@@ -1,5 +1,5 @@
 using Test, NPZ, UnPack, LinearAlgebra
-import KLLS: KLLSModel, solve!, maximize!
+using KLLS
 
 data = try # needed because of vscode quirks while developing
     npzread("../data/synthetic-UEG_testproblem.npz")
@@ -30,5 +30,20 @@ sP = solve!(klC, atol=1e-5, rtol = 1e-5, logging=0, trace=true)
 @test sP.optimality < 1e-5*klC.bNrm
 
 # Relax the simplex constraint to the nonnegative orthant.
-t, _ = maximize!(klC, zverbose=true, rtol=1e-6, logging=0, δ=1e-1)
+t, xopt = maximize!(klC, zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
 @test KLLS.value!(klC, t) < 1e-6
+
+scale!(klC, t)
+sPt = solve!(klC, atol=1e-5, rtol = 1e-6, logging=0, trace=true)
+r = sPt.residual
+x = sPt.solution
+
+@test norm(xopt - x) < 1e-5
+@test norm(A*x + C*r - klC.b) < 1e-5
+
+# Now use the self-scaling approach
+scale!(klC, 1.0)
+ss = KLLS.SSModel(klC)
+xss, tss = solve!(ss, verbose=0, rtol=1e-6)
+
+@test norm(xopt - xss) < 1e-5

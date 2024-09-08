@@ -1,5 +1,5 @@
 using Test
-using KLLS, NLPModels, LinearAlgebra
+using KLLS, NLPModels, LinearAlgebra, Random
 
 Random.seed!(1234)
 λ = 1e-1

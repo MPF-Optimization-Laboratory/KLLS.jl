@@ -32,7 +32,7 @@ end
 
 Compute the dual objective of a KLLS model with respect to the scaling parameter `t`.
 """
-function value!(kl::KLLSModel{T}, t::T; kwargs...) where T
+function value!(kl::KLLSModel, t; kwargs...)
     @unpack λ, A = kl
     scale!(kl, t)
     s = solve!(kl; kwargs...)
@@ -56,9 +56,7 @@ function maximize!(
     zverbose=true,
     logging=0,
     ) where T
-    # pop the option `rtol` from `kwargs`
     dv!(t) = value!(kl, t; atol=δ*atol, rtol=δ*rtol, logging=logging)
-    # dv!(t) = value!(kl, t)
     t = Roots.find_zero(dv!, t; atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
     return t, t*grad(kl.lse)
 end
