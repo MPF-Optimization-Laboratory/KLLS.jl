@@ -8,6 +8,7 @@ end
 """
 Constructor swallows a `KLLSModel` and returns an `SSModel`.
 This new model has one more variable than the original model: m+1.
+Default starting point is (zeros(m), 1).
 """
 function SSModel(kl::KLLSModel{T}) where T
     m = kl.meta.nvar
@@ -33,25 +34,17 @@ end
 Compute the residual in the self-scaling optimality conditions augmented problem.
 """ 
 function NLPModels.residual!(ss::SSModel, yt, Fx)
-  	
 	increment!(ss, :neval_residual)
     kl = ss.kl
 	@unpack A, c, w, lse = kl
 	m = kl.meta.nvar
- 
     r = @view Fx[1:m]
 	y = @view yt[1:m]
-	t = yt[end]
-
-    # Compute w = A'y - c
-    w .= -c
-	mul!(w, A', y, 1, 1)
-    logsumexp = obj!(lse, w)
-
+	t =       yt[end]
     scale!(kl, t)
+    f = lseatyc!(kl, y)
 	dGrad!(kl, y, r) # Fx[1:m] = ∇f(y)	
-	Fx[end] = logsumexp - log(t) - 1
-	
+	Fx[end] = f - log(t) - 1
 	return Fx
 end
 """
@@ -72,7 +65,6 @@ function NLPModels.jprod_residual!(ss::SSModel, yt, wα, Jyt)
     increment!(ss, :neval_jprod_residual)
 
     Jy = @view Jyt[1:m]
-    y = @view yt[1:m]
     t = yt[end]
     w = @view wα[1:m]
     α = wα[end]
@@ -100,20 +92,21 @@ function solve!(ss::SSModel{T}; kwargs...) where T
     trunk_stats = trunk(ss; kwargs...)
 
     kl = ss.kl
-    # stats = ExecutionStats(
-    #     trunk_stats.status,
-    #     trunk_stats.elapsed_time,       # elapsed time
-    #     trunk_stats.iter,               # number of iterations
-    #     neval_jprod(kl),                # number of products with A
-    #     neval_jtprod(kl),               # number of products with A'
-    #     zero(T),                        # TODO: primal objective
-    #     trunk_stats.objective,          # dual objective
-    #     (kl.scale).*grad(kl.lse),       # primal solultion `x`
-    #     (kl.λ).*(trunk_stats.solution), # residual r = λy
-    #     trunk_stats.dual_feas,          # norm of the gradient of the dual objective
-    #     DataFrame()                     # TODO: tracer 
-    # )
     x = kl.scale.*grad(kl.lse)
+    y = trunk_stats.solution[1:end-1]
     t = trunk_stats.solution[end]
-    return (x, t)
+    stats = ExecutionStats(
+        trunk_stats.status,
+        trunk_stats.elapsed_time,       # elapsed time
+        trunk_stats.iter,               # number of iterations
+        neval_jprod(kl),                # number of products with A
+        neval_jtprod(kl),               # number of products with A'
+        zero(T),                        # TODO: primal objective
+        trunk_stats.objective,          # dual objective
+        x,                              # primal solultion `x`
+        (kl.λ)*y,                       # residual r = λy
+        trunk_stats.dual_feas,          # norm of the gradient of the dual objective
+        DataFrame()                     # TODO: tracer 
+    )
+    return stats
 end

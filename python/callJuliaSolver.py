@@ -94,15 +94,29 @@ A = data["A"]
 b_avg = data["b_avg"]
 b_std = data["b_std"]
 mu = data["mu"]
-
+xexact = data["x"]
+n = len(mu)
+C = np.diag(b_std)
+c = np.zeros(n)
 q = np.array(mu, dtype=np.float64)
 q = np.maximum(q, 1e-13)
 q = q / np.sum(q)
 
+# TODO: generalize the KLLSModel struct so that we don't need this conversion
 A = jl.convert(jl.Matrix, A)
 b = jl.convert(jl.Vector, b_avg)
 q = jl.convert(jl.Vector, q)
+c = jl.convert(jl.Vector, c)
 
-klP = jl.KLLSModel(A, b, q=q, λ=1e-4)
-ss = jl.KLLS.SSModel(klP)
-x, t = jl.solve(ss, verbose=1)
+kl = jl.KLLSModel(A, b, q=q, C=C, c=c, λ=1e-4)
+ss = jl.KLLS.SSModel(kl)
+x1, t1 = jl.solve(ss, verbose=1)
+
+# Compare to maximize
+t2, x2 = jl.maximize(kl, zverbose=True)
+
+plt.plot(x1)
+plt.plot(mu)
+plt.plot(xexact)
+plt.ylim([0, .01])
+plt.show()

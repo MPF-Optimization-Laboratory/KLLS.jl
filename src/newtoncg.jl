@@ -1,4 +1,15 @@
 """
+Compute f(y) = logΣexp(A'y - c) and it's gradient,
+stored in the `lse` internal buffer.
+"""
+function lseatyc!(kl, y)
+    @unpack A, c, w, lse = kl
+    w .= -c
+    mul!(w, A', y, 1, 1)
+    return obj!(lse, w)
+end
+
+"""
 Dual objective:
 
 - base case (no scaling, unweighted 2-norm):
@@ -8,17 +19,13 @@ Dual objective:
     f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
 """
 function dObj!(kl::KLLSModel, y)
-    @unpack A, b, c, λ, C, w, lse, scale = kl 
-    w .= -c
-    mul!(w, A', y, 1, 1) # w = A'y - c
-    f = obj!(lse, w)
+    @unpack b, λ, C, scale = kl 
+    increment!(kl, :neval_jtprod)
+    f = lseatyc!(kl, y)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
 
-function NLPModels.obj(kl::KLLSModel, y)
-    increment!(kl, :neval_jtprod)
-    return dObj!(kl, y)
-end
+NLPModels.obj(kl::KLLSModel, y) = dObj!(kl, y)
 
 """
 Dual objective gradient
@@ -29,6 +36,7 @@ evaluated at `y`. Assumes that the objective was last evaluated at the same poin
 """
 function dGrad!(kl::KLLSModel, y, ∇f)
     @unpack A, b, λ, C, lse, scale = kl
+    increment!(kl, :neval_jprod)
     p = grad(lse)
     ∇f .= -b
     if λ > 0
@@ -38,10 +46,7 @@ function dGrad!(kl::KLLSModel, y, ∇f)
     return ∇f
 end
 
-function NLPModels.grad!(kl::KLLSModel, y, ∇f)
-    increment!(kl, :neval_jprod)
-    return dGrad!(kl, y, ∇f)
-end
+NLPModels.grad!(kl::KLLSModel, y, ∇f) = dGrad!(kl, y, ∇f)
 
 function dHess(kl::KLLSModel)
     @unpack A, λ, C, lse, scale = kl
@@ -52,28 +57,31 @@ function dHess(kl::KLLSModel)
     end
     return ∇²dObj
 end
+
 """
+    dHess_prod!(kl::KLLSModel{T}, z, v) where T
+
 Product of the dual objective Hessian with a vector `z`
 
     v ← ∇²d(y)z = τ A∇²log∑exp(A'y)Az + λCz,
 
 where `y` is the point at which the objective was last evaluated.
 """
-function dHess_prod!(kl::KLLSModel{T}, z, v) where T
+function dHess_prod!(kl::KLLSModel, z, Hz)
     @unpack A, λ, C, w, lse, scale = kl
+    increment!(kl, :neval_jprod)
+    increment!(kl, :neval_jtprod)
     g = grad(lse)
     mul!(w, A', z)                 # w =                  A'z
     w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'z)
-    mul!(v, A, w, scale, zero(T))  # v = scale*A(G - gg')(A'z)
+    mul!(Hz, A, w, scale, 0)        # v = scale*A(G - gg')(A'z)
     if λ > 0
-        mul!(v, C, z, λ, 1)        # v += λCz
+        mul!(Hz, C, z, λ, 1)        # v += λCz
     end
-    return v
+    return Hz
 end
 
 function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(T)) where T
-    increment!(kl, :neval_jprod)
-    increment!(kl, :neval_jtprod)
     return Hz = dHess_prod!(kl, z, Hz)
 end
 

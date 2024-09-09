@@ -15,7 +15,7 @@ Structure for KLLS model
     b::SB
     c::S = begin
               m, n = size(A)
-              c = zeros(eltype(A), n)
+              c = ones(eltype(A), n)
             end
     q::S = begin
              m, n = size(A)
