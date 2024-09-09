@@ -39,7 +39,6 @@ function value!(kl::KLLSModel, t; jprods=Int[0], kwargs...)
     dv = obj!(kl.lse, A'y) - log(t) - 1
     jprods[1] += neval_jprod(kl) + neval_jtprod(kl)
     return dv
-    
 end
 
 """
@@ -74,7 +73,7 @@ function maximize!(
     jprods = Int[0]
     dv!(t) = value!(kl, t; jprods=jprods, atol=δ*atol, rtol=δ*rtol, logging=logging)
     t = Roots.find_zero(dv!, t; atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
-    return t, t*grad(kl.lse), jprods
+    return t, t*grad(kl.lse), jprods[1]
 end
 
 """
