@@ -15,7 +15,8 @@ If no prior is known, instead provide the dimension `n`:
     LogExpFunction(n)
 """
 function LogExpFunction(q::AbstractVector)
-    @assert (all(ζ -> ζ ≥ 0, q) && sum(q) ≈ 1) "prior is not on the simplex"
+    # @assert (all(ζ -> ζ ≥ 0, q) && sum(q) ≈ 1) "prior is not on the simplex"
+    @assert (all(ζ -> ζ ≥ 0, q)) "prior is not nonnegative"
     LogExpFunction(q, similar(q))
 end
 
