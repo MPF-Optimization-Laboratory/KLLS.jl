@@ -28,6 +28,8 @@ function Base.show(io::IO, ss::SSModel)
     show(io, ss.kl)
 end
 
+NLPModels.reset!(ss::SSModel) = NLPModels.reset!(ss.kl)
+
 """
     residual!(ss, yt, Fx)
 
@@ -41,7 +43,7 @@ where `f(y) = logΣexp(A'y)`.
 function NLPModels.residual!(ss::SSModel, yt, Fx)
 	increment!(ss, :neval_residual)
     kl = ss.kl
-	@unpack A, c, w, lse = kl
+	@unpack A, c, lse = kl
 	m = kl.meta.nvar
     r = @view Fx[1:m]
 	y = @view yt[1:m]
@@ -65,7 +67,8 @@ Compute the Jacobian-vector product,
 function NLPModels.jprod_residual!(ss::SSModel, yt, wα, Jyt)
 
     kl = ss.kl
-    @unpack A, lse = kl
+    @unpack A, lse, mbuf = kl
+    Ax = mbuf
     m = kl.meta.nvar
     x = grad(lse)
 
@@ -76,7 +79,7 @@ function NLPModels.jprod_residual!(ss::SSModel, yt, wα, Jyt)
     w = @view wα[1:m]
     α = wα[end]
    
-    Ax = A*x # TODO: in-place using preallocated vec
+    mul!(Ax, A, x)
 
     # Equation (1)
     Jy .= w

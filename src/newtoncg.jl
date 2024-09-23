@@ -3,10 +3,10 @@ Compute f(y) = logΣexp(A'y - c) and it's gradient,
 stored in the `lse` internal buffer.
 """
 function lseatyc!(kl, y)
-    @unpack A, c, w, lse = kl
-    w .= -c
-    mul!(w, A', y, 1, 1)
-    return obj!(lse, w)
+    @unpack A, c, nbuf, lse = kl
+    nbuf .= -c
+    mul!(nbuf, A', y, 1, 1)
+    return obj!(lse, nbuf)
 end
 
 """
@@ -68,7 +68,8 @@ Product of the dual objective Hessian with a vector `z`
 where `y` is the point at which the objective was last evaluated.
 """
 function dHess_prod!(kl::KLLSModel, z, Hz)
-    @unpack A, λ, C, w, lse, scale = kl
+    @unpack A, λ, C, nbuf, lse, scale = kl
+    w = nbuf
     increment!(kl, :neval_jprod)
     increment!(kl, :neval_jtprod)
     g = grad(lse)

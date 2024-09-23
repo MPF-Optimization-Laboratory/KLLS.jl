@@ -24,7 +24,8 @@ Structure for KLLS model
            end
     λ::T = √eps(eltype(A))
     C::CT = I
-    w::S = similar(q)
+    mbuf::S = similar(b)
+    nbuf::S = similar(q)
     bNrm::T = norm(b)
     scale::T = one(eltype(A))
     lse::LogExpFunction = LogExpFunction(q)
@@ -56,7 +57,7 @@ function scale!(kl::KLLSModel{T}, scale::T) where T
     return kl
 end
 
-function reset!(kl::KLLSModel)
+function NLPModels.reset!(kl::KLLSModel)
     for f in fieldnames(Counters)
       setfield!(kl.counters, f, 0)
     end

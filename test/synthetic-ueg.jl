@@ -23,7 +23,7 @@ sP = solve!(kl, atol=1e-5, rtol = 1e-5, logging=0, trace=true)
 
 # Value-function iteration: nonnegative 
 reset!(kl)
-t1, x1 = maximize!(kl, zverbose=true, rtol=1e-6, logging=0, δ=1e-1)
+t1, x1 = maximize!(kl, zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
 @test KLLS.value!(kl, t1) < 1e-6
 
 # Solve the KL problem with the scaling `t1` obtained above
@@ -35,6 +35,7 @@ x2, r2 = sPt.solution, sPt.residual
 @test norm(A*x2 + C*r2 - b) < 1e-5
 
 # Now use the self-scaling approach
+reset!(kl)
 scale!(kl, 1.0)
 ss = KLLS.SSModel(kl)
 ssStats = solve!(ss, verbose=0, rtol=1e-6)
