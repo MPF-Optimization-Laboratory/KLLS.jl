@@ -9,8 +9,8 @@ using JSOSolvers: trunk
 using NLPModels
 # import NLPModels: NLSMeta, NLPModels, NLPModelMeta, AbstractNLPModel, AbstractNLSModel, NLSCounters, Counters, increment!, neval_jprod, neval_jtprod
 
-export solve!, scale!, regularize!, histogram, maximize!
-export KLLSModel
+export solve!, scale!, regularize!, histogram, maximize!, reset!
+export KLLSModel, SSModel
 
 include("logsumexp.jl")
 include("model.jl")

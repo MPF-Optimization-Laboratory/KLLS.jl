@@ -7,8 +7,8 @@ end
 
 """
 Constructor swallows a `KLLSModel` and returns an `SSModel`.
-This new model has one more variable than the original model: m+1.
-Default starting point is (zeros(m), 1).
+This new model has one more variable than the original model: `m+1`.
+Default starting point is `(zeros(m), 1)`.
 """
 function SSModel(kl::KLLSModel{T}) where T
     m = kl.meta.nvar
@@ -31,7 +31,12 @@ end
 """
     residual!(ss, yt, Fx)
 
-Compute the residual in the self-scaling optimality conditions augmented problem.
+Compute the residual in the self-scaling optimality conditions augmented problem, which concatenate the dual residual with the optimal scaling condition:
+
+    F(y, t) = [ ∇d(y)
+                logexp(A'y) - log(t) - 1 ]
+
+where `f(y) = logΣexp(A'y)`.
 """ 
 function NLPModels.residual!(ss::SSModel, yt, Fx)
 	increment!(ss, :neval_residual)
@@ -41,12 +46,14 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
     r = @view Fx[1:m]
 	y = @view yt[1:m]
 	t =       yt[end]
-    scale!(kl, t)
-    f = lseatyc!(kl, y)
-	dGrad!(kl, y, r) # Fx[1:m] = ∇f(y)	
-	Fx[end] = f - log(t) - 1
+    
+    scale!(kl, t)             # Apply the latest scaling factor
+    f = lseatyc!(kl, y)       # f = logΣexp(A'y). Needed before grad eval
+	dGrad!(kl, y, r)          # r ≡ Fx[1:m] = ∇d(y)	
+	Fx[end] = f - log(t) - 1  # optimal scaling condition
 	return Fx
 end
+
 """
     Jyt = jprod_residual!(ss, yt, wα, Jyt)
 
