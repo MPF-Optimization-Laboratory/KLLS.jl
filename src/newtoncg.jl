@@ -59,11 +59,11 @@ function dHess(kl::KLLSModel)
 end
 
 """
-    dHess_prod!(kl::KLLSModel{T}, z, v) where T
+    dHess_prod!(kl::KLLSModel{T}, z, Hz) where T
 
 Product of the dual objective Hessian with a vector `z`
 
-    v ← ∇²d(y)z = τ A∇²log∑exp(A'y)Az + λCz,
+    Hz ← ∇²d(y)z = τ A∇²log∑exp(A'y)Az + λCz,
 
 where `y` is the point at which the objective was last evaluated.
 """
@@ -75,9 +75,9 @@ function dHess_prod!(kl::KLLSModel, z, Hz)
     g = grad(lse)
     mul!(w, A', z)                 # w =                  A'z
     w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'z)
-    mul!(Hz, A, w, scale, 0)        # v = scale*A(G - gg')(A'z)
+    mul!(Hz, A, w, scale, 0)       # v = scale*A(G - gg')(A'z)
     if λ > 0
-        mul!(Hz, C, z, λ, 1)        # v += λCz
+        mul!(Hz, C, z, λ, 1)       # v += λCz
     end
     return Hz
 end

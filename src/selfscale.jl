@@ -57,14 +57,14 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
 end
 
 """
-    Jyt = jprod_residual!(ss, yt, wα, Jyt)
+    Jyt = jprod_residual!(ss, yt, zα, Jyt)
 
 Compute the Jacobian-vector product, 
 
-    (1) [ ∇²d(A'y)  Ax  ][ w ] := [ Jy ]  where x:=x(y)
+    (1) [ ∇²d(A'y)  Ax  ][ z ] := [ Jy ]  where x:=x(y)
     (2) [ (Ax)'     -1/t][ α ] := [ Jt ]
 """
-function NLPModels.jprod_residual!(ss::SSModel, yt, wα, Jyt)
+function NLPModels.jprod_residual!(ss::SSModel, yt, zα, Jyt)
 
     kl = ss.kl
     @unpack A, lse, mbuf = kl
@@ -76,18 +76,17 @@ function NLPModels.jprod_residual!(ss::SSModel, yt, wα, Jyt)
 
     Jy = @view Jyt[1:m]
     t = yt[end]
-    w = @view wα[1:m]
-    α = wα[end]
+    z = @view zα[1:m]
+    α = zα[end]
    
     mul!(Ax, A, x)
 
     # Equation (1)
-    Jy .= w
-    dHess_prod!(kl, w, Jy)  # Jy = ∇²d(A'y)w
-    mul!(Jy, A, x, α, 1)    # Jy += αAx
+    dHess_prod!(kl, z, Jy)  # Jy = ∇²d(A'y)z
+    Jy .+= α*Ax             # Jy += αAx
     
     # Equation (2)  
-    Jyt[end] = w⋅Ax - α/t
+    Jyt[end] = z⋅Ax - α/t
 
     return Jyt
 end
