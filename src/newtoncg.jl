@@ -86,18 +86,23 @@ function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector,
     return Hz = dHess_prod!(kl, z, Hz)
 end
 
-function solve!(kl::KLLSModel{T}; M=I, logging=0, monotone=true, max_time::Float64=30.0, kwargs...) where T
+function solve!(
+    kl::KLLSModel{T};
+    M=I,
+    logging=0,
+    monotone=true,
+    max_time::Float64=30.0,
+    kwargs...) where T
    
     # Reset counters
     reset!(kl)    
 
     # Tracer
-    tracer = DataFrame(iter=Int[], dual_obj=Float64[], r=Float64[], Δ=Float64[], Δₐ_Δₚ=Float64[], cgits=Int[], cgmsg=String[])
+    tracer = DataFrame(iter=Int[], dual_obj=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
     
     # Callback routine
-    cb(nlp, solver, stats) = callback(
-    kl, solver, M, stats, tracer, logging, max_time; kwargs...
-    )
+    cb(kl, solver, stats) =
+        callback(kl, solver, M, stats, tracer, logging, max_time; kwargs...)
     
     # Call the Trunk solver
     if M === I
@@ -130,15 +135,15 @@ function callback(
     tracer,
     logging,
     max_time;
-    atol::T = √eps(T),
-    rtol::T = √eps(T),
+    atol::T = DEFAULT_PRECISION(T),
+    rtol::T = DEFAULT_PRECISION(T),
     max_iter::Int = typemax(Int),
     trace::Bool = false,
     ) where T
     
     dObj = trunk_stats.objective 
     iter = trunk_stats.iter
-    r = trunk_stats.dual_feas # = ||∇ dual obj(x)|| = ||λy||
+    r = trunk_stats.dual_feas # = ||∇ dual obj(x)||
     # r = norm(solver.gx)
     Δ = solver.tr.radius
     actual_to_predicted = solver.tr.ratio
@@ -180,10 +185,12 @@ end
 
 const cg_msg = Dict(
 "on trust-region boundary" => "⊕",
+"found approximate minimum least-squares solution" => "min soln",
 "nonpositive curvature detected" => "neg curv",
 "solution good enough given atol and rtol" => "✓",
 "zero curvature detected" => "zer curv",
 "maximum number of iterations exceeded" => "⤒",
+"found approximate zero-residual solution" => "zero res",
 "user-requested exit" => "user exit",
 "time limit exceeded" => "time exit",
 "unknown" => ""

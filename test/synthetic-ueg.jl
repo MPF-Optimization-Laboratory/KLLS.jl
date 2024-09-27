@@ -38,6 +38,6 @@ x2, r2 = sPt.solution, sPt.residual
 reset!(kl)
 scale!(kl, 1.0)
 ss = KLLS.SSModel(kl)
-ssStats = solve!(ss, verbose=0, rtol=1e-6)
+ssStats = solve!(ss, logging=0, rtol=1e-6)
 xss = ssStats.solution
 @test norm(x2 - xss) < 1e-5

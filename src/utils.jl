@@ -14,16 +14,17 @@ end
 
 function Base.show(io::IO, s::ExecutionStats)
     rel_res = norm(s.residual, Inf)
-    @printf("\n")
+    @printf(io, "\n")
     if s.status == :max_iter 
-        @printf("Maximum number of iterations reached\n")
+        @printf(io, "Maximum number of iterations reached\n")
     elseif s.status == :optimal
-        @printf("Optimality conditions satisfied\n")
+        @printf(io, "Optimality conditions satisfied\n")
     end
-    @printf("Products with A and A': %9d\n", s.neval_jprod+s.neval_jtprod)
-    @printf("Time elapsed (sec)    : %9.1f\n", s.elapsed_time)
-    @printf("||Ax-b||₂             : %9.1e\n", rel_res)
-    @printf("Optimality            : %9.1e\n", s.optimality)
+    nprods = s.neval_jprod + s.neval_jtprod
+    @printf(io, "Products with A and A': %9d\n"  , nprods)
+    @printf(io, "Time elapsed (sec)    : %9.1f\n", s.elapsed_time)
+    @printf(io, "||Ax-b||₂             : %9.1e\n", rel_res)
+    @printf(io, "Optimality            : %9.1e\n", s.optimality)
 end
 
 """

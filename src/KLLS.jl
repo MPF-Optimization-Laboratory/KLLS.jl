@@ -7,17 +7,20 @@ using DataFrames
 import Roots
 using JSOSolvers: trunk
 using NLPModels
-# import NLPModels: NLSMeta, NLPModels, NLPModelMeta, AbstractNLPModel, AbstractNLSModel, NLSCounters, Counters, increment!, neval_jprod, neval_jtprod
+# using NonlinearSolve, LinearSolve
 
 export KLLSModel, SSModel
-export solve!, scale!, regularize!, histogram, maximize!
+export solve!, scale!, regularize!, histogram, maximize!, reset!
+
+DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 
 include("logsumexp.jl")
 include("model.jl")
 include("newtoncg.jl")
 include("newtonls.jl")
 include("selfscale.jl")
+include("nlsolve.jl")
 include("precon.jl")
 include("utils.jl")
 
-end # module
+end

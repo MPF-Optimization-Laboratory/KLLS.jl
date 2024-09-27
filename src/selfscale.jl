@@ -96,14 +96,32 @@ function NLPModels.jtprod_residual!(ss::SSModel, yt, wα, Jyt)
     NLPModels.jprod_residual!(ss, yt, wα, Jyt)
 end
 
+struct TrunkLS end
 
-function solve!(ss::SSModel{T}; kwargs...) where T
-    trunk_stats = trunk(ss; kwargs...)
+solve!(ss::SSModel; kwargs...) = solve!(ss, TrunkLS(); kwargs...)
+
+function solve!(
+    ss::SSModel{T},
+    ::TrunkLS;
+    logging=0,
+    monotone=true,
+    max_time=30.0,
+    kwargs...) where T
+
+    reset!(ss) # reset counters
+
+    tracer = DataFrame(iter=Int[], scale=T[], vpt=T[], dual_obj=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
+
+    # Callback routine
+    cb(ss::SSModel, solver, stats) =
+      callback(ss, solver, stats, tracer, logging, max_time; kwargs...)
+    
+    trunk_stats =
+      trunk(ss; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
 
     kl = ss.kl
     x = kl.scale.*grad(kl.lse)
-    y = trunk_stats.solution[1:end-1]
-    t = trunk_stats.solution[end]
+    y = @view trunk_stats.solution[1:end-1]
     stats = ExecutionStats(
         trunk_stats.status,
         trunk_stats.elapsed_time,       # elapsed time
@@ -118,4 +136,64 @@ function solve!(ss::SSModel{T}; kwargs...) where T
         DataFrame()                     # TODO: tracer 
     )
     return stats
+end
+
+function callback(
+    ss::SSModel{T},
+    solver,
+    trunk_stats,
+    tracer,
+    logging,
+    max_time;
+    atol = √eps(T),
+    rtol = √eps(T),
+    max_iter::Int = typemax(Int),
+    trace::Bool = false,
+    ) where T
+  
+    
+    # Norm of the dual gradient ∇²d(y)
+    dObj = let
+        m = length(ss.kl.b)
+        norm(solver.Fx[1:m])
+    end
+    vpt = solver.Fx[end]
+
+    iter = trunk_stats.iter # = number of iterations
+    r = trunk_stats.dual_feas # = ||∇F⋅F(y,t)||
+    # r = norm(solver.gx)
+    scale = solver.x[end]
+    Δ = solver.tr.radius 
+    actual_to_predicted = solver.tr.ratio
+    cgits = solver.subsolver.stats.niter
+    cgexit = cg_msg[solver.subsolver.stats.status]
+    ε = atol + rtol * ss.kl.bNrm
+    
+    # Test exit conditions
+    tired = iter >= max_iter
+    optimal = r < ε 
+    done = tired || optimal
+    
+    log_items = (iter, scale, vpt, dObj, r, Δ, actual_to_predicted, cgits, cgexit) 
+    trace && push!(tracer, log_items)
+    if logging > 0 && iter == 0
+        println("\n", ss)
+        println("Solver parameters:")
+        @printf("   atol = %7.1e  max time (sec) = %7d\n", atol, max_time)
+        @printf("   rtol = %7.1e  target ∥r∥<ε   = %7.1e\n\n", rtol, ε)
+        @printf("%7s  %8s  %9s  %8s  %8s  %7s  %7s  %4s  %10s\n",
+        "iter","t","v'(t)","∥∇d(y)∥","∥∇F⋅F∥","Δ","Δₐ/Δₚ","cg","cg msg")
+    end
+    if logging > 0 && (mod(iter, logging) == 0 || done)
+        @printf("%7d  %8.2e  %9.2e  %8.2e  %8.2e  %7.1e  %7.1e  %4d  %10s\n", (log_items...))
+    end
+    
+    if optimal
+        trunk_stats.status = :optimal
+    elseif tired
+        trunk_stats.status = :max_iter
+    end
+    if trunk_stats.status == :unkown
+        return
+    end
 end

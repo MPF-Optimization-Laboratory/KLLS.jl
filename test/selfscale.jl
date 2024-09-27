@@ -2,7 +2,7 @@ using Test
 using KLLS, NLPModels, LinearAlgebra, Random
 
 Random.seed!(1234)
-λ = 1e-1
+λ = 1e-2
 m, n = 8, 10
 kl = KLLS.randKLmodel(m, n) 
 A, b = kl.A, kl.b
@@ -34,12 +34,15 @@ J = let
 end
 @test all( .≈(J, Jtrue, atol=1e-6) )
 
-ssSoln = solve!(ss, verbose=1, rtol=1e-6)
+rtol = 1e-6
+atol = 1e-6
+ssSoln = solve!(ss, trace=true, logging=0, atol=atol, rtol=rtol)
 
-y = ssSoln.solution[1:m]
-t = ssSoln.solution[end]
-x = KLLS.grad(kl.lse)
+x = ssSoln.solution
+r = ssSoln.residual
+y = r/λ
+t = sum(x)
 
 Fy = residual!(ss, [y; t], similar([y; t]))
-
-norm(A*x + λ*y - b)
+@test norm(Fy[1:m]) < 1e-5*kl.bNrm
+@test norm(A*x + r - b) ≤ atol + rtol*kl.bNrm
