@@ -9,6 +9,7 @@ using Random
 using NPZ
 using CSV
 using Dates
+using LinearAlgebra
 
 #=
 First set of tests, small A, random gaussian, uniform solution norm(x)=1
@@ -72,12 +73,31 @@ function dfToCSV(df::DataFrame,method_name::String)
 
 end
 
+
    
 test = optimToDF(out.trace)
 #dfToCSV(test,"test_method")
 
 
-testnpz = npzread("data/Laplace Data/PhysicsData.npz")
+UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")
+
+q = convert(Vector{Float64}, UEG_dict["mu"])
+q .= max.(q, 1e-13)
+q .= q./sum(q)
+C = inv.(UEG_dict["b_std"]) |> diagm
+λ = 1e-4
+n = length(q)
+
+kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
+
+
+
+
+
+
+# no need to specify q, as default is uniform.
+
+
 #=
 #All of this faults. Will have to manually do matlab PDCO comparisons "offline"
 

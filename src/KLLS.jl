@@ -10,9 +10,8 @@ using NLPModels
 # using NonlinearSolve, LinearSolve
 
 export KLLSModel, SSModel
-export solve!, scale!, regularize!, histogram, maximize!, reset!, callback
+export solve!, scale!, regularize!, histogram, maximize!, reset!
 
-#Matt added export of callbacl
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 
 include("logsumexp.jl")

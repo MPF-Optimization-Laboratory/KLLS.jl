@@ -19,8 +19,14 @@ include("metrics.jl")
 
 UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")
 
-kl_UEG = KLLSModel(A = UEG_dict["A"],b = UEG_dict["b_avg"])
-kl_UEG.q = UEG_dict["mu"]
+q = convert(Vector{Float64}, UEG_dict["mu"])
+q .= max.(q, 1e-13)
+q .= q./sum(q)
+C = inv.(UEG_dict["b_std"]) |> diagm
+λ = 1e-4
+n = length(q)
+
+kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
 
 metrics(kl_UEG,"UEG")
 
