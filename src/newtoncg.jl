@@ -13,7 +13,7 @@ end
 Dual objective:
 
 - base case (no scaling, unweighted 2-norm):
-    f(y) = log∑exp(A'y - c) - 0.5λ y∙Cy - b∙y
+    f(y) = log∑exp(A'y - c) + 0.5λ y∙Cy - b∙y
 
 - with scaling and weighted 2-norm:
     f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
@@ -169,7 +169,7 @@ function callback(
     elseif tired
         trunk_stats.status = :max_iter
     end
-    if trunk_stats.status == :unkown
+    if trunk_stats.status == :unknown
         return
     end
     
