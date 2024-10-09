@@ -23,5 +23,6 @@ include("selfscale.jl")
 include("nlsolve.jl")
 include("precon.jl")
 include("utils.jl")
+include("general-constrained-model/CLS-model.jl")
 
 end
