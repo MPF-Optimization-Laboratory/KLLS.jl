@@ -1,4 +1,4 @@
-function [x,y,z,inform] = PDCO_KL(A, b, mu, lmda, delta, print)
+function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, lmda, delta, print)
     
     A(end+1, :) = 1; % enforce simplex constraint
     b(end+1, :) = 1;
@@ -54,7 +54,7 @@ function [x,y,z,inform] = PDCO_KL(A, b, mu, lmda, delta, print)
     options.wait = 0;
 
 
-    [x,y,z,inform] = pdco(@KL, A, b, bl, bu, d1, d2,options,x0,y0,z0,xsize,zsize, mu); 
+    [x,y,z,inform,tracer_test] = pdco(@KL, A, b, bl, bu, d1, d2,options,x0,y0,z0,xsize,zsize, mu); 
 
 end
 

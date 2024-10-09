@@ -1,4 +1,4 @@
-function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
+function [x,y,z,inform,PDitns,CGitns,time,logging_Mat] = ...
     pdco(pdObj,pdMat,b,bl,bu,d1,d2,options,x0,y0,z0,xsize,zsize, p_)
 
 %-----------------------------------------------------------------------
@@ -301,10 +301,6 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
   nb     = n + m;
   CGitns = 0;
   inform = 0;
-
-  % Added intialization for trace
-  tracer_mat = zeros(1,3);
-
   % 07 Aug 2003: No need for next lines.
   %if length(d1)==1, d1 = d1*ones(n,1); end   % Allow scalar d1, d2
   %if length(d2)==1, d2 = d2*ones(m,1); end   % to mean d1*e, d2*e
@@ -769,7 +765,7 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
         [dy, istop_minres, itnm, normr, normAr, normA, condA, normx] = ...
             minres( mat_minres_handle, rhs, pdDDD3, damp, show, check, itnlim, atol );
 
-        if istop_minres==-1 || istop_minres==5 || istop_minres==6   % cnlim or itnlim
+        if istop_minres==-1 || istop_minres==5 || istop_minres==6   % conlim or itnlim
             fprintf('\n    MINRES stopped early:  istop = %3d', istop_minres)
         end
 
@@ -1190,12 +1186,6 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
     %-------------------------------------------------------------------
     % Iteration log.
     %-------------------------------------------------------------------
-    
-
-    %-------------------------------------------------------------------
-    % Matt Piggybacking logging; changing print -> save as a matrix
-    %-------------------------------------------------------------------
-    tracer_mat(PDitns,:) = [PDitns,objtrue,sum(x*beta)];
 
     if PriLev > 0
       str1    = sprintf('\n%3g%5.1f' , PDitns      , log10(mu)   );
@@ -1211,6 +1201,11 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
          str5 = sprintf('%3g%8.1e'   , nf          , center      );
       end
       fprintf([str1 str2 str3 str4 str5])
+    
+    %-------------------------------------------------------------------
+    % Matt Piggybacking logging; changing print -> save as a matrix
+    %-------------------------------------------------------------------
+    logging_Mat[PDits]
 
       if     Method== 1 || Method== 11
         if PDitns==1, fprintf(' %8g', nnz(R)); end
