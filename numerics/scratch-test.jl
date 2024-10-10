@@ -9,7 +9,7 @@ using NPZ
 using CSV
 using Dates
 using LinearAlgebra
-
+using Plots
 #=
 First set of tests, small A, random gaussian, uniform solution norm(x)=1
 b = Ax
@@ -67,14 +67,20 @@ kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
 optTol = 10e-7
 test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true)
 
-x = 5;
-print(string(x))
 
+FOLDER = "1010_1645"
 
-FOLDER = "1010_1521"
+files_to_plot = readdir(joinpath(@__DIR__ ,"outputs",FOLDER))
+#print(files_to_plot)
 
-files_to_plot = readdir(joinpath(@__DIR__ ,outputs,FOLDER))
-print(files_to_plot)
+for filename in files_to_plot
+    UEG_plot = plot!(title = "UEG Residual", xlabel = "Iteration", ylabel = "r")
+    if(occursin("UEG",filename))
+        df = DataFrame(CSV.File(joinpath(@__DIR__ ,"outputs",FOLDER,filename)))
+        plot!(df[:,1],df[:,3], labels=[split(filename,"lam")[2]], legend=:topleft)
+    end
+    display(UEG_plot)
+end
 
 
 # no need to specify q, as default is uniform.
