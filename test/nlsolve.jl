@@ -57,6 +57,7 @@ nlcache = init(
     # trace_level = TraceAll(),
     # store_trace = Val(true),
     NewtonRaphson(
+        linesearch = RobustNonMonotoneLineSearch(),
         linsolve = KrylovJL_MINRES(verbose=0, itmax=10, atol=abstol, rtol=reltol),
        ),
     )
