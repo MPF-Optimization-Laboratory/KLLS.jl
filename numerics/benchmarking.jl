@@ -10,7 +10,7 @@ using Random
 using NPZ
 using CSV
 using Dates
-include("metrics.jl")
+include("solve_metrics.jl")
 
 lambdas = (10.0).^(range(-3,stop=3,length=6))
 

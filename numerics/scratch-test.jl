@@ -89,12 +89,17 @@ C = inv.(UEG_dict["b_std"]) |> diagm
 n = length(q)
 
 kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
-test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
+optTol = 10e-7
+test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true)
 
 x = 5;
 print(string(x))
 
 
+FOLDER = "1010_1521"
+
+files_to_plot = readdir(joinpath(@__DIR__ ,outputs,FOLDER))
+print(files_to_plot)
 
 
 # no need to specify q, as default is uniform.
