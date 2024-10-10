@@ -34,7 +34,7 @@ function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, lmda, delta, print)
     options = pdcoSet;
 
     % MODIFICATION MADE BELOW
-    options.MaxIter      =    100;
+    options.MaxIter      =   1000;
     options.FeaTol       =  1e-10; %ORIGNIALLY 1e-6
     options.OptTol       =  1e-10; %ORIGNIALLY 1e-6
 

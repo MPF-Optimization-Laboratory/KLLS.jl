@@ -1,4 +1,4 @@
-# Goal: Given A, b, (scaling?)
+# Goal: Given A, b, lambda
 # Solve the KLLS problem for Ax=b and compare various metrics
 
 using Optim
@@ -20,12 +20,18 @@ function optimToDF(optimState::Vector)
     return df
 end
 
-function dfToCSV(df::DataFrame,method_name::String,problem_name::String)
-    dt = Dates.now() 
-    dt = Dates.format(dt, "mmdd_HHMM")
-    filename = problem_name * "_" * method_name * "_" * dt * ".csv"
+function dfToCSV(df::DataFrame,method_name::String,problem_name::String,lam_str::String)
+    dt = Dates.now() ;
+    dt = Dates.format(dt, "mmdd_HHMM");
+    filename = problem_name * "_" * method_name * "_lam" *lam_str * ".csv";
+    dir_name = joinpath(@__DIR__, "outputs", dt);
+    print(dir_name)
+        if !ispath(dir_name)
+            mkpath(dir_name)
+            return dir_name
+        end
 
-    CSV.write("numerics/outputs/" * filename,df)
+    CSV.write(joinpath(dir_name , filename),df);
 
 end
 
@@ -34,11 +40,15 @@ function metrics(
         kl::KLLSModel,
         problem_name::String,
         optTol::Real = 1e-6,
-        max_iter::Int = 100)
+        max_iter::Int = 1000)
 
     ## First method, Solve via KLLS and store in tracer, save to CSV
     soln = KLLS.solve!(kl, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
-    dfToCSV(soln.tracer,"KLLS",problem_name)
+    if(soln.tracer[end,3] < optTol)
+        dfToCSV(soln.tracer,"KLLS",problem_name,string(kl.λ))
+    else
+        dfToCSV(soln.tracer,"KLLS",problem_name* "_FAILED",string(kl.λ))
+    end
 
     ## Second method, solve dual via KLLS
     ## Def'n of f and nabla f as expected by Optim
@@ -62,9 +72,9 @@ function metrics(
     if(Optim.g_converged(opt_sol) == false)
         # TESTING GRADIENT CONVERGENCE SPECIFICALLY!!
         # other conditions for termination may flag
-        dfToCSV(optimToDF(opt_sol.trace),"LBFGS",problem_name * "_FAILED");
+        dfToCSV(optimToDF(opt_sol.trace),"LBFGS",problem_name * "_FAILED",string(kl.λ));
     else
-        dfToCSV(optimToDF(opt_sol.trace),"LBFGS",problem_name);
+        dfToCSV(optimToDF(opt_sol.trace),"LBFGS",problem_name,string(kl.λ))
     end
 
 

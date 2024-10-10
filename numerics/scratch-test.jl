@@ -89,8 +89,10 @@ C = inv.(UEG_dict["b_std"]) |> diagm
 n = length(q)
 
 kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
+test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
 
-
+x = 5;
+print(string(x))
 
 
 
