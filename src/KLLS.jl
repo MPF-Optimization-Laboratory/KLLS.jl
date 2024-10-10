@@ -7,9 +7,10 @@ using DataFrames
 import Roots
 using JSOSolvers: trunk
 using NLPModels
-# using NonlinearSolve, LinearSolve
+using NonlinearSolve, LinearSolve
+using Suppressor
 
-export KLLSModel, SSModel
+export KLLSModel, SSModel, NewtonEQ, TrunkLS
 export solve!, scale!, regularize!, histogram, maximize!, reset!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)

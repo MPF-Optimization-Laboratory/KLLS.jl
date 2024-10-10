@@ -10,7 +10,7 @@ execute:
 
 $$
 \newcommand{\ent}[2]{\text{\bf ent}(#1\mid #2)}
-\newcommand{\KL}[2]{\text{\bf KL}(#1\mid #2)}
+\newcommand{\KL}[2]{\text{\bf KL}(#1\mid #2)a}
 \newcommand{\logexp}{\text{\bf logexp}}
 $$
 

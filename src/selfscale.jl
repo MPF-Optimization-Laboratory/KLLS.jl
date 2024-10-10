@@ -6,9 +6,11 @@ struct SSModel{T, S, K<:KLLSModel{T}} <: AbstractNLSModel{T,S}
 end
 
 """
-Constructor swallows a `KLLSModel` and returns an `SSModel`.
-This new model has one more variable than the original model: `m+1`.
-Default starting point is `(zeros(m), 1)`.
+    SSModel(kl::KLLSModel) -> SSModel
+
+This model is a container for `kl` and the augmented problem for the self-scaled model in the variables (y,t).
+
+Default starting point is `(kl.x0, 1.0)`
 """
 function SSModel(kl::KLLSModel{T}) where T
     m = kl.meta.nvar
@@ -19,7 +21,6 @@ function SSModel(kl::KLLSModel{T}) where T
         name = "Scaled Simplex Model"
     )
     nls_meta = NLSMeta{T, Vector{T}}(m+1, m+1)
-
     return SSModel(kl, meta, nls_meta, NLSCounters())
 end
 
@@ -38,7 +39,10 @@ Compute the residual in the self-scaling optimality conditions augmented problem
     F(y, t) = [ ∇d(y)
                 logexp(A'y) - log(t) - 1 ]
 
-where `f(y) = logΣexp(A'y)`.
+where
+
+    ∇d(y) = A(tx(y)) + λCy - b
+    x(y) = ∇logexp(A'y)
 """ 
 function NLPModels.residual!(ss::SSModel, yt, Fx)
 	increment!(ss, :neval_residual)
@@ -100,6 +104,11 @@ struct TrunkLS end
 
 solve!(ss::SSModel; kwargs...) = solve!(ss, TrunkLS(); kwargs...)
 
+"""
+    solve!(ss::SSModel, ::TrunkLS; kwargs...)
+
+Solve the self-scaled model using Gauss-Newton, via the TrunkLS algorithm.
+"""
 function solve!(
     ss::SSModel{T},
     ::TrunkLS;
@@ -110,7 +119,7 @@ function solve!(
 
     reset!(ss) # reset counters
 
-    tracer = DataFrame(iter=Int[], scale=T[], vpt=T[], dual_obj=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
+    tracer = DataFrame(iter=Int[], scale=T[], vpt=T[], dual_grad=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
 
     # Callback routine
     cb(ss::SSModel, solver, stats) =
@@ -133,7 +142,7 @@ function solve!(
         x,                              # primal solultion `x`
         (kl.λ)*y,                       # residual r = λy
         trunk_stats.dual_feas,          # norm of the gradient of the dual objective
-        DataFrame()                     # TODO: tracer 
+        tracer                          # TODO: tracer 
     )
     return stats
 end
@@ -145,23 +154,21 @@ function callback(
     tracer,
     logging,
     max_time;
-    atol = √eps(T),
-    rtol = √eps(T),
+    atol = DEFAULT_PRECISION(T),
+    rtol = DEFAULT_PRECISION(T),
     max_iter::Int = typemax(Int),
     trace::Bool = false,
     ) where T
   
     
-    # Norm of the dual gradient ∇²d(y)
-    dObj = let
-        m = length(ss.kl.b)
-        norm(solver.Fx[1:m])
-    end
+    # Norm of the (unscaled) dual gradient ∇d(y)
+    m = length(ss.kl.b)
+    ∇d = @view solver.Fx[1:m]
+    norm∇d = norm(∇d, Inf)
     vpt = solver.Fx[end]
 
     iter = trunk_stats.iter # = number of iterations
     r = trunk_stats.dual_feas # = ||∇F⋅F(y,t)||
-    # r = norm(solver.gx)
     scale = solver.x[end]
     Δ = solver.tr.radius 
     actual_to_predicted = solver.tr.ratio
@@ -174,7 +181,7 @@ function callback(
     optimal = r < ε 
     done = tired || optimal
     
-    log_items = (iter, scale, vpt, dObj, r, Δ, actual_to_predicted, cgits, cgexit) 
+    log_items = (iter, scale, vpt, norm∇d, r, Δ, actual_to_predicted, cgits, cgexit) 
     trace && push!(tracer, log_items)
     if logging > 0 && iter == 0
         println("\n", ss)
