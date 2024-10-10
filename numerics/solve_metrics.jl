@@ -24,17 +24,15 @@ function dfToCSV(df::DataFrame,method_name::String,problem_name::String,lam_str:
     dt = Dates.format(dt, "mmdd_HHMM");
     filename = problem_name * "_" * method_name * "_lam" *lam_str * ".csv";
     dir_name = joinpath(@__DIR__, "outputs", dt);
-    print(dir_name)
         if !ispath(dir_name)
-            mkpath(dir_name)
-            return dir_name
+            mkpath(dir_name);
         end
 
     CSV.write(joinpath(dir_name , filename),df);
 
 end
 
-function metrics(
+function solve_metrics(
     # Inputs: KLLS Model, Relative tolerance for dual gradient, maximum iterations
         kl::KLLSModel,
         problem_name::String,
@@ -43,7 +41,7 @@ function metrics(
 
     ## First method, Solve via KLLS and store in tracer, save to CSV
     soln = KLLS.solve!(kl, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
-    if(soln.tracer[end,3] < optTol)
+    if(soln.tracer[end,end] == "✓")
         dfToCSV(soln.tracer,"KLLS",problem_name,string(kl.λ))
     else
         dfToCSV(soln.tracer,"KLLS",problem_name* "_FAILED",string(kl.λ))
