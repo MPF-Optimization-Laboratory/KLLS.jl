@@ -4,7 +4,6 @@
 using Optim
 using DataFrames
 using KLLS
-using MATLAB
 using Random
 using NPZ
 using CSV
@@ -29,7 +28,7 @@ x0 = randn(n)
 x0 = x0/sum(x0)
 b = A*x0
 
-λ = 1e-3
+λ = 1e-2
 
 data = KLLSModel(A, b, λ=λ)
 atol = rtol = 1e-6
@@ -53,30 +52,6 @@ out =optimize(f,grad!,z0,
             extended_trace = true
         )
         )
-
-   
-function optimToDF(optimState::Vector)
-    df = DataFrame(iter=Int[], dual_obj=Float64[], r=Float64[]) #, Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
-    for i in 1:size(optimState,1)
-        log = (optimState[i].iteration, optimState[i].value, optimState[i].g_norm)
-        push!(df,log)
-    end
-
-    return df
-end
-
-function dfToCSV(df::DataFrame,method_name::String)
-    dt = Dates.now() 
-    dt = Dates.format(dt, "mmdd_HHMM")
-    filename = method_name * "_" * dt * ".csv"
-    CSV.write("numerics/outputs/" * filename,df)
-
-end
-
-
-   
-test = optimToDF(out.trace)
-#dfToCSV(test,"test_method")
 
 
 UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")

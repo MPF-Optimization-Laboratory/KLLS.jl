@@ -5,14 +5,13 @@
 using Optim
 using DataFrames
 using KLLS
-using MATLAB
 using Random
 using NPZ
 using CSV
 using Dates
 include("solve_metrics.jl")
 
-lambdas = (10.0).^(range(-3,stop=3,length=6))
+lambdas = (10.0).^(range(-2,stop=2,length=3))
 
 ###########################################################
 #
@@ -25,10 +24,10 @@ q = convert(Vector{Float64}, UEG_dict["mu"])
 q .= max.(q, 1e-13)
 q .= q./sum(q)
 C = inv.(UEG_dict["b_std"]) |> diagm
-λ = 1e-4
 n = length(q)
 
 for λ in lambdas
+    print(λ)
     local kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
     metrics(kl_UEG,"UEG")
 end
