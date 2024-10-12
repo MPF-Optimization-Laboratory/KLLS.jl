@@ -7,7 +7,11 @@ using DataFrames
 import Roots
 using JSOSolvers: trunk
 using NLPModels
+
+# NonlinearSolve packages
 using NonlinearSolve, LinearSolve
+import SciMLBase: ReturnCode
+
 using Suppressor
 
 export KLLSModel, SSModel, NewtonEQ, TrunkLS
@@ -20,7 +24,6 @@ include("model.jl")
 include("newtoncg.jl")
 include("newtonls.jl")
 include("selfscale.jl")
-include("nlsolve.jl")
 include("precon.jl")
 include("utils.jl")
 

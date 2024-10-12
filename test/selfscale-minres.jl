@@ -33,15 +33,20 @@ kl = let
     C = inv.(b_std) |> diagm
     λ = 1e-3
     m, n = size(A)
-
     KLLSModel(A, b, C=C, q=q, λ=λ)
 end
 
 # ╔═╡ ac625eec-36d3-4134-8e0f-85840a5a42d6
-nlStats, trace = solve!(SSModel(kl), NewtonEQ(), trace=true); trace
+nlStats = solve!(SSModel(kl), NewtonEQ(), trace=true)
+
+# ╔═╡ 73f9b815-f1ac-4d54-b239-a9c136d265b7
+sum(nlStats.solution)
+
+# ╔═╡ 896b5616-a835-4e49-a525-d439aa9b0210
+sum(nlStats.solution)
 
 # ╔═╡ 0debb8c4-10ac-4503-b5c2-129e83f4f676
-ssStats = solve!(SSModel(kl), logging=1)
+ssStats = solve!(SSModel(kl))
 
 # ╔═╡ 5fdc5be6-c733-41a4-a9dd-dfbefeb33c95
 stats = solve!(kl)
@@ -351,7 +356,9 @@ version = "17.4.0+2"
 # ╠═5e293c92-0fb4-471b-bc8f-a1db96348c22
 # ╠═27b130f3-43b9-43b2-a52d-72f90a3cb4c0
 # ╟─f8d82b78-8cde-406d-ad73-e11e89b541e5
+# ╠═73f9b815-f1ac-4d54-b239-a9c136d265b7
 # ╠═ac625eec-36d3-4134-8e0f-85840a5a42d6
+# ╠═896b5616-a835-4e49-a525-d439aa9b0210
 # ╠═0debb8c4-10ac-4503-b5c2-129e83f4f676
 # ╠═5fdc5be6-c733-41a4-a9dd-dfbefeb33c95
 # ╟─0883febb-a3ad-4e6b-a003-a614101e7344
