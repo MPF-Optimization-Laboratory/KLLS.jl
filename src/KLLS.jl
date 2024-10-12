@@ -7,12 +7,11 @@ using DataFrames
 import Roots
 using JSOSolvers: trunk
 using NLPModels
+using LinearOperators
 
 # NonlinearSolve packages
 using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
-
-using Suppressor
 
 export KLLSModel, SSModel, NewtonEQ, TrunkLS
 export solve!, scale!, regularize!, histogram, maximize!, reset!
@@ -24,6 +23,7 @@ include("model.jl")
 include("newtoncg.jl")
 include("newtonls.jl")
 include("selfscale.jl")
+include("optimal-transport.jl")
 include("precon.jl")
 include("utils.jl")
 

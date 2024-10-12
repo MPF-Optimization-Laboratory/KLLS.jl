@@ -272,7 +272,7 @@ function solve!(
         iter > max_iter && break
 
         # Take a Newton step
-        @suppress_err step!(nlcache)
+        step!(nlcache)
 
         t = nlcache.u[end]  
         ∇d = @view nlcache.fu[1:m]
