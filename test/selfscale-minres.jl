@@ -8,7 +8,7 @@ using InteractiveUtils
 push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/KLLS.jl")
 
 # ╔═╡ 27b130f3-43b9-43b2-a52d-72f90a3cb4c0
-using Random, NPZ, UnPack, LinearAlgebra
+using Random, NPZ, UnPack, LinearAlgebra, Test
 
 # ╔═╡ cd97fc06-7d10-11ef-2719-8f1e5ca4314c
 using PlutoLinks
@@ -24,7 +24,11 @@ md"## Setup data"
 
 # ╔═╡ a820ce39-98ee-438f-96e3-548fc7f87495
 kl = let
-	data = npzread("../data/synthetic-UEG_testproblem.npz")
+	data = try
+	         npzread("../data/synthetic-UEG_testproblem.npz")
+	catch
+	         npzread("./data/synthetic-UEG_testproblem.npz")
+	end
 	@unpack A, b_avg, b_std, mu = data
     b = b_avg
     q = convert(Vector{Float64}, mu)
@@ -40,10 +44,13 @@ end
 nlStats = solve!(SSModel(kl), NewtonEQ(), trace=true)
 
 # ╔═╡ 73f9b815-f1ac-4d54-b239-a9c136d265b7
-sum(nlStats.solution)
+s2 = sum(nlStats.solution)
 
 # ╔═╡ 896b5616-a835-4e49-a525-d439aa9b0210
-sum(nlStats.solution)
+s1 = sum(nlStats.solution)
+
+# ╔═╡ 67e2a523-1b4d-4f20-9519-056ae389c7cf
+@test s1 ≈ s2
 
 # ╔═╡ 0debb8c4-10ac-4503-b5c2-129e83f4f676
 ssStats = solve!(SSModel(kl))
@@ -84,6 +91,7 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
 PlutoLinks = "0ff47ea0-7a50-410d-8455-4348d5de0420"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
 
 [compat]
@@ -98,7 +106,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "997ff2f226852999ec2f2f0893d3396cb1dbde3e"
+project_hash = "3df99d3f092bcc8745251124b63622447bc7ec2c"
 
 [[deps.ArgTools]]
 uuid = "0dad84c5-d112-42e6-8d28-ef12dabb789f"
@@ -311,6 +319,11 @@ deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 version = "1.10.0"
 
+[[deps.Test]]
+deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
+uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+version = "1.11.0"
+
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
 uuid = "cf7118a7-6976-5b1a-9a39-7adc72f591a4"
@@ -356,6 +369,7 @@ version = "17.4.0+2"
 # ╠═5e293c92-0fb4-471b-bc8f-a1db96348c22
 # ╠═27b130f3-43b9-43b2-a52d-72f90a3cb4c0
 # ╟─f8d82b78-8cde-406d-ad73-e11e89b541e5
+# ╠═67e2a523-1b4d-4f20-9519-056ae389c7cf
 # ╠═73f9b815-f1ac-4d54-b239-a9c136d265b7
 # ╠═ac625eec-36d3-4134-8e0f-85840a5a42d6
 # ╠═896b5616-a835-4e49-a525-d439aa9b0210

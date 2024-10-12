@@ -2,6 +2,7 @@ using Test
 using LinearAlgebra, Random
 import Krylov: cg
 using NLPModels
+using PlutoLinks
 # using ADNLPModels, JSOSolvers
 using KLLS
 
@@ -159,8 +160,7 @@ end
 end
 
 @testset "Self-scaling" begin
-
-
+    include("selfscale-minres.jl")
 end
 
 @testset "Synthetic data" begin
