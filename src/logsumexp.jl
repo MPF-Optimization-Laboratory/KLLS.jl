@@ -36,12 +36,25 @@ https://github.com/baggepinnen/MonteCarloMeasurements.jl/blob/4f9b688d298157dc24
 """
 function obj!(lse::LogExpFunction, p)
     @unpack q, g = lse
-    maxval, maxind = findmax(p)
+    maxval, maxind = myfindmax(p)
     @. g = q * exp(p - maxval)
     Σ = sum_all_but(g, maxind) # Σ = ∑gₑ-1
     f = log1p(Σ) + maxval
     @. g = g / (Σ + 1)
     return f
+end
+
+"""
+Find the maximum element of `p` and its index. This is significantly faster than the built-in `findmax`.
+"""
+function myfindmax(p)
+    maxval, maxind = p[1], 1
+    @inbounds for i in 2:length(p)
+        if p[i] > maxval
+            maxval, maxind = p[i], i
+        end
+    end
+    return maxval, maxind
 end
 
 """

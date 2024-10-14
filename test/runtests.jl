@@ -166,3 +166,6 @@ end
 @testset "Synthetic data" begin
     include("synthetic-ueg.jl")
 end
+
+@testset "Optimal transport" begin
+end

@@ -1,4 +1,4 @@
-mutable struct ExecutionStats{T<:AbstractFloat, V<:AbstractVector{T}, DF}
+mutable struct ExecutionStats{T<:AbstractFloat, V<:AbstractVector{T}, S<:AbstractArray{T}, DF}
     status::Symbol
     elapsed_time::T
     iter::Int
@@ -6,7 +6,7 @@ mutable struct ExecutionStats{T<:AbstractFloat, V<:AbstractVector{T}, DF}
     neval_jtprod::Int
     primal_obj::T
     dual_obj::T
-    solution::V
+    solution::S
     residual::V
     optimality::T
     tracer::DF

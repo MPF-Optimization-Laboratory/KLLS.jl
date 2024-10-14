@@ -4,8 +4,8 @@ stored in the `lse` internal buffer.
 """
 function lseatyc!(kl, y)
     @unpack A, c, nbuf, lse = kl
-    nbuf .= -c
-    mul!(nbuf, A', y, 1, 1)
+    nbuf .= c
+    mul!(nbuf, A', y, 1, -1)
     return obj!(lse, nbuf)
 end
 

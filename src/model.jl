@@ -10,7 +10,7 @@ Structure for KLLS model
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct KLLSModel{T<:AbstractFloat, M<:AbstractMatrix{T}, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
+@kwdef mutable struct KLLSModel{T<:AbstractFloat, M, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
     A::M
     b::SB
     c::S = begin
