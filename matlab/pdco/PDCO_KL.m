@@ -1,14 +1,27 @@
-function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, lmda, delta, print)
+function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, d2)
+    % Matt Edit 10/15: added scaling via d2 to inputs
+    % deleted printing.
+    % d2 commented below recovers usual setup
     
+    print = 0;
+
     A(end+1, :) = 1; % enforce simplex constraint
     b(end+1, :) = 1;
 
-    [m, n] = size(A);
+    d2(end+1,:) = 10e-3; % default value of delta, chosen by matt.
+    % this is simplex constraint tolerance
     
+
+    [m, n] = size(A);
+     %{
     % these choices of d2 and d1 give the standard framework
+
     d2 = sqrt(lmda) * ones(m, 1);
     d2(end) = delta;
-    d1 = 0;
+
+     %}
+
+    d1=0;
 
     % ---------------------------------------
     
