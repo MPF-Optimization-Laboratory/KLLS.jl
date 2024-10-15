@@ -1,4 +1,13 @@
-lambdas = logspace(-4, 2, 7)
+lambdas = logspace(-2, 2, 3);
+print = 0;
+delta = 1e-3;
+
+folder = strcat(string(month(t)),string(month(t)),'_',string(hour(t)),string(minute(t)));
+directory = fullfile("GitHub\KLLS.jl\numerics\outputs",folder);
+    
+if ~exist(directory, 'dir')
+       mkdir(directory)
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -14,8 +23,6 @@ A = data.A;
 
 b = data.b_avg;
 b = b';
-x0 = data.x; % already normalized
-x0 = x0'; 
 mu = data.mu; % prior provided
 mu = double(mu'); % was single precision
 
@@ -26,13 +33,22 @@ mu = double(mu'); % was single precision
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 for lam = lambdas
-    [x, y, z, inform,tracer_UEG] = PDCO_KL(A, b, mu, lmda_test, delta, print);
-    t = datetime
-    name = strcat()
+    [x, y, z, inform,tracer_UEG] = PDCO_KL(A, b, mu, lam, delta, print);
+    t = datetime;
+    name = strcat('UEG_PDCO_lam',string(lam));
+    
+    writematrix(tracer_UEG,strcat(directory,n".csv"))
 end
 
 data = load('data/rho-meson_testproblem.mat');
 A = data.A;
 b = data.b_avg;
-x0 = data.x;
 mu = data.mu; % prior provided
+
+
+for lam = lambdas
+    [x, y, z, inform,tracer_rho_meson] = PDCO_KL(A, b, mu, lmda_test, delta, print);
+    t = datetime;
+    name = strcat('PDCO_rho_meson',string(month(t)),string(day(t)),'_',string(hour(t)),string(minute(t)),'_',string(lam));
+    writematrix(tracer_rho_meson,fullfile("GitHub\KLLS.jl\numerics\outputs",name,".csv"))
+end
