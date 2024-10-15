@@ -9,6 +9,7 @@ using Random
 using NPZ
 using CSV
 using Dates
+
 include("solve_metrics.jl")
 
 lambdas = (10.0).^(range(-2,stop=2,length=3))
