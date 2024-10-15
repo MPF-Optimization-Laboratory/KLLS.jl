@@ -1,5 +1,14 @@
-# Goal: Given A, b, lambda
-# Solve the KLLS problem for Ax=b and compare various metrics
+###############################################################################
+#
+# solve_metrics.jl
+# Takes as input: KLLS model (A,b,mu, ...) & problem name (string)
+# Outputs: Solves problem with:
+#           - KKLS algorithm
+#           - L-BFGS (julia)
+# Saves per iteration infomation (dual objective value, dual gradient value
+# as dated CSV file, in numerics/outputs/... directory
+#
+##############################################################################
 
 using Optim
 using DataFrames

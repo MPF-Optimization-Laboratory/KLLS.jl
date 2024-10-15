@@ -28,7 +28,8 @@ mu = double(mu'); % was single precision
 for lam = lambdas
     [x, y, z, inform,tracer_UEG] = PDCO_KL(A, b, mu, lmda_test, delta, print);
     t = datetime
-    name = strcat()
+    name = strcat('PDCO_UEG',string(month(t)),string(day(t)),'_',string(hour(t)),string(minute(t)),'_',string(lam))
+    writematrix(tracer_UEG,fullfile("GitHub\KLLS.jl\numerics\outputs",name,".csv"))
 end
 
 data = load('data/rho-meson_testproblem.mat');
