@@ -1,7 +1,14 @@
-function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, d2)
-    % Matt Edit 10/15: added scaling via d2 to inputs
-    % deleted printing.
-    % d2 commented below recovers usual setup
+function [x,y,z,inform,tracer] = PDCO_KL(A, b, mu, d2)
+    % Changelog: 10/15: (MATT)
+    % -added scaling via d2 to inputs
+    % This is necessary for UEG to incorporate the weight matrix C = diag(sqrt(d2)))
+    % 
+    % - deleted printing.
+    % - d2 commented below recovers usual setup
+    % - removed lambda, delta as inputs. 
+    % - lambda is now passed as part of d2, delta is a default argument (see below)
+    
+    % Code below originally by Nick
     
     print = 0;
 
@@ -66,8 +73,8 @@ function [x,y,z,inform,tracer_test] = PDCO_KL(A, b, mu, d2)
     options.Print = print;
     options.wait = 0;
 
-
-    [x,y,z,inform,tracer_test] = pdco(@KL, A, b, bl, bu, d1, d2,options,x0,y0,z0,xsize,zsize, mu); 
+    % Additional return variable tracer added by Matt, to allow for per-iteration information
+    [x,y,z,inform,tracer] = pdco(@KL, A, b, bl, bu, d1, d2,options,x0,y0,z0,xsize,zsize, mu); 
 
 end
 
