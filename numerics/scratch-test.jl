@@ -1,7 +1,7 @@
 # Basic Interdependency Testing
 # Making sure KLLS, optim, Matlab all run smoothly in one environment
 
-using Optim
+
 using DataFrames
 using KLLS
 using Random
@@ -10,6 +10,9 @@ using CSV
 using Dates
 using LinearAlgebra
 using Plots
+
+include("Optim.jl")
+
 #=
 First set of tests, small A, random gaussian, uniform solution norm(x)=1
 b = Ax
@@ -46,12 +49,12 @@ z0 = randn(m)
 
 xs=[]
 cb = tr -> begin
-            push!(xs, tr[end].metadata)
+            push!(xs, [tr[end].metadata["f evals"] , tr[end].metadata["∇f evals"]])
             false
         end
 
-out =optimize(f,grad!,z0,
-        LBFGS(),
+out =Optim.optimize(f,grad!,z0,
+        Optim.LBFGS(),
         Optim.Options(
             callback = cb,
             store_trace = true,
@@ -60,6 +63,17 @@ out =optimize(f,grad!,z0,
         )
         )
 
+function optimToDF(optimState::Vector,cumulative_cost::Vector)
+    df = DataFrame(iter=Int[], dual_obj=Float64[], r=Float64[],f_evals =Int[],grad_evals = []) #, Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
+    for i in 1:size(optimState,1)
+        log = (optimState[i].iteration, optimState[i].value, optimState[i].g_norm,cumulative_cost[i][1],cumulative_cost[i][2])
+        push!(df,log)
+    end
+
+    return df
+end
+
+optimToDF(out,xs)
 
 UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")
 
