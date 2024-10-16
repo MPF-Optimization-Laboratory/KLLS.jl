@@ -73,7 +73,7 @@ function optimToDF(optimState::Vector,cumulative_cost::Vector)
     return df
 end
 
-optimToDF(out,xs)
+d = optimToDF(out.trace,xs)
 
 UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")
 
@@ -86,7 +86,7 @@ n = length(q)
 
 kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
 optTol = 10e-7
-test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true)
+test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true,logging=true)
 
 #=
 FOLDER = "1010_1645"

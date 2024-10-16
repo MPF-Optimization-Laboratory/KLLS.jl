@@ -306,7 +306,7 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
   inform = 0;
 
   % Added intialization for trace
-  tracer_mat = zeros(1,4);
+  tracer_mat = zeros(1,5);
 
   % 07 Aug 2003: No need for next lines.
   %if length(d1)==1, d1 = d1*ones(n,1); end   % Allow scalar d1, d2
@@ -1198,7 +1198,7 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
     %-------------------------------------------------------------------
     % Matt Piggybacking logging; changing print -> save as a matrix
     %-------------------------------------------------------------------
-    tracer_mat(PDitns,:) = [PDitns,objtrue,norm(pdMat*x-b),sum(x*beta)];
+    tracer_mat(PDitns,:) = [PDitns,objtrue,norm(pdMat*x-b),sum(x*beta),itncg];
 
     if PriLev > 0
       str1    = sprintf('\n%3g%5.1f' , PDitns      , log10(mu)   );
