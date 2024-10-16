@@ -47,6 +47,13 @@ function optimize(d::D, initial_x::Tx, method::M,
 
     options.show_trace && print_header(method)
     _time = time()
+
+    ####################################################################################
+    #
+    # 10/16/2024 - Matt Piggybacking Tracer of julia optim here.
+    #
+    ####################################################################################
+
     trace!(tr, d, state, iteration, method, options, _time-t0)
     ls_success::Bool = true
     while !converged && !stopped && iteration < options.iterations
