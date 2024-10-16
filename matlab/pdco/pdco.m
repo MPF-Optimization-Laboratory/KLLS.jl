@@ -1,6 +1,9 @@
 function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
     pdco(pdObj,pdMat,b,bl,bu,d1,d2,options,x0,y0,z0,xsize,zsize, p_)
 
+% Matt comment 10/15: returned variable Tracer_mat piggybacks on usual print options to return
+% per-iteration information
+
 %-----------------------------------------------------------------------
 % pdco.m: Primal-Dual Barrier Method for Convex Objectives (23 Nov 2013)
 %-----------------------------------------------------------------------

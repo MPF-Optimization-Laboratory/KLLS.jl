@@ -50,7 +50,7 @@ function solve_metrics(
 
     ## First method, Solve via KLLS and store in tracer, save to CSV
     soln = KLLS.solve!(kl, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
-    if(soln.tracer[end,end] == "✓")
+    if(soln.status == :optimal)
         dfToCSV(soln.tracer,"KLLS",problem_name,string(kl.λ))
     else
         dfToCSV(soln.tracer,"KLLS",problem_name* "_FAILED",string(kl.λ))

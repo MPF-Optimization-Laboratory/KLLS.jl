@@ -44,9 +44,16 @@ grad!(grad_in_place,y) = KLLS.dGrad!(data,y,grad_in_place)
 
 z0 = randn(m)
 
+xs=[]
+cb = tr -> begin
+            push!(xs, tr[end].metadata)
+            false
+        end
+
 out =optimize(f,grad!,z0,
         LBFGS(),
         Optim.Options(
+            callback = cb,
             store_trace = true,
             show_trace = false,
             extended_trace = true
@@ -67,7 +74,7 @@ kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
 optTol = 10e-7
 test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true)
 
-
+#=
 FOLDER = "1010_1645"
 
 files_to_plot = readdir(joinpath(@__DIR__ ,"outputs",FOLDER))
@@ -81,7 +88,7 @@ for filename in files_to_plot
     end
     display(UEG_plot)
 end
-
+=#
 
 # no need to specify q, as default is uniform.
 

@@ -1,3 +1,9 @@
+%%%
+% Warning: this relies on altered versions of pdco, KL.m, and PDCO_KL.m
+% Previous versions by Nick (prior to 10/15/2024) will not run properly.
+% See comments in pdco / pdco_kl for details of changes
+%%%
+
 lambdas = logspace(-2, 2, 3);
 t = datetime;
 
