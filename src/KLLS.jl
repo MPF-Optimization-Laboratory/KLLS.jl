@@ -13,7 +13,7 @@ using LinearOperators
 using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
 
-export KLLSModel, SSModel, OTModel, NewtonEQ, TrunkLS
+export KLLSModel, SSModel, OTModel, NewtonEQ, NewtonEQKLLS, TrunkLS
 export solve!, scale!, regularize!, histogram, maximize!, reset!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)

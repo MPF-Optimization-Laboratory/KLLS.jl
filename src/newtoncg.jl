@@ -206,34 +206,23 @@ const cg_msg = Dict(
 Compute the residual of the gradient of the dual problem 
 
     F(y, t) = [ A(tx(y)) + λCy - b ]
-
 """ 
-function residual!(kl::KLLSModel, y, Fx)
-	# increment!(kl, :neval_residual)
+function nlresidual!(F, y, kl::KLLSModel)
     lseatyc!(kl, y)                 # Calculate gradient
-	Fx = dGrad!(kl, y, Fx)          # r ≡ Fx = ∇d(y)	
-	return Fx
+	dGrad!(kl, y, F)          # r ≡ Fx = ∇d(y)	
+    return F
 end
 
 """
-    Jy = jprod_residual!(kl, y, z, Jy)
+    Jy = nlprod!(Jy, z, _, kl::KLLSModel)
 
 Compute the Jacobian-vector product, 
 
     ∇²d(A'y)z := Jy
 """
-function jprod_residual!(kl::KLLSModel, z, Jy)
-    # increment!(kl, :neval_jprod_residual)
+function nljprod!(Jy, z, _, kl::KLLSModel)
     dHess_prod!(kl, z, Jy)
     return Jy
-end
-
-function nlresidual!(F, y, kl::KLLSModel)
-    residual!(kl, y, F)
-end
-
-function nljprod!(Jy, z, y, kl::KLLSModel)
-    jprod_residual!(kl, z, Jy)
 end
 
 struct NewtonEQKLLS end
