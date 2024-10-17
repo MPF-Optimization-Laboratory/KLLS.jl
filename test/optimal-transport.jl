@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.46
+# v0.19.47
 
 using Markdown
 using InteractiveUtils
@@ -8,7 +8,7 @@ using InteractiveUtils
 push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/KLLS.jl")
 
 # ╔═╡ 25d15fce-878a-11ef-223c-d7d7e72be074
-using Test, LinearOperators, LinearAlgebra, NPZ, Plots, OptimalTransport;
+using Test, LinearOperators, LinearAlgebra, NPZ, Plots, OptimalTransport, Statistics, Distances, BenchmarkTools;
 
 # ╔═╡ e09d8892-f7e6-4e15-bd58-d35a82fcb64b
 using PlutoLinks
@@ -19,18 +19,69 @@ using PlutoLinks
 # ╔═╡ e42047ee-338d-4223-bf8d-f18ed39cdc03
 md"# Optimal Transport Tests"
 
+# ╔═╡ c506736e-612a-44b7-89a9-8bc3cfbbd9b9
+md"""
+The entropically-regularized OT problem has the form
+
+$$x$$
+"""
+
 # ╔═╡ 8269b11a-5cef-45d1-a8a1-9323457d7d50
 md"## Example from the OptimalTransport.jl documentation"
 
+# ╔═╡ f8a265ec-2a4f-4299-ae95-4db2af1458b5
+begin
+μsupport = νsupport = range(-2, 2; length=100)
+C2 = pairwise(SqEuclidean(), μsupport', νsupport'; dims=2)
+μ = normalize!(exp.(-μsupport .^ 2 ./ 0.5^2), 1)
+ν = normalize!(νsupport .^ 2 .* exp.(-νsupport .^ 2 ./ 0.5^2), 1)
+
+plot(μsupport, μ; label=raw"$\mu$", size=(600, 400))
+plot!(νsupport, ν; label=raw"$\nu$")
+end
+
+# ╔═╡ fd4098ab-7865-432a-b3ec-976427be0850
+Tsk, Tkl, klstats = let
+	ϵ = 0.01*median(C2)
+	Tsk = sinkhorn(μ, ν, C2, ϵ)
+    Tkl, klstats = let
+	    ot = KLLS.OTModel(μ, ν, C2, ϵ)
+	    solve!(ot, trace=true)
+	end
+   	Tsk, Tkl, klstats
+   end;
+
+# ╔═╡ 9dc3458b-17dc-4f0b-8666-4e1d4bc0c8ba
+klstats.tracer
+
+# ╔═╡ 765ad53a-fa8d-4316-9e0d-f84090a8299d
+let
+	P1 = heatmap(μsupport, νsupport, Tsk;
+                 title="Sinkhorn", aspect_ratio=:equal, cbar=false,
+	             showaxis=false, grid=false)
+	P2 = heatmap(μsupport, νsupport, Tkl;
+			     title="KLLS", aspect_ratio=:equal, cbar=false,
+				 showaxis=false, grid=false)
+	plot(P1, P2)
+end
+
+# ╔═╡ 67e1c7c8-7892-4a34-87f4-b9a43ebcc2ff
+@btime sinkhorn(μ, ν, C2, 0.006);
+
+# ╔═╡ c5442902-3b37-4f57-acab-2a0cad8bc482
+@btime solve!($(OTModel(μ, ν, C2, 0.006)));
+
+# ╔═╡ 5a0f8920-18e4-498b-9a6a-67962ade6b6a
+Tots, stats = let
+	ot = KLLS.OTModel(μ, ν, C2, 0.001; λ=1e-4)
+    γ2, stats = solve!(ot, logging=0)
+end;
+
+# ╔═╡ 4b4df76a-1a21-44b7-90f4-5dda8e4d7226
+stats
+
 # ╔═╡ cb0629b6-7eec-43f4-9eac-a04cb539c7b0
 md"## Sharvaj's example"
-
-# ╔═╡ 0d927791-2f67-4439-b56b-fe88bb4cca57
-function oterror(a, b, X)
-	erra = norm(sum(X, dims=2) .- a, Inf)
-	errb = norm(sum(X, dims=1) .- b, Inf)
-	max(erra, errb)
-end
 
 # ╔═╡ fdc31fee-86d7-4aec-9983-ef8227a80321
 ots = begin
@@ -41,25 +92,16 @@ ots = begin
 	# a = MtlArray(convert(Vector{Float32}, a))
 	# b = MtlArray(convert(Vector{Float32}, b))
 	# C = MtlArray(convert(Matrix{Float32},C))
-	OTModel(C, a, b)
-end
+end;
 
 # ╔═╡ d215c8ad-a7e6-43d0-a1e0-4a58eaf0765e
-Psinkhorn = sinkhorn(a, b, C, 1e-1);
+Psinkhorn = sinkhorn(a, b, C, median(C[:])*0.05);
 
 # ╔═╡ 38f4c75b-f995-4d19-a4ce-fa3caf78724a
 begin
-	regularize!(ots, 1e-5)
-    ots_stats = solve!(ots, trace=true)
+	P, ots_stats = solve!(OTModel(a, b, C, median(C[:])*0.05))
 	@test ots_stats.status == :optimal
-	Pots = reshape(ots_stats.solution, size(C))
-end;
-
-# ╔═╡ 47ba1b08-5018-4ecc-93da-93b34e5f611b
-norm(Pots[:] - Psinkhorn[:], Inf)
-
-# ╔═╡ a73348e0-fb49-40f7-a35e-269d9d038cd1
-oterror(a, b, Psinkhorn), oterror(a, b, Pots)
+end
 
 # ╔═╡ 174e2187-d409-4edb-be46-bf680df9f63e
 md"## Solve small random OT"
@@ -67,30 +109,28 @@ md"## Solve small random OT"
 # ╔═╡ e1952c1a-8823-4dc4-8e71-747c65c52f04
 let
 	m, n = 2, 3
+	ϵ = 0.1
 	C = rand(m, n)
 	p = (v = rand(m); v./sum(v))
 	q = (v = rand(n); v./sum(v))
-	ot = OTModel(C, p, q)
-    otstats = solve!(ot, trace=true)
+	ot = OTModel(p, q, C, ϵ)
+    T, otstats = solve!(ot)
 	@test otstats.status == :optimal
 end
 
 # ╔═╡ 784532ae-a31b-4675-8e4c-651d84f5a01b
-md"## Linear operator"
+md"## Test linear OT operator"
 
 # ╔═╡ d04cbba8-1ef8-4ef7-b996-5fc1c818b2c7
 # Create operator
 begin
-	m, n = 3,4
+	m, n = 3, 4
 	X = rand(m, n)
 	A = KLLS.row_col_sum_operator(m, n)
 end
 
-# ╔═╡ 51ba3c6b-c9db-48a6-9514-258af6d2bdac
-let
-	z = zeros(m+n) # output
-	mul!(z, A, vec(X), 1, 1)
-end
+# ╔═╡ b147d5d5-fddd-4a53-97d5-9091e2a79e65
+@test check_ctranspose(A)
 
 # ╔═╡ 0df33b57-f051-4bfd-9cec-e0eb555a359e
 @test size(A) == (m+n, m*n)
@@ -101,8 +141,23 @@ begin
 	@test all( (A*vec(X))[m+1:end] .≈ vec(sum(X, dims=1)) )
 end
 
-# ╔═╡ b147d5d5-fddd-4a53-97d5-9091e2a79e65
-@test check_ctranspose(A)
+# ╔═╡ 9f9949a6-5458-45a9-95ce-71fbc4e9fd4a
+md"## Utility functions"
+
+# ╔═╡ 0d927791-2f67-4439-b56b-fe88bb4cca57
+"""1-norm error in marginals"""
+function oterror(a, b, X)
+	erra = norm(vec(sum(X, dims=2)) .- a, 1)
+	errb = norm(vec(sum(X, dims=1)) .- b, 1)
+	max(erra, errb)
+end
+
+# ╔═╡ a73348e0-fb49-40f7-a35e-269d9d038cd1
+oterror(a, b, Psinkhorn), oterror(a, b, P)
+
+# ╔═╡ 86abbeaa-8c04-4fd2-9428-72bcf8be0d1a
+"Heat map of the transportation plan"
+plots_heatmap(P) = heatmap(1:size(P,1), 1:size(P,2), P)
 
 # ╔═╡ 88cebb99-01fc-43b2-be2c-30825fac165d
 md"## Pluto Testing Facilities"
@@ -136,20 +191,26 @@ HTML("""
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 LinearOperators = "5c8ed15e-5a4c-59e4-a42b-c7e8811fb125"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
 OptimalTransport = "7e02d93a-ae51-4f58-b602-d97af76e3b33"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoLinks = "0ff47ea0-7a50-410d-8455-4348d5de0420"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
+BenchmarkTools = "~1.5.0"
+Distances = "~0.10.11"
 LinearOperators = "~2.9.0"
 NPZ = "~0.4.3"
 OptimalTransport = "~0.3.19"
 Plots = "~1.40.8"
 PlutoLinks = "~0.1.6"
+Statistics = "~1.11.1"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -158,7 +219,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.11.0"
 manifest_format = "2.0"
-project_hash = "27a1f4262e2120a9a4ab04aba38a381c157373f9"
+project_hash = "9a0dc42324d0a3654d58dc903e25a36eb31578b9"
 
 [[deps.AliasTables]]
 deps = ["PtrArrays", "Random"]
@@ -1576,22 +1637,31 @@ version = "1.4.1+1"
 # ╟─e42047ee-338d-4223-bf8d-f18ed39cdc03
 # ╠═25d15fce-878a-11ef-223c-d7d7e72be074
 # ╠═92018049-a8d3-48b5-aaca-d097da69b7f8
+# ╠═c506736e-612a-44b7-89a9-8bc3cfbbd9b9
 # ╟─8269b11a-5cef-45d1-a8a1-9323457d7d50
+# ╠═f8a265ec-2a4f-4299-ae95-4db2af1458b5
+# ╠═fd4098ab-7865-432a-b3ec-976427be0850
+# ╠═9dc3458b-17dc-4f0b-8666-4e1d4bc0c8ba
+# ╠═765ad53a-fa8d-4316-9e0d-f84090a8299d
+# ╠═67e1c7c8-7892-4a34-87f4-b9a43ebcc2ff
+# ╠═c5442902-3b37-4f57-acab-2a0cad8bc482
+# ╠═4b4df76a-1a21-44b7-90f4-5dda8e4d7226
+# ╠═5a0f8920-18e4-498b-9a6a-67962ade6b6a
 # ╟─cb0629b6-7eec-43f4-9eac-a04cb539c7b0
-# ╠═47ba1b08-5018-4ecc-93da-93b34e5f611b
 # ╠═a73348e0-fb49-40f7-a35e-269d9d038cd1
-# ╠═0d927791-2f67-4439-b56b-fe88bb4cca57
 # ╠═d215c8ad-a7e6-43d0-a1e0-4a58eaf0765e
 # ╠═38f4c75b-f995-4d19-a4ce-fa3caf78724a
 # ╠═fdc31fee-86d7-4aec-9983-ef8227a80321
 # ╟─174e2187-d409-4edb-be46-bf680df9f63e
 # ╠═e1952c1a-8823-4dc4-8e71-747c65c52f04
 # ╟─784532ae-a31b-4675-8e4c-651d84f5a01b
-# ╠═51ba3c6b-c9db-48a6-9514-258af6d2bdac
-# ╠═0df33b57-f051-4bfd-9cec-e0eb555a359e
-# ╠═4eff0ff5-2dde-4dfa-8b5a-30bf594ae857
 # ╠═d04cbba8-1ef8-4ef7-b996-5fc1c818b2c7
 # ╠═b147d5d5-fddd-4a53-97d5-9091e2a79e65
+# ╠═0df33b57-f051-4bfd-9cec-e0eb555a359e
+# ╠═4eff0ff5-2dde-4dfa-8b5a-30bf594ae857
+# ╟─9f9949a6-5458-45a9-95ce-71fbc4e9fd4a
+# ╠═0d927791-2f67-4439-b56b-fe88bb4cca57
+# ╠═86abbeaa-8c04-4fd2-9428-72bcf8be0d1a
 # ╟─88cebb99-01fc-43b2-be2c-30825fac165d
 # ╠═e09d8892-f7e6-4e15-bd58-d35a82fcb64b
 # ╟─4d8ebc3a-8a4e-498a-9856-b99a790f5392

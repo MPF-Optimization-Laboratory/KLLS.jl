@@ -42,9 +42,9 @@ KLLSModel(A, b; kwargs...) = KLLSModel(A=A, b=b; kwargs...)
 function Base.show(io::IO, kl::KLLSModel)
     println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))
-    println(io, @sprintf("   m = %5d  bNrm = %7.1e", size(kl.A, 1), kl.bNrm))
-    println(io, @sprintf("   n = %5d  λ    = %7.1e", size(kl.A, 2), kl.λ))
-    println(io, @sprintf("       %5s  τ    = %7.1e"," ", kl.scale))
+    println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(kl.A, 1), kl.bNrm))
+    println(io, @sprintf("   n = %10d  λ    = %7.1e", size(kl.A, 2), kl.λ))
+    println(io, @sprintf("       %10s  τ    = %7.1e"," ", kl.scale))
 end
 
 function regularize!(kl::KLLSModel{T}, λ::T) where T

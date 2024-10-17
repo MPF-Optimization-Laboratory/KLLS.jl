@@ -1,5 +1,15 @@
-struct OTModel{KL}
+struct OTModel{KL, T}
+    m::Int64
+    n::Int64
+    ε::T
+    λ::T
     kl::KL
+end
+
+function Base.show(io::IO, ot::OTModel)
+    println(io, "Entropic Optimal Transport Model")
+    println(io, @sprintf("   m = %10d  ϵ = %10.1e", ot.m, ot.ε))
+    println(io, @sprintf("   n = %10d  λ = %10.1e", ot.n, ot.λ))
 end
 
 """
@@ -7,19 +17,38 @@ end
 
 Construct a regularized optimal transport model with cost matrix `C` and marginals `p` and `q`.
 """
-function OTModel(C, p, q; kwargs...)
+function OTModel_prior(p, q, C, ε; kwargs...)
     m, n = size(C)
     A = row_col_sum_operator(m, n)
     b = vcat(p, q)
     c = vec(C)
+    q = inv.(exp.(c/ε))
+    kl = KLLSModel(A, b, c=0*c, q=q; kwargs...)
+    λ = kl.λ
+    regularize!(kl, ε*kl.λ)
+    return OTModel(m, n, ε, λ, kl)
+end
+
+function OTModel(p, q, C, ε; kwargs...)
+    m, n = size(C)
+    A = row_col_sum_operator(m, n)
+    b = vcat(p, q)
+    c = vec(C)/ε
     kl = KLLSModel(A, b, c=c; kwargs...)
-    return OTModel(kl)
+    λ = kl.λ
+    regularize!(kl, ε*kl.λ)
+    return OTModel(m, n, ε, λ, kl)
 end
 
 function solve!(ot::OTModel; kwargs...)
     stats = solve!(ot.kl; kwargs...)
+    P = reshape(stats.solution, ot.m, ot.n)
+    return P, stats
 end
-regularize!(ot::OTModel, λ) = regularize!(ot.kl, λ)
+function regularize!(ot::OTModel, λ)
+   ot.kl.c ./= λ
+   regularize!(ot.kl, λ)
+end
 
 """
     row_col_sum_operator(m::Int, n::Int) -> LinearOperator
