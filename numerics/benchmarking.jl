@@ -13,7 +13,7 @@ using LinearAlgebra
 
 include("solve_metrics.jl")
 
-lambdas = (10.0).^(range(-2,stop=2,length=3))
+lambdas = (10.0).^(range(-5,stop=2,length=8))
 lambdas = round.(lambdas,sigdigits = 3)
 ###########################################################
 #
