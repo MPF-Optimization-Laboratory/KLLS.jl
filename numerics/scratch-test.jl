@@ -89,6 +89,7 @@ size(test_dict["b"])
 
 kl_MNIST = KLLSModel(test_dict["A"]',test_dict["b"])
 optTol = 10e-7
+
 test_var = KLLS.solve!(kl_MNIST, atol=optTol, rtol=optTol,max_iter =200,trace=true,logging=true)
 
 #=
@@ -122,4 +123,3 @@ mat"version"
 #testVar = mat"PDCO_KL.m"
 =#
 
-=#

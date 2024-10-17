@@ -50,7 +50,6 @@ function solve_metrics(
         max_iter::Int = 400)
 
     ## First method, Solve via KLLS and store in tracer, save to CSV
-    print("in solver before KLLS")
     soln = KLLS.solve!(kl, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
     # Tracer stores CGITS already, very easy to use
     if(soln.status == :optimal)
@@ -82,7 +81,9 @@ function solve_metrics(
                 extended_trace = true,
                 callback = cb,
                 # Piggyback trace to return ∇f and f evals per iteration
-                g_tol = optTol,
+                g_tol = optTol + optTol*kl.bNrm,
+
+                # This is something to chat about, early stopping criterion
                 f_tol = 0,
                 x_tol = 0
             )
