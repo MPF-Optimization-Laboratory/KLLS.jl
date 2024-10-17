@@ -47,9 +47,10 @@ function solve_metrics(
         kl::KLLSModel,
         problem_name::String,
         optTol::Real = 1e-6,
-        max_iter::Int = 1000)
+        max_iter::Int = 400)
 
     ## First method, Solve via KLLS and store in tracer, save to CSV
+    print("in solver before KLLS")
     soln = KLLS.solve!(kl, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true)
     # Tracer stores CGITS already, very easy to use
     if(soln.status == :optimal)
@@ -58,7 +59,7 @@ function solve_metrics(
     else
         dfToCSV(soln.tracer,"KLLS",problem_name* "_FAILED",string(kl.λ))
     end
-
+    
     ## Second method, solve dual via KLLS
     ## Def'n of f and nabla f as expected by Optim
     f(y) = KLLS.dObj!(kl,y)

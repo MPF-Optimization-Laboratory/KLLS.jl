@@ -8,3 +8,4 @@ KLLS.code-workspace
 klsolve.html
 
 /.quarto/
+data/MNIST_data_denoising.npz

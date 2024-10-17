@@ -75,18 +75,21 @@ end
 
 d = optimToDF(out.trace,xs)
 
-UEG_dict = npzread("data/synthetic-UEG_testproblem.npz")
+test_dict = npzread("data/MNIST_data_denoising.npz")
 
-q = convert(Vector{Float64}, UEG_dict["mu"])
-q .= max.(q, 1e-13)
-q .= q./sum(q)
-C = inv.(UEG_dict["b_std"]) |> diagm
+#q = convert(Vector{Float64}, UEG_dict["mu"])
+#q .= max.(q, 1e-13)
+#q.= q./sum(q)
+#C = inv.(UEG_dict["b_std"]) |> diagm
 λ = 1e-4
-n = length(q)
+#n = length(q)
 
-kl_UEG = KLLSModel(UEG_dict["A"],UEG_dict["b_avg"],C=C,q=q,λ=λ)
+size(test_dict["A"]')
+size(test_dict["b"])
+
+kl_MNIST = KLLSModel(test_dict["A"]',test_dict["b"])
 optTol = 10e-7
-test_var = KLLS.solve!(kl_UEG, atol=optTol, rtol=optTol,max_iter =200,trace=true,logging=true)
+test_var = KLLS.solve!(kl_MNIST, atol=optTol, rtol=optTol,max_iter =200,trace=true,logging=true)
 
 #=
 FOLDER = "1010_1645"
@@ -117,4 +120,6 @@ mat"version"
 
 #mat"addpath('/Matlab/pdco/')"      
 #testVar = mat"PDCO_KL.m"
+=#
+
 =#
