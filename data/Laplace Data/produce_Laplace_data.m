@@ -9,9 +9,9 @@ function [A, b, p, x_values] = produce_Laplace_data(f, K, s_values, n)
     %
     % Outputs:
     %   - A: (K+1+length(s_values), n) matrix for Laplace transforms and moments.
-    %   - b: A (K+1+length(s_values), 1) vector of measurements.
-    %   - p: A (n, 1) vector representing the discretized density function (unnormalized).
-    %   - x_values: A (n, 1) vector of x values used to evaluate f.
+    %   - b: a (K+1+length(s_values), 1) vector of measurements.
+    %   - p: a (n, 1) vector representing the discretized density function (unnormalized).
+    %   - x_values: a (n, 1) vector of x values used to evaluate f.
 
     m = (K + 1) + length(s_values);
     
