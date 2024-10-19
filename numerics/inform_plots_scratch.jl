@@ -9,7 +9,7 @@ using Dates
 using Plots
 using MAT
 using LinearAlgebra
-using Tables
+using PrettyTables
 using CairoMakie, Makie
 
 include("plot_utils.jl")
@@ -73,7 +73,9 @@ PDCO_cg_itns = PDCO_dict["result"]
 FinalCosts = hcat(lambdas , (2.0).*cgitns, (2.0).*PDCO_cg_itns')
 df = DataFrame(FinalCosts, ["λ", "KLLS", "PDCO"])
 
-CSV.write(joinpath(pwd , "MatVec_Comparisons.csv"),df);
+#CSV.write(joinpath(pwd() , "MatVec_Comparisons.csv"),df);
+
+
 
 f = Figure()
 ax = Axis(f[1, 1])
@@ -83,6 +85,7 @@ str = String(io.data)
 
 
 text(5,5, text=str, font="Consolas", textsize=14)
+
 
 ############################################################################
 #
