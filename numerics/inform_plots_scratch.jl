@@ -39,7 +39,8 @@ max_time = 60.0;
 lambdas = (10.0).^(range(-12,stop=-9,length=4))
 lambdas =round.(lambdas, sigdigits = 3)
 
-lamdas = [1.0]
+cgitns = zeros(size(lambdas))
+
 
 #################################################################################
 #
@@ -51,11 +52,11 @@ lamdas = [1.0]
 figure_1 = plot(title = "ρ-meson problem", xlabel = "ω (frequency)", ylabel = "Probability")
 plot!(x_test,labels = "True Density",lw = 2)
 
-for λ in lambdas
+for (index,λ) in enumerate(lambdas)
     local data = KLLSModel(A,b,C=I, q = μ, λ = λ)
-    stats = KLLS.solve!(data, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true,logging=true)
+    global stats = KLLS.solve!(data, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true,logging=true)
     plot!(stats.solution, labels = "λ = " * string(λ))
-
+    cgitns[index] =sum(stats.tracer[:,6])
 end
 
 
@@ -67,7 +68,7 @@ display(figure_1)
 #
 ############################################################################
 
-
+#=
 UEG_dict= matread(joinpath(pwd(),"data","synthetic-UEG_testproblem.mat"))
 
 A = UEG_dict["A"]
@@ -102,6 +103,7 @@ end
 
 
 display(figure_2)
+=#
 
 ############################################################################
 #

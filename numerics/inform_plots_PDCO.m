@@ -10,12 +10,20 @@ p = data.x';
 
 % this choices of d2 gives the standard framework
 % i.e no weights for rho-meson problem
-
-for lam =[10e-6]
+lams = logspace(-12,-2,11);
+result = zeros('like',lams);
+index = 1;
+for lam = lams
+    clear tracer x y z 
 
     d2 = sqrt(lam) * ones(m, 1);
 
     [x, y, z, inform,tracer] = PDCO_KL(A, b, mu, d2);
     name = strcat('rho_meson_pdco_lam',string(lam));
+    
 
+    lam
+    result(index) = sum(tracer(:,end))
+    
+    index = index +1;
 end
