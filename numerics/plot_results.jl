@@ -9,10 +9,9 @@ using Plots
 
 include("plot_utils.jl")
 
-## 10/15 comment: This is not the correct version; home device need to push to origin.
 ## in progress of fixing.
 
-folder = "1017_1520"
+folder = "1017_1627"
 
 files_to_plot = readdir(joinpath(@__DIR__ ,"outputs",folder))
 
