@@ -78,3 +78,30 @@ for lam = lambdas
 
     writematrix(tracer_rho_meson,strcat(fullfile(directory,name),".csv"))
 end
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+data = load('data/rho-meson_testproblem.mat');
+A = data.A;
+
+b = data.b_avg;
+b =  b';
+mu = data.mu; % prior provided
+mu = double(mu');
+
+[m, n] = size(A);
+
+% this choices of d2 gives the standard framework
+% i.e no weights for rho-meson problem
+
+for lam = lambdas
+
+    d2 = sqrt(lam) * ones(m, 1);
+
+    [x, y, z, inform,tracer_rho_meson] = PDCO_KL(A, b, mu, d2);
+    name = strcat('rho_meson_pdco_lam',string(lam));
+
+    writematrix(tracer_rho_meson,strcat(fullfile(directory,name),".csv"))
+end
+
