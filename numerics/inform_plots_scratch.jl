@@ -26,8 +26,8 @@ A = laplace_dict["A"]
 b = vec(laplace_dict["b_avg"])
 x_test = vec(laplace_dict["x"])
 
-#x_plot = vec(laplace_dict["x_values"])
-#p_soln = vec(laplace_dict["p"])'
+# x_plot = vec(laplace_dict["x_values"])
+#p_soln = vec(laplace_dict["p"])
 
 μ = ones(size(A)[2]);
 μ .= max.(μ, 1e-13)
@@ -65,7 +65,10 @@ display(figure_1)
 #
 #############################################################################
 
-data = KLLSModel(A,b,C=I, q = μ, λ = 10e-8)
+# One fixed λ to compare work between trunk / LBFGS / PDCO.
+# pick a small one, 10e-4
+
+data = KLLSModel(A,b,C=I, q = μ, λ = 10e-4)
 
 f(y) = KLLS.dObj!(data,y) # DUAL objective, 
 grad!(grad_in_place,y) = KLLS.dGrad!(data,y,grad_in_place)
@@ -85,7 +88,5 @@ opt_sol =Optim.optimize(f,grad!,z0,
         x_tol = 0
 )
 )
-KLLS.obj!(data.lse,A'*opt_sol.minimizer)
-test = data.lse.g
-plot!(test)
-#primal_sol = KLLS.dGrad!(data,opt_sol.trace[end].metadata["x"]) + opt_sol.trace[end].metadata["g(x)"] + b
+
+Opt_sol.trace
