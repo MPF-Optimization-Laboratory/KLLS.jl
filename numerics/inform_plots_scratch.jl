@@ -9,9 +9,12 @@ using Dates
 using Plots
 using MAT
 using LinearAlgebra
+using Tables
+using CairoMakie, Makie
 
 include("plot_utils.jl")
 include("solve_metrics.jl")
+
 
 ##################################################
 #
@@ -36,7 +39,7 @@ x_test = vec(laplace_dict["x"])
 optTol = 10e-12
 max_iter =1000;
 max_time = 60.0;
-lambdas = (10.0).^(range(-12,stop=-9,length=4))
+lambdas = (10.0).^(range(-12,stop=-2,length=11))
 lambdas =round.(lambdas, sigdigits = 3)
 
 cgitns = zeros(size(lambdas))
@@ -61,6 +64,25 @@ end
 
 
 display(figure_1)
+
+###############################################################################
+
+PDCO_dict =matread(joinpath(pwd(),"numerics","cgiterations_PDCO.mat"))
+PDCO_cg_itns = PDCO_dict["result"]
+
+FinalCosts = hcat(lambdas , (2.0).*cgitns, (2.0).*PDCO_cg_itns')
+df = DataFrame(FinalCosts, ["λ", "KLLS", "PDCO"])
+
+CSV.write(joinpath(pwd , "MatVec_Comparisons.csv"),df);
+
+f = Figure()
+ax = Axis(f[1, 1])
+io = IOBuffer()
+pretty_table(io, df)
+str = String(io.data)
+
+
+text(5,5, text=str, font="Consolas", textsize=14)
 
 ############################################################################
 #
