@@ -9,8 +9,8 @@ using Dates
 using Plots
 using MAT
 using LinearAlgebra
-using PrettyTables
-using CairoMakie, Makie
+# using PrettyTables
+# using CairoMakie, Makie
 
 include("plot_utils.jl")
 include("solve_metrics.jl")
@@ -42,7 +42,8 @@ max_time = 60.0;
 lambdas = (10.0).^(range(-12,stop=-2,length=11))
 lambdas =round.(lambdas, sigdigits = 3)
 
-cgitns = zeros(size(lambdas))
+KLLS_cgitns = zeros(size(lambdas))
+KLLS_norm = zeros(size(lambdas))
 
 
 #################################################################################
@@ -59,32 +60,25 @@ for (index,λ) in enumerate(lambdas)
     local data = KLLSModel(A,b,C=I, q = μ, λ = λ)
     global stats = KLLS.solve!(data, atol=optTol, rtol=optTol,max_iter = max_iter,trace=true,logging=true)
     plot!(stats.solution, labels = "λ = " * string(λ))
-    cgitns[index] =sum(stats.tracer[:,6])
+    KLLS_cgitns[index] =sum(stats.tracer[:,6])
+    KLLS_norm[index] = LinearAlgebra.norm(A*stats.solution - b)
 end
-
 
 display(figure_1)
 
 ###############################################################################
 
-PDCO_dict =matread(joinpath(pwd(),"numerics","cgiterations_PDCO.mat"))
-PDCO_cg_itns = PDCO_dict["result"]
+PDCO_dict =matread(joinpath(pwd(),"numerics","PDCO_results.mat"))
+PDCO_cg_itns = PDCO_dict["result_cg"]
+PDCO_norm = PDCO_dict["result_norm"]
 
-FinalCosts = hcat(lambdas , (2.0).*cgitns, (2.0).*PDCO_cg_itns')
-df = DataFrame(FinalCosts, ["λ", "KLLS", "PDCO"])
+FinalCosts = hcat(lambdas , (2.0).*KLLS_cgitns, (2.0).*PDCO_cg_itns',KLLS_norm,PDCO_norm')
+df = DataFrame(FinalCosts, ["λ", "KLLS MatVec", "PDCO MatVec","KLLS ||Ax-b||","PDCO, ||Ax-b||"])
 
-#CSV.write(joinpath(pwd() , "MatVec_Comparisons.csv"),df);
-
-
-
-f = Figure()
-ax = Axis(f[1, 1])
-io = IOBuffer()
-pretty_table(io, df)
-str = String(io.data)
+CSV.write(joinpath(pwd() , "MatVec_Norm_Comparisons_.csv"),df);
 
 
-text(5,5, text=str, font="Consolas", textsize=14)
+
 
 
 ############################################################################

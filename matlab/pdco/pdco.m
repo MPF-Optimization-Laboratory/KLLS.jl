@@ -94,7 +94,7 @@ function [x,y,z,inform,tracer_mat,PDitns,CGitns,time] = ...
 %
 %
 % OUTPUT ARGUMENTS:
-% x          is the primal solution.
+% x          is the primal solution.tra
 % y          is the dual solution associated with Ax + D2 r = b.
 % z          is the dual solution associated with bl <= x <= bu.
 % inform = 0 if a solution is found;

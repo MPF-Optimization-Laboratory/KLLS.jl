@@ -11,7 +11,9 @@ p = data.x';
 % this choices of d2 gives the standard framework
 % i.e no weights for rho-meson problem
 lams = logspace(-12,-2,11);
-result = zeros('like',lams);
+result_cg = zeros('like',lams);
+result_norm = zeros('like',lams);
+
 index = 1;
 for lam = lams
     clear tracer x y z 
@@ -22,8 +24,8 @@ for lam = lams
     name = strcat('rho_meson_pdco_lam',string(lam));
     
 
-    lam
-    result(index) = sum(tracer(:,end))
-    
+    result_cg(index) = sum(tracer(:,end))
+    result_norm(index) = norm(A*x-b)
+
     index = index +1;
 end
