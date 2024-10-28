@@ -2,7 +2,6 @@
 
 ###########################################################
 
-#using Optim
 using DataFrames
 using KLLS
 using Random
