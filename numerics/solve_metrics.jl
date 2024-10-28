@@ -16,8 +16,7 @@ using Random
 using NPZ
 using CSV
 using Dates
-
-include("Optim.jl")
+using Optim
 
 function optimToDF(optimState::Vector,cumulative_cost::Vector)
     df = DataFrame(iter=Int[], dual_obj=Float64[], r=Float64[],f_evals =Int[],∇f_evals = Int[]) #, Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
