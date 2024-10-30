@@ -34,8 +34,7 @@ def plot_normalized_dynamic_structure_factor():
 
     # Plot the normalized distribution
     plt.figure(figsize=(8, 6))
-    plt.plot(omega, S_q_omega_normalized, label=r'Normalized $S(q, \omega)$', color='b')
-    plt.title(r"Normalized $S(q, \omega)$ as a Function of $\omega$")
+    plt.plot(omega, S_q_omega_normalized, label=r'Distribution $S(q, \omega)$', color='b')
     plt.xlabel(r'Energy Transfer $\omega$')
     plt.ylabel(r'Normalized $S(q, \omega)$')
     plt.axvline(omega_plasmon, color='r', linestyle='--', label="Plasmon peak")
@@ -45,4 +44,35 @@ def plot_normalized_dynamic_structure_factor():
 
 # Call the function to generate the normalized plot
 plot_normalized_dynamic_structure_factor()
+# %%
+import matplotlib.pyplot as plt
+
+# Data provided by the user
+lambda_values = [1.0e-12, 1.0e-11, 1.0e-10, 1.0e-9, 1.0e-8, 1.0e-7, 1.0e-6, 1.0e-5, 0.0001, 0.001, 0.01]
+KLLS_values = [2008.0, 1082.0, 892.0, 570.0, 376.0, 242.0, 164.0, 132.0, 94.0, 60.0, 40.0]
+PDCO_values = [3896.0, 4084.0, 7368.0, 11738.0, 7520.0, 6060.0, 3628.0, 2070.0, 1144.0, 646.0, 398.0]
+
+# Plotting without the failed convergence points and adjusting the labels as requested
+plt.figure(figsize=(10, 6))
+
+# Plotting both solvers with distinct colors
+plt.plot(lambda_values, KLLS_values, marker='o', color='blue', label='KLLS', linewidth=2)
+plt.plot(lambda_values[3:], PDCO_values[3:], marker='o', color='green', label='PDCO', linewidth=2)
+
+# Log scale for lambda and reversing the x-axis
+plt.xscale('log')
+plt.gca().invert_xaxis()
+plt.legend(fontsize=14)
+plt.xticks(fontsize=14)
+plt.yticks(fontsize=14)
+# Labels and removing the title
+plt.xlabel('Regularization (λ)', fontsize=14)
+plt.ylabel('Matrix-Vector Products', fontsize=14)
+
+# Adding legend
+plt.legend()
+
+# Show the plot with grid
+plt.grid(False)
+plt.show()
 # %%
