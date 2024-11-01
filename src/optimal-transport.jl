@@ -69,11 +69,8 @@ function row_col_sum_operator(m::Int, n::Int)
         A(x) = [sum over rows; sum over columns], x reshaped as X = reshape(x, m, n)
     """
     function Afun!(y::AbstractVector{T}, x::AbstractVector{T}, α, β) where T
-        @assert length(x) == N "Input vector x must have length m * n"
-        @assert length(y) == M "Output vector y must have length m + n"
-
-        if β == zero(T)
-            y .= zero(T)
+        if β == 0
+            fill!(y, zero(T))
         else
             y .*= β
         end
@@ -102,11 +99,8 @@ function row_col_sum_operator(m::Int, n::Int)
     end
 
     function _Atfun!(x::AbstractVector{T}, y::AbstractVector{T}, α::T, β::T) where T
-        @assert length(x) == N "Output vector x must have length m * n"
-        @assert length(y) == M "Input vector y must have length m + n"
-
-        if β == zero(T)
-            x .= zero(T)
+        if β == 0
+            fill!(x, zero(T))
         else
             x .*= β
         end
