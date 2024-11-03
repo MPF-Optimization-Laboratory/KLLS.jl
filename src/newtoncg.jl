@@ -195,3 +195,125 @@ const cg_msg = Dict(
 "time limit exceeded" => "time exit",
 "unknown" => ""
 )
+
+#######################################################################
+# Nonlinear Least Squares via NonlinearSolve.jl
+#######################################################################
+
+"""
+    Fx = residual!(kl, yt, Fx)
+
+Compute the residual of the gradient of the dual problem 
+
+    F(y, t) = [ A(tx(y)) + λCy - b ]
+""" 
+function nlresidual!(F, y, kl::KLLSModel)
+    lseatyc!(kl, y)                 # Calculate gradient
+	dGrad!(kl, y, F)          # r ≡ Fx = ∇d(y)	
+    return F
+end
+
+"""
+    Jy = nlprod!(Jy, z, _, kl::KLLSModel)
+
+Compute the Jacobian-vector product, 
+
+    ∇²d(A'y)z := Jy
+"""
+function nljprod!(Jy, z, _, kl::KLLSModel)
+    dHess_prod!(kl, z, Jy)
+    return Jy
+end
+
+struct NewtonEQKLLS end
+
+function solve!(
+    kl::KLLSModel{T},
+    ::NewtonEQKLLS;
+    y0 = begin
+        m = kl.meta.nvar
+        zeros(T, m)
+    end,
+    atol = DEFAULT_PRECISION(T),
+    rtol = DEFAULT_PRECISION(T),
+    max_time=30.0,
+    max_iter=1000,
+    trace::Bool = false,
+    kwargs...) where T
+    
+    reset!(kl) # reset counters
+    m = kl.meta.nvar
+
+    tracer = DataFrame(iter=Int[], norm∇d=T[], cgits=Int[], cgmsg=String[])
+   
+    # Setup the NonlinearSolve objects
+    nlf = NonlinearFunction(nlresidual!, jvp=nljprod!)
+    prob = NonlinearProblem(nlf, y0, kl)
+    nlcache = init(
+                prob,
+                reltol=rtol,
+                abstol=atol,
+                show_trace = Val(false),
+                store_trace = Val(false),
+                NewtonRaphson(
+                    linesearch = RobustNonMonotoneLineSearch(),
+                    linsolve = KrylovJL_MINRES(verbose=0, itmax=50),
+                )
+            )
+   
+    start_time = time()
+    elapsed_time = 0.0
+    iter = 0
+    while true 
+        
+        # Break if time is up
+        elapsed_time = time() - start_time
+        iter += 1
+        elapsed_time > max_time && break
+        iter > max_iter && break
+
+        # Take a Newton step
+        step!(nlcache)
+
+        ∇d = nlcache.fu
+       
+        norm∇d = norm(∇d, Inf)
+        log_items = (iter, norm∇d, nlcache.descent_cache.lincache.lincache.cacheval.stats.niter, nlcache.descent_cache.lincache.lincache.cacheval.stats.status) 
+        trace && push!(tracer, log_items)
+        
+        if nlcache.retcode ≠ ReturnCode.Default
+            break
+        end
+    end
+
+    # Test nlcache.retcode to return one of the following symbols:
+    # :optimal, :max_iter, :unknown
+    status = if nlcache.retcode == ReturnCode.Success
+        :optimal
+    elseif nlcache.retcode == ReturnCode.MaxIters
+        :max_iter
+    else
+        :unknown
+    end
+
+    λ = kl.λ
+    y = nlcache.u
+    x = kl.scale.*grad(kl.lse)
+    ∇d = nlcache.fu
+    r = λ*y
+    stats = ExecutionStats(
+        status,
+        elapsed_time,       # elapsed time
+        iter,               # number of iterations
+        neval_jprod(kl),    # number of products with A
+        neval_jtprod(kl),   # number of products with A'
+        zero(T),            # TODO: primal objective
+        zero(T),            # dual objective
+        x,                  # primal solultion `x`
+        r,                  # residual r = λy
+        norm(∇d),           # norm of gradient of the dual objective
+        tracer              # TODO: tracer 
+    ) 
+    
+    return stats
+end
