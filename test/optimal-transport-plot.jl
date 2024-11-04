@@ -1,3 +1,5 @@
+# Experiments with optimal transport
+# Not a unit-test.
 using GridLayoutBase
 using Plots, OptimalTransport, Statistics, Distances
 
