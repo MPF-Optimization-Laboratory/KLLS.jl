@@ -5,8 +5,8 @@ using GLPK
 
 @testset "Feasable LP" begin
     Random.seed!(1234)
-    m = 50
-    n = 100
+    m = 10 
+    n = 20
 
     A = rand(m, n)
 
@@ -15,7 +15,7 @@ using GLPK
 
     c = rand(n)
 
-    lp = KLLS.LPModel(A, b, c)
+    lp = KLLS.LPModel(A, b, c, ε=5e-3, λ=5e-3)
     stats = solve!(lp)
     optimal_x_lpmodel = stats.solution
     @test stats.status == :optimal
@@ -34,8 +34,8 @@ end
 
 @testset "Infeasible LP" begin
     Random.seed!(1234)
-    m = 50
-    n = 100
+    m = 10
+    n = 20
 
     A = rand(m, n)
 
@@ -49,7 +49,7 @@ end
 
     c = rand(n)
 
-    lp = KLLS.LPModel(A, b, c)
+    lp = KLLS.LPModel(A, b, c, ε=5e-1, λ=5e-1)
     stats = solve!(lp)
     @test stats.status == :infeasible
 

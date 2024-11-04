@@ -86,7 +86,7 @@ Adjusts the relaxation constant `ε` in the `LPModel`.
 """
 function regularize_relaxation!(lp::LPModel, ε)
     regularize!(lp.ss.kl, lp.λ * ε)
-    lp.ss.kl.c = lp.ss.kl.c / ε
+    BLAS.scal!(1/ε, lp.ss.kl.c)
     lp.ε = ε
 end
 
