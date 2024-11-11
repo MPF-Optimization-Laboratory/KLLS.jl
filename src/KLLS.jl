@@ -19,7 +19,7 @@ export solve!, scale!, regularize!, histogram, maximize!, reset!
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 
 include("logsumexp.jl")
-include("model.jl")
+include("klls-model.jl")
 include("newtoncg.jl")
 include("newtonls.jl")
 include("selfscale.jl")
