@@ -123,7 +123,7 @@ function solve!(
         TrunkLS(),
         logging=logging,
         monotone=monotone,
-        max_time=max_time,
+        max_time=max_time;
         kwargs...
     )
 
