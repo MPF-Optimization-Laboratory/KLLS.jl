@@ -148,7 +148,7 @@ function callback(
     Δ = solver.tr.radius
     actual_to_predicted = solver.tr.ratio
     cgits = solver.subsolver.stats.niter
-    cgexit = cg_msg[solver.subsolver.stats.status]
+    cgexit = get(cg_msg, solver.subsolver.stats.status, "default")
     ε = atol + rtol * kl.bNrm
     
     # Test exit conditions
