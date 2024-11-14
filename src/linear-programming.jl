@@ -111,8 +111,11 @@ A statistics object containing the solution and status.
 # Notes
 - If the solution is found but the residual norm exceeds `1e-1`, the status is set to `:infeasible`.
 """
+solve!(lp::LPModel; kwargs...) = solve!(lp, TrunkLS(); kwargs...)
+
 function solve!(
-    lp::LPModel{T};
+    lp::LPModel{T},
+    Solver; 
     logging=0,
     monotone=true,
     max_time=30.0,
@@ -120,10 +123,10 @@ function solve!(
 ) where T
     klls_stats = solve!(
         lp.ss,
-        TrunkLS(),
+        Solver,
         logging=logging,
-        monotone=monotone,
-        max_time=max_time;
+        max_time=max_time,
+        monotone=monotone;
         kwargs...
     )
 

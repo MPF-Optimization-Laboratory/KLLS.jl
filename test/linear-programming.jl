@@ -16,7 +16,7 @@ using GLPK
     c = rand(n)
 
     lp = KLLS.LPModel(A, b, c, ε=5e-3, λ=5e-3)
-    stats = solve!(lp)
+    stats = solve!(lp, trace=true)
     optimal_x_lpmodel = stats.solution
     @test stats.status == :optimal
 
@@ -29,7 +29,11 @@ using GLPK
     optimize!(model)
     optimal_x_jump = value.(x)
 
+    @test c'optimal_x_lpmodel ≈ c'optimal_x_jump atol=1e-1
     @test norm(optimal_x_jump .- optimal_x_lpmodel) < 1e-1
+
+    # 13 Nov '24: The self-scaling model may have nonoptimal stationary points. Verify that 
+
 end
 
 @testset "Infeasible LP" begin

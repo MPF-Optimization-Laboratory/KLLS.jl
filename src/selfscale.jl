@@ -49,6 +49,7 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
     kl = ss.kl
 	@unpack A, c, lse = kl
 	m = kl.meta.nvar
+    
     r = @view Fx[1:m]
 	y = @view yt[1:m]
 	t =       yt[end]
@@ -132,21 +133,24 @@ function solve!(
     trunk_stats =
       trunk(ss; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
 
+    # Optimality. Report the maximum ∇d(y) and v'(t)
+    optimality = sqrt(obj(ss, trunk_stats.solution))
+
     kl = ss.kl
     x = kl.scale.*grad(kl.lse)
     y = @view trunk_stats.solution[1:end-1]
     stats = ExecutionStats(
-        trunk_stats.status,
-        trunk_stats.elapsed_time,       # elapsed time
-        trunk_stats.iter,               # number of iterations
-        neval_jprod(kl),                # number of products with A
-        neval_jtprod(kl),               # number of products with A'
-        zero(T),                        # TODO: primal objective
-        trunk_stats.objective,          # dual objective
-        x,                              # primal solultion `x`
-        (kl.λ)*y,                       # residual r = λy
-        trunk_stats.dual_feas,          # norm of the gradient of the dual objective
-        tracer                          # TODO: tracer 
+        trunk_stats.status,          # status
+        trunk_stats.elapsed_time,    # elapsed time
+        trunk_stats.iter,            # iterations
+        neval_jprod(kl),             # count products with A
+        neval_jtprod(kl),            # count products with A'
+        zero(T),                     # TODO: primal objective
+        trunk_stats.objective,       # dual objective
+        x,                           # primal solultion `x`
+        (kl.λ)*y,                    # residual r = λy
+        optimality,       # norm of the gradient of the dual objective
+        tracer                       # TODO: tracer 
     )
     return stats
 end
@@ -213,6 +217,7 @@ end
 # Nonlinear Least Squares via NonlinearSolve.jl
 #######################################################################
 
+# These methods just rearrange the inputs to the NonlinearSolve.jl API
 function nlresidual!(F, yt, ss::SSModel)
     residual!(ss, yt, F)
 end
@@ -255,7 +260,8 @@ function solve!(
                 show_trace = Val(false),
                 store_trace = Val(false),
                 NewtonRaphson(
-                    linesearch = RobustNonMonotoneLineSearch(),
+                    # linesearch = RobustNonMonotoneLineSearch(),
+                    linesearch = BackTracking(),
                     linsolve = KrylovJL_MINRES(verbose=0, itmax=50),
                 )
             )
