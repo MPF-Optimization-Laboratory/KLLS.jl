@@ -13,7 +13,7 @@ using LinearOperators
 using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
 
-export KLLSModel, SSModel, OTModel, NewtonEQ, TrunkLS
+export KLLSModel, SSModel, OTModel, NewtonEQ, TrunkLS, LPModel
 export solve!, scale!, regularize!, histogram, maximize!, reset!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
@@ -25,6 +25,7 @@ include("newtonls.jl")
 include("selfscale.jl")
 include("optimal-transport.jl")
 include("precon.jl")
+include("linear-programming.jl")
 include("utils.jl")
 
 end
