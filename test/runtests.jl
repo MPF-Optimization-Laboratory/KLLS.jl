@@ -23,3 +23,7 @@ end
 @testset "test-selfscale" begin
     include("test-selfscale.jl")
 end
+
+@testset "test-sequential-scale" begin
+    include("test-sequential-scale.jl")
+end

@@ -28,11 +28,29 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 """
+    randKLmodel(m, n)
+
+Generate a random KL model of size `m` x `n`.
+"""
+function randKLmodel(m, n)
+    A = randn(m, n)
+    b = randn(m)
+    return KLLSModel(A, b)
+end
+
+"""
+    histogram(s:ExecutionStats; kwargs...)
+
+Plot a histogram of the solution.
+"""
+function histogram end
+
+"""
     value!(kl::KLLSModel, t; kwargs...)
 
 Compute the dual objective of a KLLS model with respect to the scaling parameter `t`.
 """
-function value!(kl::KLLSModel, t; jprods=Int[0], kwargs...)
+function value2!(kl::KLLSModel, t; jprods=Int[0], kwargs...)
     @unpack λ, A = kl
     scale!(kl, t)
     s = solve!(kl; kwargs...)
@@ -72,25 +90,7 @@ function maximize!(
     ) where T
 
     jprods = Int[0]
-    dv!(t) = value!(kl, t; jprods=jprods, atol=δ*atol, rtol=δ*rtol, logging=logging)
+    dv!(t) = value2!(kl, t; jprods=jprods, atol=δ*atol, rtol=δ*rtol, logging=logging)
     t = Roots.find_zero(dv!, t; atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
     return t, t*grad(kl.lse), jprods[1]
 end
-
-"""
-    randKLmodel(m, n)
-
-Generate a random KL model of size `m` x `n`.
-"""
-function randKLmodel(m, n)
-    A = randn(m, n)
-    b = randn(m)
-    return KLLSModel(A, b)
-end
-
-"""
-    histogram(s:ExecutionStats; kwargs...)
-
-Plot a histogram of the solution.
-"""
-function histogram end

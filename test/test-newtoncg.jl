@@ -46,7 +46,10 @@ end
 
     # Value-function iteration: nonnegative 
     reset!(kl)
-    t1, x1 = maximize!(kl, zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
+    ss = KLLS.SSModel(kl)
+    ssSoln = solve!(ss, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
+    x1 = ssSoln.solution
+    t1 = ss.kl.scale
     @test KLLS.value!(kl, t1) < 1e-6
 
     # Solve the KL problem with the scaling `t1` obtained above
@@ -60,7 +63,6 @@ end
     # Now use the self-scaling approach
     reset!(kl)
     scale!(kl, 1.0)
-    ss = KLLS.SSModel(kl)
     ssStats = solve!(ss, logging=0, rtol=1e-6)
     xss = ssStats.solution
     @test norm(x2 - xss) < 1e-5
