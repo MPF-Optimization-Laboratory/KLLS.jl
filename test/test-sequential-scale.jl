@@ -38,7 +38,7 @@ using KLLS, NLPModels, LinearAlgebra, Random
 
       rtol = tol
       atol = tol
-      ssSoln = solve!(ss, SequentialSolve(), logging=0, atol=atol, rtol=rtol)
+      ssSoln = solve!(ss, SequentialSolve(), logging=0, atol=atol, rtol=rtol, zverbose=false)
 
       @test ssSoln.status == :optimal
 end
