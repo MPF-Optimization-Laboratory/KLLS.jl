@@ -28,56 +28,6 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 """
-    value!(kl::KLLSModel, t; kwargs...)
-
-Compute the dual objective of a KLLS model with respect to the scaling parameter `t`.
-"""
-function value!(kl::KLLSModel, t; jprods=Int[0], kwargs...)
-    @unpack λ, A = kl
-    scale!(kl, t)
-    s = solve!(kl; kwargs...)
-    y = s.residual/λ
-    dv = obj!(kl.lse, A'y) - log(t) - 1
-    jprods[1] += neval_jprod(kl) + neval_jtprod(kl)
-    return dv
-end
-
-"""
-    maximize!(kl::KLLSModel; kwargs...) -> t, xopt, jprods
-
-TODO: Documentation incomplete and incorrect options
-Keyword arguments:
-- `t::Real=1.0`: Initial guess for the scaling parameter (root finding)
-- `rtol::Real=1e-6`: Relative tolerance for the optimization.
-- `atol::Real=1e-6`: Absolute tolerance for the optimization.
-- `xatol::Real=1e-6`: Absolute tolerance for the primal solution.
-- `xrtol::Real=1e-6`: Relative tolerance for the primal solution.
-- `δ::Real=1e-2`: Tolerance for the dual objective.
-- `zverbose::Bool=true`: Verbosity flag.
-- `logging::Int=0`: Logging level.
-
-Maximize the dual objective of a KLLS model with respect to the scaling parameter `t`.
-Returns the optimal primal solution.
-"""
-function maximize!(
-    kl::KLLSModel{T};
-    t=one(T),
-    rtol=1e-6,
-    atol=1e-6,
-    xatol=1e-6,
-    xrtol=1e-6,
-    δ=1e-2,
-    zverbose=true,
-    logging=0,
-    ) where T
-
-    jprods = Int[0]
-    dv!(t) = value!(kl, t; jprods=jprods, atol=δ*atol, rtol=δ*rtol, logging=logging)
-    t = Roots.find_zero(dv!, t; atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
-    return t, t*grad(kl.lse), jprods[1]
-end
-
-"""
     randKLmodel(m, n)
 
 Generate a random KL model of size `m` x `n`.
