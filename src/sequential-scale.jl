@@ -11,6 +11,7 @@ function value!(kl::KLLSModel, t; jprods=Int[0], jtprods=Int[0], kwargs...)
     dv = obj!(kl.lse, A'y) - log(t) - 1
     jprods[1] += neval_jprod(kl)
     jtprods[1] += neval_jtprod(kl)
+    update_y0!(kl, s.residual ./ kl.λ) # Set the next runs starting point to the radial projection
     return dv
 end
 
@@ -55,7 +56,7 @@ function solve!(
     tracker = Roots.Tracks()
     tracer = DataFrame(iter=Int[], scale=T[], vpt=T[], norm∇d=T[], cgits=Int[], cgmsg=String[])
 
-    # Find optiml t
+    # Find optimal t
     start_time = time()
     dv!(t) = value!(ss.kl, t; jprods=jprods, jtprods=jtprods, atol=δ*atol, rtol=δ*rtol, logging=logging)
     t = Roots.find_zero(dv!, t; tracks=tracker, atol=atol, rtol=rtol, xatol=xatol, xrtol=xrtol, verbose=zverbose)
@@ -63,7 +64,6 @@ function solve!(
 
     # Solve one final time
     scale!(ss.kl, t)
-    # TODO: Use warm start here to start from the last x value 
     final_run_stats = solve!(ss.kl, atol=δ*atol, rtol=δ*rtol, logging=logging)
 
     status = :unknown
@@ -73,16 +73,16 @@ function solve!(
 
     stats = ExecutionStats(
         status,
-        elapsed_time,               # elapsed time
-        tracker.steps,              # number of iterations
-        jprods[1],                  # number of products with A
-        jtprods[1],                 # number of products with A'
-        zero(T),                    # TODO: primal objective
-        zero(T),                    # dual objective
-        final_run_stats.solution,   # primal solultion `x`
-        final_run_stats.residual,   # residual r = λy
-        final_run_stats.optimality, # norm of gradient of the dual objective
-        tracer                      # TODO: tracer to store iteration info 
+        elapsed_time,                   # elapsed time
+        tracker.steps,                  # number of iterations
+        jprods[1],                      # number of products with A
+        jtprods[1],                     # number of products with A'
+        zero(T),                        # TODO: primal objective
+        zero(T),                        # dual objective
+        final_run_stats.solution,       # primal solution `x`
+        final_run_stats.residual,       # residual r = λy
+        final_run_stats.optimality,     # norm of gradient of the dual objective
+        tracer                          # TODO: tracer to store iteration info 
     ) 
 
     return stats

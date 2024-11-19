@@ -119,7 +119,7 @@ function solve!(
         neval_jtprod(kl),               # number of products with A'
         zero(T),                        # TODO: primal objective
         trunk_stats.objective,          # dual objective
-        (kl.scale).*grad(kl.lse),       # primal solultion `x`
+        (kl.scale).*grad(kl.lse),       # primal solution `x`
         (kl.λ).*(trunk_stats.solution), # residual r = λy
         trunk_stats.dual_feas,          # norm of the gradient of the dual objective
         tracer
