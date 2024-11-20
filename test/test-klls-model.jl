@@ -21,6 +21,8 @@ end
     A = randn(m, n)
     b = randn(m)
     data = KLLSModel(A, b)
+
+    # Test scaling
     @test try
         scale!(data, 0.5)
         true
@@ -28,6 +30,8 @@ end
         false
     end
     @test data.scale == 0.5
+
+    # Test regularization
     @test try
         regularize!(data, 1e-3)
         true
@@ -35,4 +39,15 @@ end
         false
     end
     @test data.λ == 1e-3
+
+    # Test initial guess update
+    y0 = ones(Float64, m)
+    @test try
+        update_y0!(data, y0)
+        true
+    catch
+        false
+    end
+    @test data.meta.x0 == y0
+    
 end

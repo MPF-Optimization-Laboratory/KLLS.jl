@@ -57,6 +57,10 @@ function scale!(kl::KLLSModel{T}, scale::T) where T
     return kl
 end
 
+function update_y0!(kl::KLLSModel{T}, y0::AbstractVector{T}) where T
+    kl.meta = NLPModelMeta(kl.meta, x0=y0)
+end
+
 function NLPModels.reset!(kl::KLLSModel)
     for f in fieldnames(Counters)
       setfield!(kl.counters, f, 0)

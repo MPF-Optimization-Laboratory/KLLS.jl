@@ -114,9 +114,9 @@ function solve!(
         neval_jtprod(kl),            # count products with A'
         zero(T),                     # TODO: primal objective
         trunk_stats.objective,       # dual objective
-        x,                           # primal solultion `x`
+        x,                           # primal solution `x`
         (kl.λ)*y,                    # residual r = λy
-        optimality,       # norm of the gradient of the dual objective
+        optimality,                  # norm of the gradient of the dual objective
         tracer                       # TODO: tracer 
     )
     return stats
