@@ -86,16 +86,54 @@ function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector,
     return Hz = dHess_prod!(kl, z, Hz)
 end
 
+"""
+Primal objective:
+
+Calculates the primal objective value
+
+    f(x) = 1/(2λ) ⟨Ax-b,C⁻¹(Ax-b)⟩ + ⟨c, x⟩ + KL(x || q)
+
+
+"""
+function pObj!(kl::KLLSModel, x)
+    @unpack A, b, c, C, q, λ, mbuf, mbuf2 = kl
+    # Pre-allocate workspace for Ax - b
+    mbuf = similar(b)          # Temporary vector for Ax - b
+
+    # Compute Ax - b in-place
+    mul!(mbuf, A, x)           # mbuf = A * x
+    mbuf .-= b                 # mbuf = Ax - b
+
+    # Solve C * y = mbuf to get y = C⁻¹(mbuf)
+    mbuf2 = similar(mbuf)  # Temporary vector for C⁻¹(mbuf)
+    mbuf2 .= C \ mbuf      # Use \ to solve C * y = mbuf
+
+    # Compute ⟨Ax - b, C⁻¹(Ax - b)⟩
+    quadratic_term = dot(mbuf, mbuf2)
+
+    # Compute ⟨c, x⟩
+    linear_term = dot(c, x)
+
+    # Compute KL(x || q)
+    kl_term = sum(xi * log(xi / qi) for (xi, qi) in zip(x, q) if xi > 0)
+
+    # Final objective
+    return (1 / (2 * λ)) * quadratic_term + linear_term + kl_term
+end
+
 function solve!(
     kl::KLLSModel{T};
     M=I,
     logging=0,
     monotone=true,
     max_time::Float64=30.0,
+    reset_counters=true,
     kwargs...) where T
    
     # Reset counters
-    reset!(kl)    
+    if reset_counters
+        reset!(kl)    
+    end
 
     # Tracer
     tracer = DataFrame(iter=Int[], dual_obj=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])

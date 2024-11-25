@@ -64,7 +64,7 @@ function solve!(
 
     # Solve one final time
     scale!(ss.kl, t)
-    final_run_stats = solve!(ss.kl, atol=δ*atol, rtol=δ*rtol, logging=logging)
+    final_run_stats = solve!(ss.kl, atol=δ*atol, rtol=δ*rtol, logging=logging, reset_counters=false)
 
     status = :unknown
     if tracker.convergence_flag == :x_converged
@@ -78,7 +78,7 @@ function solve!(
         jprods[1],                      # number of products with A
         jtprods[1],                     # number of products with A'
         zero(T),                        # TODO: primal objective
-        zero(T),                        # dual objective
+        final_run_stats.dual_obj,       # dual objective
         final_run_stats.solution,       # primal solution `x`
         final_run_stats.residual,       # residual r = λy
         final_run_stats.optimality,     # norm of gradient of the dual objective

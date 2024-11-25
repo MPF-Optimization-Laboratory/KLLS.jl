@@ -67,3 +67,40 @@ end
     xss = ssStats.solution
     @test norm(x2 - xss) < 1e-5
 end
+
+@testset "Primal-Dual Obj" begin
+    # At a solution, primal and dual objectives must be the same
+    Random.seed!(1234)
+
+    m, n = 10, 30
+    A = randn(m, n)
+    b = randn(m)
+    λ = 1e-1
+    kl = KLLSModel(A, b, λ=λ)
+
+    atol = rtol = 1e-6
+    st = solve!(kl, atol=atol, rtol=rtol)
+
+    pObj = KLLS.pObj!(kl, st.solution)
+    dObj = KLLS.dObj!(kl, st.residual / λ)
+    @test isapprox(pObj, -dObj)
+end
+
+@testset "Primal-Dual Obj, Scaled" begin
+    # At a solution, primal and dual objectives must be the same
+    Random.seed!(1234)
+
+    m, n = 10, 30
+    A = randn(m, n)
+    b = randn(m)
+    λ = 1e-1
+    kl = KLLSModel(A, b, λ=λ)
+    scale!(kl, 8.0)
+
+    atol = rtol = 1e-6
+    st = solve!(kl, atol=atol, rtol=rtol)
+
+    pObj = KLLS.pObj!(kl, st.solution)
+    dObj = KLLS.dObj!(kl, st.residual / λ)
+    @test isapprox(pObj, -dObj)
+end
