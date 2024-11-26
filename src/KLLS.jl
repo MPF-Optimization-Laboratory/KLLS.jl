@@ -5,16 +5,17 @@ using Printf
 using UnPack
 using DataFrames
 import Roots
-using JSOSolvers: trunk
+using JSOSolvers: trunk, TrunkSolver
 using NLPModels
 using LinearOperators
+using SolverCore
 
 # NonlinearSolve packages
 using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
 
 export KLLSModel, SSModel, OTModel, LPModel
-export NewtonEQ, TrunkLS, SequentialSolve, InexactNewton
+export NewtonEQ, TrunkLS, SequentialSolve, LevelSet
 export solve!, scale!, regularize!, histogram, maximize!, reset!, update_y0!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
@@ -26,7 +27,7 @@ include("newtoncg.jl")
 include("newtonls.jl")
 include("selfscale.jl")
 include("sequential-scale.jl")
-include("inexact-newton.jl")
+include("level-set.jl")
 include("optimal-transport.jl")
 include("precon.jl")
 include("linear-programming.jl")

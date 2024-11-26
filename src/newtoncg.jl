@@ -97,15 +97,12 @@ Calculates the primal objective value
 """
 function pObj!(kl::KLLSModel, x)
     @unpack A, b, c, C, q, λ, mbuf, mbuf2 = kl
-    # Pre-allocate workspace for Ax - b
-    mbuf = similar(b)          # Temporary vector for Ax - b
 
     # Compute Ax - b in-place
     mul!(mbuf, A, x)           # mbuf = A * x
     mbuf .-= b                 # mbuf = Ax - b
 
     # Solve C * y = mbuf to get y = C⁻¹(mbuf)
-    mbuf2 = similar(mbuf)  # Temporary vector for C⁻¹(mbuf)
     mbuf2 .= C \ mbuf      # Use \ to solve C * y = mbuf
 
     # Compute ⟨Ax - b, C⁻¹(Ax - b)⟩
@@ -125,9 +122,9 @@ function solve!(
     kl::KLLSModel{T};
     M=I,
     logging=0,
-    monotone=true,
     max_time::Float64=30.0,
     reset_counters=true,
+    solver=TrunkSolver(kl),
     kwargs...) where T
    
     # Reset counters
@@ -144,10 +141,12 @@ function solve!(
     
     # Call the Trunk solver
     if M === I
-        trunk_stats = trunk(kl; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
+        trunk_stats = SolverCore.solve!(solver, kl; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time) 
     else
-        trunk_stats = trunk(kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
+        trunk_stats = SolverCore.solve!(solver, kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
     end
+
+    x = kl.scale .* grad(kl.lse)
     
     stats = ExecutionStats(
         trunk_stats.status,
@@ -155,9 +154,9 @@ function solve!(
         trunk_stats.iter,               # number of iterations
         neval_jprod(kl),                # number of products with A
         neval_jtprod(kl),               # number of products with A'
-        zero(T),                        # TODO: primal objective
+        pObj!(kl, x),                   # primal objective
         trunk_stats.objective,          # dual objective
-        (kl.scale).*grad(kl.lse),       # primal solution `x`
+        x,                              # primal solution `x`
         (kl.λ).*(trunk_stats.solution), # residual r = λy
         trunk_stats.dual_feas,          # norm of the gradient of the dual objective
         tracer

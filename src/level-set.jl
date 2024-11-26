@@ -1,10 +1,10 @@
-struct InexactNewton end
+struct LevelSet end
 
 function solve!(
     kl::KLLSModel{T},
-    ::InexactNewton;
+    ::LevelSet;
     α::T=1.5,
-    σ=norm(kl.b)^2 / (2 * kl.λ),
+    σ=kl.bNrm^2 / (2 * kl.λ),
     t=1,
     logging=0,
     atol=1e-3,
@@ -19,21 +19,30 @@ function solve!(
     scale!(kl, t)
 
     it = 0
-    start_time = time()
     tracer = DataFrame(iter=Int[], l=T[], u=T[], u_over_l=T[], s=T[])
     l, u, s = 0.0, 0.0, 0.0
+    solver = TrunkSolver(kl)
+    start_time = time()
+
 
     while true
         it += 1
-        l, u, s = oracle!(kl, α, σ, tracer, logging=logging, max_time=max_time) # TODO: weird max time
+        l, u, s = oracle!(kl, α, σ, solver, tracer, logging=logging, max_time=max_time) # TODO: weird max time
         tk = t - l / s
-        if tk < 0
-            tk = 0.01
-        end
-        done = abs(tk - t) < atol
+        
+        @assert tk > 0 "New scale must be positive"
+
+        small_step = abs(tk - t) ≤ atol + t*rtol
+        min_value = u ≤ atol + σ*rtol
+        done = small_step || min_value
 
         if logging > 0
-            @printf("Outer iteration: %7d l: %9.2e u: %9.2e s: %9.2e tk: %9.2e  Δₜ: %9.2e\n", it, l, u, s, tk, abs(tk - t))
+            @printf("lvl itn: %7d ℓ: %9.2e u: %9.2e s: %9.2e tₖ: %9.2e  Δₜ: %9.2e\n", it, l, u, s, tk, abs(tk - t))
+            if done && small_step
+                println("Stopping due to small step in t")
+            elseif done
+                println("Stopping due to small upper bound")
+            end
         end
 
         if done
@@ -67,7 +76,8 @@ function oracle!(
     kl::KLLSModel{T},
     α::T,
     σ::T,
-    tracer;
+    solver::TrunkSolver,
+    tracer::DataFrame;
     logging=0,
     max_time::Float64=30.0,
     kwargs...
@@ -75,11 +85,14 @@ function oracle!(
     # return values (l, u, s)
     ret = [0.0, 0.0, 0.0]
 
+    # Reset the solver
+    SolverCore.reset!(solver, kl)
+
     # Callback routine
     cb(kl, solver, stats) =
         oracle_callback(kl, solver, stats, tracer, logging, α, σ, ret; kwargs...)
 
-    stats = trunk(kl; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=true)
+    stats = SolverCore.solve!(solver, kl; x=kl.meta.x0, callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time)
 
     return ret
 end
