@@ -4,6 +4,10 @@ using Test
     include("test-klls-model.jl")
 end
 
+@testset "test-level-set" begin
+    include("test-level-set.jl")
+end
+
 @testset "test-linear-programming" begin
     include("test-linear-programming.jl")
 end

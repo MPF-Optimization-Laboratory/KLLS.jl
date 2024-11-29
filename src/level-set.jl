@@ -5,16 +5,19 @@ function solve!(
     ::LevelSet;
     α::T=1.5,
     σ=kl.bNrm^2 / (2 * kl.λ),
-    t=1,
+    t=one(T),
     logging=0,
     atol=1e-3,
     rtol=1e-3,
     max_time::Float64=30.0,
     kwargs...
 ) where {T}
+
+    # Reset counters
+    reset!(kl)
+
     @assert 1 < α < 2 "α must be in the open interval (1, 2)"
     @assert t > 0 "t0 must be positive"
-    @assert σ >= 0 "σ must be non-negative"
 
     scale!(kl, t)
 
@@ -24,14 +27,11 @@ function solve!(
     solver = TrunkSolver(kl)
     start_time = time()
 
-
     while true
         it += 1
         l, u, s = oracle!(kl, α, σ, solver, tracer, logging=logging, max_time=max_time) # TODO: weird max time
         tk = t - l / s
         
-        @assert tk > 0 "New scale must be positive"
-
         small_step = abs(tk - t) ≤ atol + t*rtol
         min_value = u ≤ atol + σ*rtol
         done = small_step || min_value
@@ -45,6 +45,11 @@ function solve!(
             end
         end
 
+        # If tk
+        if tk < 0
+            tk = t / 2
+        end
+
         if done
             break
         end
@@ -52,7 +57,15 @@ function solve!(
         scale!(kl, t)
     end
 
-    final_soln = solve!(kl, logging=logging, reset_counters=false, kwargs...)
+    final_soln = solve!(
+        kl,
+        # SSTrunkLS(), # This doesn't work, or takes more time, either way, bad...
+        logging=logging,
+        reset_counters=false,
+        atol=atol,
+        rtol=rtol,
+        kwargs...
+    )
 
     runtime = time() - start_time
 
@@ -71,6 +84,160 @@ function solve!(
     )
     return stats
 end
+
+##############################################################################
+# Adaptive Level Set
+##############################################################################
+
+struct AdaptiveLevelSet end
+
+function solve!(
+    kl::KLLSModel{T},
+    ::AdaptiveLevelSet;
+    α::T=1.5,
+    t=one(T),
+    logging=0,
+    atol=1e-3,
+    rtol=1e-3,
+    max_time::Float64=30.0,
+    kwargs...
+) where {T}
+    # Reset counters
+    reset!(kl)
+
+    @assert 1 < α < 2 "α must be in the open interval (1, 2)"
+    @assert t > 0 "t0 must be positive"
+
+    scale!(kl, t)
+
+    # Initial objective guess
+    σ = 0.0
+
+    it = 0
+    tracer = DataFrame(iter=Int[], l=T[], u=T[], u_over_l=T[], s=T[])
+    solver = TrunkSolver(kl)
+    subsolver_logging = Int(max(0, logging-1))
+
+    start_time = time()
+
+    # Set bounds and slope
+    l, u, s = 0.0, 0.0, 0.0
+
+    if logging > 0
+        println("Starting t windup from t = $t")
+    end
+ 
+    while true
+        it += 1
+        l, u, s, y = oracle!(kl, α, σ, solver, tracer, logging=subsolver_logging, max_time=max_time)
+        update_y0!(kl, y)
+        if s > 0
+            t /= 2
+            if logging > 0
+                println("t = $t")
+            end
+            scale!(kl, t)
+        else 
+            break
+        end
+    end
+    
+    if logging > 0 
+        println("t windup is complete at t = $t")
+    end
+
+    tₐ, sₐ, lₐ = t, s, l
+
+    while true
+        it += 1
+        l, u, s, y = oracle!(kl, α, σ, solver, tracer, logging=subsolver_logging, max_time=max_time)
+        
+        # Check if we overshot, adjust guess if we did
+        if s > 0.0
+            if s < 1e-1
+                break
+            end
+            σ_new = σ + lₐ / 2      # Set the new guess to avg between lower bound and old guess
+            lₐ = lₐ - σ_new + σ     # Since l is relative, fix it
+            t = tₐ - lₐ / sₐ        # Set new t to the new intersect
+            scale!(kl, t)
+
+            if logging > 0
+                println("overshot the optimal t, increasing guess to σ=$σ_new")
+            end
+            σ = σ_new
+            continue
+        end
+
+        tₐ, sₐ, lₐ = t, s, l
+        update_y0!(kl, y)
+        t_proposed = t - l / s
+        
+        small_step = abs(t_proposed - t) ≤ atol + t*rtol
+        min_value = u ≤ atol + σ*rtol
+        done = small_step || min_value
+
+        if logging > 0
+            @printf("lvl itn: %7d ℓ: %9.2e u: %9.2e s: %9.2e tₖ: %9.2e  Δₜ: %9.2e\n", it, l, u, s, t_proposed, abs(t_proposed - t))
+            if done && small_step
+                println("Stopping due to small step in t")
+            elseif done
+                println("Stopping due to small upper bound")
+            end
+        end
+
+        if done
+            # if the gradient is small, guess is good, break
+            if s > -1
+                break
+            end
+
+            # if the gradient is large, the guess is too high, lower it
+            σ_new = σ + s * 1e-2
+            lₐ = lₐ - σ_new + σ
+            l = l - σ_new + σ
+            t = t + (σ_new - σ - l) / s
+            scale!(kl, t)
+            if logging > 0
+                println("converged at a high objective with slope $s, decreasing guess from $σ to $σ_new")
+            end
+            σ=σ_new
+        end
+
+        t = t_proposed
+        scale!(kl, t)
+    end
+
+    final_soln = solve!(
+        kl,
+        logging=subsolver_logging,
+        reset_counters=false,
+        atol=atol,
+        rtol=rtol,
+        kwargs...
+    )
+
+    runtime = time() - start_time
+
+    stats = ExecutionStats(
+        final_soln.status,
+        runtime,                        # elapsed time
+        it,                             # number of iterations
+        neval_jprod(kl),                # number of products with A
+        neval_jtprod(kl),               # number of products with A'
+        final_soln.primal_obj,          # primal objective
+        final_soln.dual_obj,            # dual objective
+        final_soln.solution,            # primal solution `x`
+        final_soln.residual,            # residual r = λy
+        final_soln.optimality,          # norm of the gradient of the dual objective
+        tracer
+    )
+    return stats
+end
+
+##############################################################################
+# Oracle
+##############################################################################
 
 function oracle!(
     kl::KLLSModel{T},
@@ -94,7 +261,7 @@ function oracle!(
 
     stats = SolverCore.solve!(solver, kl; x=kl.meta.x0, callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time)
 
-    return ret
+    return ret[1], ret[2], ret[3], stats.solution
 end
 
 function oracle_callback(
@@ -148,6 +315,5 @@ function oracle_callback(
         st = -obj!(kl.lse, kl.A'y) + log(kl.scale) + 1
         ret .= [dObj, pObj, st]
         trunk_stats.status = :user # Ends the oracle iterations
-        update_y0!(kl, y)          # Set up starting point for next iteration
     end
 end

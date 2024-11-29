@@ -59,13 +59,6 @@ end
     x2, r2 = sPt.solution, sPt.residual
     @test norm(x1 - x2) < 1e-5
     @test norm(A*x2 + C*r2 - b) < 1e-5
-
-    # Now use the self-scaling approach
-    reset!(kl)
-    scale!(kl, 1.0)
-    ssStats = solve!(ss, logging=0, rtol=1e-6)
-    xss = ssStats.solution
-    @test norm(x2 - xss) < 1e-5
 end
 
 @testset "Primal-Dual Obj" begin

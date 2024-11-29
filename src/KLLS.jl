@@ -15,7 +15,7 @@ using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
 
 export KLLSModel, SSModel, OTModel, LPModel
-export NewtonEQ, TrunkLS, SequentialSolve, LevelSet
+export NewtonEQ, SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
 export solve!, scale!, regularize!, histogram, maximize!, reset!, update_y0!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
