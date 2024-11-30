@@ -61,7 +61,7 @@ function newton_opt(
         dObj, dGrd, dHes = evaldual(y)
 
     end
-    return grad(kl.lse), y, tracer
+    return grad(kl.kernel), y, tracer
 end
 
 function armijo(f, ∇fx, x, d; μ=1e-5, α=1, ρ=0.5, maxits=10)

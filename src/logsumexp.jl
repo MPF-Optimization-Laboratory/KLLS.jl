@@ -85,3 +85,14 @@ function hess(lse::LogExpFunction)
     g = lse.g
     return Diagonal(g) - g * g'
 end
+
+"""
+Get the Hessian vector product of logΣexp at the point `p`
+where the `lse` objective was last evaluated:
+
+    Hz = hessvp(lse, z)
+"""
+function hessvp(lse::LogExpFunction{T}, z::AbstractVector{T}) where T
+    g = lse.g
+    return g.*(z .- (dot(g, z)))
+end

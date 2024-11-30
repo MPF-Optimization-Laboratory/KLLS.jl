@@ -8,7 +8,7 @@ function value!(kl::KLLSModel, t; jprods=Int[0], jtprods=Int[0], kwargs...)
     scale!(kl, t)
     s = solve!(kl; kwargs...)
     y = s.residual/λ
-    dv = obj!(kl.lse, A'y) - log(t) - 1
+    dv = obj!(kl.kernel, A'y) - log(t) - 1
     jprods[1] += neval_jprod(kl)
     jtprods[1] += neval_jtprod(kl)
     update_y0!(kl, s.residual ./ kl.λ) # Set the next runs starting point to the radial projection

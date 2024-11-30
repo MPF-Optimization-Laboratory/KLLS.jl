@@ -3,14 +3,14 @@ Structure for KLLS model
     - `A` is the matrix of constraints
     - `b` is the right-hand side
     - `q` is the prior (default: uniform)
-    - `lse` is the log-sum-exp function
+    - `kernel` is the kernel used to regularize (default: LSE for simplex)
     - `λ` is the regularization parameter
     - `C` is a positive definite scaling matrix
     - `w` is an n-buffer for the Hessian-vector product 
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct KLLSModel{T<:AbstractFloat, M, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
+@kwdef mutable struct KLLSModel{T<:AbstractFloat, M, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}, K} <: AbstractNLPModel{T, S}
     A::M
     b::SB
     c::S = begin
@@ -29,7 +29,7 @@ Structure for KLLS model
     nbuf::S = similar(q)
     bNrm::T = norm(b)
     scale::T = one(eltype(A))
-    lse::LogExpFunction = LogExpFunction(q)
+    kernel::K = LogExpFunction(q)
     name::String = ""
     meta::NLPModelMeta{T, S} = begin
         m = size(A, 1)

@@ -43,7 +43,7 @@ import Krylov: cg
 
     # DiagASAtPreconditioner
     M = KLLS.DiagASAPreconditioner(data)
-    g = KLLS.grad(data.lse)
+    g = KLLS.grad(data.kernel)
     S = Diagonal(g)
     P = Diagonal(A*S*A')
     @test all(P*d ≈ mul!(similar(d), M, d))
