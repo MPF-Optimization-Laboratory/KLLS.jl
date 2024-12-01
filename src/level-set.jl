@@ -25,11 +25,12 @@ function solve!(
     tracer = DataFrame(iter=Int[], l=T[], u=T[], u_over_l=T[], s=T[])
     l, u, s = 0.0, 0.0, 0.0
     solver = TrunkSolver(kl)
+    subsolver_logging = Int(max(0, logging-1))
     start_time = time()
 
     while true
         it += 1
-        l, u, s = oracle!(kl, α, σ, solver, tracer, logging=logging, max_time=max_time) # TODO: weird max time
+        l, u, s = oracle!(kl, α, σ, solver, tracer, logging=subsolver_logging, max_time=max_time) # TODO: weird max time
         tk = t - l / s
         
         small_step = abs(tk - t) ≤ atol + t*rtol
@@ -59,11 +60,11 @@ function solve!(
 
     final_soln = solve!(
         kl,
-        # SSTrunkLS(), # This doesn't work, or takes more time, either way, bad...
-        logging=logging,
+        logging=subsolver_logging,
         reset_counters=false,
-        atol=atol,
-        rtol=rtol,
+        # atol=atol,
+        # rtol=rtol,
+        solver=solver,
         kwargs...
     )
 

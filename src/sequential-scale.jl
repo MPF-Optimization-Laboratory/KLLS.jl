@@ -35,7 +35,7 @@ Maximize the dual objective of a KLLS model with respect to the scaling paramete
 Returns the optimal primal solution.
 """
 function solve!(
-    ss::SSModel{T},
+    kl::KLLSModel{T},
     ::SequentialSolve;
     t=one(T),
     rtol=1e-6,
@@ -43,10 +43,12 @@ function solve!(
     xatol=1e-6,
     xrtol=1e-6,
     δ=1e-2,
-    zverbose=true,
+    zverbose=false,
     logging=0,
     kwargs...
     ) where T
+
+    ss = SSModel(kl)
 
     # Initalize counter for mat-vec products
     jprods = Int[0]

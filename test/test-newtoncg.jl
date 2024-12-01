@@ -46,10 +46,9 @@ end
 
     # Value-function iteration: nonnegative 
     reset!(kl)
-    ss = KLLS.SSModel(kl)
-    ssSoln = solve!(ss, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
+    ssSoln = solve!(kl, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
     x1 = ssSoln.solution
-    t1 = ss.kl.scale
+    t1 = kl.scale
     @test KLLS.value!(kl, t1) < 1e-6
 
     # Solve the KL problem with the scaling `t1` obtained above

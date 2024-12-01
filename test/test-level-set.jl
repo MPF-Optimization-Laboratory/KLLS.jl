@@ -12,25 +12,26 @@ using NPZ, UnPack
 
     b = randn(m)#A*x0
     λ = 1e-3
-    data = KLLSModel(A, b, λ=λ)
+    kl = KLLSModel(A, b, λ=λ)
+    σ = -solve!(kl, SequentialSolve()).dual_obj # Find the optimal objective value
     atol = rtol = 1e-6
-    st = solve!(data, LevelSet(), atol=atol, rtol=rtol)
+    st = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=atol, rtol=rtol)
     x = st.solution; r = st.residual
     @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
-    M = KLLS.AAPreconditioner(data)
-    st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
+    M = KLLS.AAPreconditioner(kl)
+    st = solve!(kl, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
-@testset "Level Set Method for KLLSModel with synthetic data" begin
-    data = try # needed because of vscode quirks while developing
+@testset "Level Set Method for KLLSModel with synthetic kl" begin
+    kl = try # needed because of vscode quirks while developing
         npzread("../data/synthetic-UEG_testproblem.npz")
     catch
         npzread("./data/synthetic-UEG_testproblem.npz")
     end
 
-    @unpack A, b_avg, b_std, mu = data
+    @unpack A, b_avg, b_std, mu = kl
     b = b_avg
     q = convert(Vector{Float64}, mu)
     q .= max.(q, 1e-13)
@@ -41,6 +42,7 @@ end
 
     # Create and solve the KL problem
     kl = KLLSModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
-    sP = solve!(kl, LevelSet(), atol=1e-5, rtol = 1e-5, logging=0, trace=true)
+    σ = -solve!(kl, SequentialSolve()).dual_obj # Find the optimal objective value
+    sP = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=1e-5, rtol = 1e-5)
     @test sP.optimality < 1e-5*kl.bNrm
 end
