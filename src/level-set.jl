@@ -238,6 +238,10 @@ end
 
 ##############################################################################
 # Oracle
+#
+# This methods solves the same problem as the one in newtoncg.jl, 
+# the only difference is that it stops when the primal objective is less than 
+# α times dual objective. Visit newtoncg.jl for optimization documentation
 ##############################################################################
 
 function oracle!(

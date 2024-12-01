@@ -46,3 +46,25 @@ end
     sP = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=1e-5, rtol = 1e-5)
     @test sP.optimality < 1e-5*kl.bNrm
 end
+
+@testset "Adaptive Level Set Method for KLLSModel with synthetic kl" begin
+    kl = try # needed because of vscode quirks while developing
+        npzread("../data/synthetic-UEG_testproblem.npz")
+    catch
+        npzread("./data/synthetic-UEG_testproblem.npz")
+    end
+
+    @unpack A, b_avg, b_std, mu = kl
+    b = b_avg
+    q = convert(Vector{Float64}, mu)
+    q .= max.(q, 1e-13)
+    q .= q./sum(q)
+    C = inv.(b_std) |> diagm
+    λ = 1e-4
+    n = length(q)
+
+    # Create and solve the KL problem
+    kl = KLLSModel(A, b, C=C, c=zeros(n), q=q, λ=λ) 
+    sP = solve!(kl, AdaptiveLevelSet(), α=1.5, atol=1e-5, rtol = 1e-5)
+    @test sP.optimality < 1e-5*kl.bNrm
+end
