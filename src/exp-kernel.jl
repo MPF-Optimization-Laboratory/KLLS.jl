@@ -60,6 +60,6 @@ where the `expk` objective was last evaluated:
 """
 function hessvp!(expk::ExpKernel{T}, z::AbstractVector{T}) where T
     g = expk.g
-    z = g.*z
+    z .= g.*z
     return z
 end

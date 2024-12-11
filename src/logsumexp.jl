@@ -94,6 +94,6 @@ where the `lse` objective was last evaluated:
 """
 function hessvp!(lse::LogExpFunction{T}, z::AbstractVector{T}) where T
     g = lse.g
-    z = g.*(z .- (dot(g, z)))
+    z .= g.*(z .- (dot(g, z)))
     return z
 end
