@@ -95,12 +95,13 @@ struct AdaptiveLevelSet end
 function solve!(
     kl::KLLSModel{T},
     ::AdaptiveLevelSet;
-    α::T=1.5,
+    α::T=1.5,               # upper to lower bound ratio of oracle!
     t=one(T),
     logging=0,
     atol=1e-3,
     rtol=1e-3,
     max_time::Float64=30.0,
+    slope_tol=1.0,          # End scale adjustment when slope of the lower minorant is small
     kwargs...
 ) where {T}
     # Reset counters
@@ -155,7 +156,8 @@ function solve!(
         
         # Check if we overshot, adjust guess if we did
         if s > 0.0
-            if s < 1e-1
+            # If we overshot, but the scale is still good, stop
+            if s < slope_tol
                 break
             end
             σ_new = σ + lₐ / 2      # Set the new guess to avg between lower bound and old guess
@@ -164,8 +166,7 @@ function solve!(
             scale!(kl, t)
 
             if logging > 0
-                println("overshot the optimal t, increasing guess to σ=$σ_new")
-            end
+                println("overshot the optimal t, increasing objective estimate to σ=$σ_new")            end
             σ = σ_new
             continue
         end
@@ -188,12 +189,16 @@ function solve!(
         end
 
         if done
-            # if the gradient is small, guess is good, break
-            if s > -1
+            # If we find the root of v(t) - σ, but the slope is still too high
+            # it means that our estimate objective was too high.
+
+            # If the slope is small enough, break
+            if s > -slope_tol
                 break
             end
 
-            # if the gradient is large, the guess is too high, lower it
+            # if the slope is large, the guess is too high
+            # lower the guess by taking a "gradient" step down, any lowering should work here
             σ_new = σ + s * 1e-2
             lₐ = lₐ - σ_new + σ
             l = l - σ_new + σ
