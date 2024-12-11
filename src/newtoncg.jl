@@ -73,7 +73,7 @@ function dHess_prod!(kl::KLLSModel, z, Hz)
     increment!(kl, :neval_jprod)
     increment!(kl, :neval_jtprod)
     mul!(w, A', z)                 # w =              A'z
-    w .= hessvp(kernel, w)         # w =        (∇²k)(A'z) 
+    hessvp!(kernel, w)             # w =        (∇²k)(A'z) 
     mul!(Hz, A, w, scale, 0)       # v = scale*A(∇²k)(A'z)
     if λ > 0
         mul!(Hz, C, z, λ, 1)       # v += λCz

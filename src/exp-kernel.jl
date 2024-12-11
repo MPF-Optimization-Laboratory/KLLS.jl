@@ -56,9 +56,10 @@ end
 Get the Hessian vector product of logΣexp at the point `p`
 where the `expk` objective was last evaluated:
 
-    Hz = hessvp(lse, z)
+    Hz = hessvp!(lse, z)
 """
-function hessvp(expk::ExpKernel{T}, z::AbstractVector{T}) where T
+function hessvp!(expk::ExpKernel{T}, z::AbstractVector{T}) where T
     g = expk.g
-    return g.*z
+    z = g.*z
+    return z
 end
