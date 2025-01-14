@@ -86,16 +86,51 @@ function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector,
     return Hz = dHess_prod!(kl, z, Hz)
 end
 
+"""
+Primal objective:
+
+Calculates the primal objective value
+
+    f(x) = 1/(2λ) ⟨Ax-b,C⁻¹(Ax-b)⟩ + ⟨c, x⟩ + KL(x || q)
+
+
+"""
+function pObj!(kl::KLLSModel, x)
+    @unpack A, b, c, C, q, λ, mbuf, mbuf2 = kl
+
+    # Compute Ax - b in-place
+    mul!(mbuf, A, x)           # mbuf = A * x
+    mbuf .-= b                 # mbuf = Ax - b
+
+    # Solve C * y = mbuf to get y = C⁻¹(mbuf)
+    mbuf2 .= C \ mbuf      # Use \ to solve C * y = mbuf
+
+    # Compute ⟨Ax - b, C⁻¹(Ax - b)⟩
+    quadratic_term = dot(mbuf, mbuf2)
+
+    # Compute ⟨c, x⟩
+    linear_term = dot(c, x)
+
+    # Compute KL(x || q)
+    kl_term = sum(xi * log(xi / qi) for (xi, qi) in zip(x, q) if xi > 0)
+
+    # Final objective
+    return (1 / (2 * λ)) * quadratic_term + linear_term + kl_term
+end
+
 function solve!(
     kl::KLLSModel{T};
     M=I,
     logging=0,
-    monotone=true,
     max_time::Float64=30.0,
+    reset_counters=true,
+    solver=TrunkSolver(kl),
     kwargs...) where T
    
     # Reset counters
-    reset!(kl)    
+    if reset_counters
+        reset!(kl)    
+    end
 
     # Tracer
     tracer = DataFrame(iter=Int[], dual_obj=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
@@ -106,10 +141,12 @@ function solve!(
     
     # Call the Trunk solver
     if M === I
-        trunk_stats = trunk(kl; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
+        trunk_stats = SolverCore.solve!(solver, kl; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time) 
     else
-        trunk_stats = trunk(kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
+        trunk_stats = SolverCore.solve!(solver, kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
     end
+
+    x = kl.scale .* grad(kl.lse)
     
     stats = ExecutionStats(
         trunk_stats.status,
@@ -117,9 +154,9 @@ function solve!(
         trunk_stats.iter,               # number of iterations
         neval_jprod(kl),                # number of products with A
         neval_jtprod(kl),               # number of products with A'
-        zero(T),                        # TODO: primal objective
+        pObj!(kl, x),                   # primal objective
         trunk_stats.objective,          # dual objective
-        (kl.scale).*grad(kl.lse),       # primal solution `x`
+        x,                              # primal solution `x`
         (kl.λ).*(trunk_stats.solution), # residual r = λy
         trunk_stats.dual_feas,          # norm of the gradient of the dual objective
         tracer

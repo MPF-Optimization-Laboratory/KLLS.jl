@@ -38,7 +38,7 @@ using KLLS, NLPModels, LinearAlgebra, Random
 
       rtol = tol
       atol = tol
-      ssSoln = solve!(ss, trace=true, logging=0, atol=atol, rtol=rtol)
+      ssSoln = solve!(kl, SSTrunkLS(), trace=true, logging=0, atol=atol, rtol=rtol)
 
       x = ssSoln.solution
       r = ssSoln.residual

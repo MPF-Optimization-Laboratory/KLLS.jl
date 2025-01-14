@@ -46,10 +46,9 @@ end
 
     # Value-function iteration: nonnegative 
     reset!(kl)
-    ss = KLLS.SSModel(kl)
-    ssSoln = solve!(ss, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
+    ssSoln = solve!(kl, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
     x1 = ssSoln.solution
-    t1 = ss.kl.scale
+    t1 = kl.scale
     @test KLLS.value!(kl, t1) < 1e-6
 
     # Solve the KL problem with the scaling `t1` obtained above
@@ -59,11 +58,41 @@ end
     x2, r2 = sPt.solution, sPt.residual
     @test norm(x1 - x2) < 1e-5
     @test norm(A*x2 + C*r2 - b) < 1e-5
+end
 
-    # Now use the self-scaling approach
-    reset!(kl)
-    scale!(kl, 1.0)
-    ssStats = solve!(ss, logging=0, rtol=1e-6)
-    xss = ssStats.solution
-    @test norm(x2 - xss) < 1e-5
+@testset "Primal-Dual Obj" begin
+    # At a solution, primal and dual objectives must be the same
+    Random.seed!(1234)
+
+    m, n = 10, 30
+    A = randn(m, n)
+    b = randn(m)
+    λ = 1e-1
+    kl = KLLSModel(A, b, λ=λ)
+
+    atol = rtol = 1e-6
+    st = solve!(kl, atol=atol, rtol=rtol)
+
+    pObj = KLLS.pObj!(kl, st.solution)
+    dObj = KLLS.dObj!(kl, st.residual / λ)
+    @test isapprox(pObj, -dObj)
+end
+
+@testset "Primal-Dual Obj, Scaled" begin
+    # At a solution, primal and dual objectives must be the same
+    Random.seed!(1234)
+
+    m, n = 10, 30
+    A = randn(m, n)
+    b = randn(m)
+    λ = 1e-1
+    kl = KLLSModel(A, b, λ=λ)
+    scale!(kl, 8.0)
+
+    atol = rtol = 1e-6
+    st = solve!(kl, atol=atol, rtol=rtol)
+
+    pObj = KLLS.pObj!(kl, st.solution)
+    dObj = KLLS.dObj!(kl, st.residual / λ)
+    @test isapprox(pObj, -dObj)
 end

@@ -14,8 +14,8 @@ which is equivalent to:
 
 where ε is the relaxation constant, λ is the feasibility constant, and H(x) is the entropy function.
 """
-struct LPModel{T, SS<:SSModel{T}}
-    ss::SS   # Self-scaled model
+struct LPModel{T, KL<:KLLSModel{T}}
+    kl::KL   # Self-scaled model
     ε::T     # Relaxation constant
     λ::T     # Feasibility constant
 end
@@ -50,8 +50,7 @@ function LPModel(
     end
     kl = KLLSModel(A=A, b=b, c=c, λ=λ, kwargs...)
     regularize!(kl, ε * λ)
-    ss = SSModel(kl)
-    return LPModel(ss, ε, λ)
+    return LPModel(kl, ε, λ)
 end
 
 """
@@ -59,9 +58,9 @@ Custom display for `LPModel` instances.
 """
 function Base.show(io::IO, lp::LPModel)
     println(io, "KL regularized LP" *
-                (lp.ss.kl.name == "" ? "" : ": " * lp.ss.kl.name))
-    println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(lp.ss.kl.A, 1), lp.ss.kl.bNrm))
-    println(io, @sprintf("   n = %10d  λ    = %7.1e", size(lp.ss.kl.A, 2), lp.λ))
+                (lp.kl.name == "" ? "" : ": " * lp.kl.name))
+    println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(lp.kl.A, 1), lp.kl.bNrm))
+    println(io, @sprintf("   n = %10d  λ    = %7.1e", size(lp.kl.A, 2), lp.λ))
     println(io, @sprintf("       %10s  ε    = %7.1e", " ", lp.ε))
 end
 
@@ -73,7 +72,7 @@ Adjusts the feasibility constant `λ` in the `LPModel`.
 - `λ`: New feasibility constant.
 """
 function regularize_feasability!(lp::LPModel, λ)
-    regularize!(lp.ss.kl, λ * lp.ε)
+    regularize!(lp.kl, λ * lp.ε)
     lp.λ = λ
 end
 
@@ -85,15 +84,15 @@ Adjusts the relaxation constant `ε` in the `LPModel`.
 - `ε`: New relaxation constant.
 """
 function regularize_relaxation!(lp::LPModel, ε)
-    regularize!(lp.ss.kl, lp.λ * ε)
-    BLAS.scal!(1/ε, lp.ss.kl.c)
+    regularize!(lp.kl, lp.λ * ε)
+    BLAS.scal!(1/ε, lp.kl.c)
     lp.ε = ε
 end
 
 """
 Resets the `LPModel` to its initial state.
 """
-NLPModels.reset!(lp::LPModel) = NLPModels.reset!(lp.ss)
+NLPModels.reset!(lp::LPModel) = NLPModels.reset!(lp.kl)
 
 """
 Solves the LP problem using the self-scaled solver.
@@ -111,7 +110,7 @@ A statistics object containing the solution and status.
 # Notes
 - If the solution is found but the residual norm exceeds `1e-1`, the status is set to `:infeasible`.
 """
-solve!(lp::LPModel; kwargs...) = solve!(lp, TrunkLS(); kwargs...)
+solve!(lp::LPModel; kwargs...) = solve!(lp, SSTrunkLS(); kwargs...)
 
 function solve!(
     lp::LPModel{T},
@@ -122,7 +121,7 @@ function solve!(
     kwargs...
 ) where T
     klls_stats = solve!(
-        lp.ss,
+        lp.kl,
         Solver,
         logging=logging,
         max_time=max_time,

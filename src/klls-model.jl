@@ -25,6 +25,7 @@ Structure for KLLS model
     λ::T = √eps(eltype(A))
     C::CT = I
     mbuf::S = similar(b)
+    mbuf2::S = similar(b)
     nbuf::S = similar(q)
     bNrm::T = norm(b)
     scale::T = one(eltype(A))

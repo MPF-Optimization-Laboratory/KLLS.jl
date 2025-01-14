@@ -72,24 +72,28 @@ end
 # Nonlinear Least Squares via TrunkLS
 #######################################################################
 
-struct TrunkLS end
-
-solve!(ss::SSModel; kwargs...) = solve!(ss, TrunkLS(); kwargs...)
+struct SSTrunkLS end
 
 """
-    solve!(ss::SSModel, ::TrunkLS; kwargs...)
+    solve!(ss::SSModel, ::SSTrunkLS; kwargs...)
 
 Solve the self-scaled model using Gauss-Newton, via the TrunkLS algorithm.
 """
 function solve!(
-    ss::SSModel{T},
-    ::TrunkLS;
+    kl::KLLSModel{T},
+    ::SSTrunkLS;
     logging=0,
     monotone=true,
     max_time=30.0,
+    atol=zero(T),
+    rtol=zero(T),
+    reset_counters=true,
     kwargs...) where T
 
-    reset!(ss) # reset counters
+    if reset_counters
+        reset!(kl) # reset counters
+    end
+    ss = SSModel(kl)
 
     tracer = DataFrame(iter=Int[], scale=T[], vpt=T[], dual_grad=T[], r=T[], Δ=T[], Δₐ_Δₚ=T[], cgits=Int[], cgmsg=String[])
 
@@ -98,7 +102,7 @@ function solve!(
       callback(ss, solver, stats, tracer, logging, max_time; kwargs...)
     
     trunk_stats =
-      trunk(ss; callback=cb, atol=zero(T), rtol=zero(T), max_time=max_time, monotone=monotone) 
+      trunk(ss; callback=cb, atol=atol, rtol=rtol, max_time=max_time, monotone=monotone) 
 
     # Optimality. Report the maximum ∇d(y) and v'(t)
     optimality = sqrt(obj(ss, trunk_stats.solution))
