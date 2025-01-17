@@ -1,27 +1,27 @@
 """
-Compute f(y) = logΣexp(A'y - c) and it's gradient,
-stored in the `lse` internal buffer.
+Compute f(y) = kernel(A'y - c) and it's gradient,
+stored in the `kernel` internal buffer.
 """
-function lseatyc!(kl, y)
-    @unpack A, c, nbuf, lse = kl
+function kernelatyc!(kl, y)
+    @unpack A, c, nbuf, kernel = kl
     nbuf .= c
     mul!(nbuf, A', y, 1, -1)
-    return obj!(lse, nbuf)
+    return obj!(kernel, nbuf)
 end
 
 """
 Dual objective:
 
 - base case (no scaling, unweighted 2-norm):
-    f(y) = log∑exp(A'y - c) - 0.5λ y∙Cy - b∙y
+    f(y) = kernel(A'y - c) - 0.5λ y∙Cy - b∙y
 
 - with scaling and weighted 2-norm:
-    f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
+    f(y) = τ kernel(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
 """
 function dObj!(kl::KLLSModel, y)
     @unpack b, λ, C, scale = kl 
     increment!(kl, :neval_jtprod)
-    f = lseatyc!(kl, y)
+    f = kernelatyc!(kl, y)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
 
@@ -30,14 +30,14 @@ NLPModels.obj(kl::KLLSModel, y) = dObj!(kl, y)
 """
 Dual objective gradient
 
-   ∇f(y) = τ A∇log∑exp(A'y-c) + λCy - b 
+   ∇f(y) = τ A∇kernel(A'y-c) + λCy - b 
 
 evaluated at `y`. Assumes that the objective was last evaluated at the same point `y`.
 """
 function dGrad!(kl::KLLSModel, y, ∇f)
-    @unpack A, b, λ, C, lse, scale = kl
+    @unpack A, b, λ, C, kernel, scale = kl
     increment!(kl, :neval_jprod)
-    p = grad(lse)
+    p = grad(kernel)
     ∇f .= -b
     if λ > 0
         mul!(∇f, C, y, λ, 1)
@@ -49,8 +49,8 @@ end
 NLPModels.grad!(kl::KLLSModel, y, ∇f) = dGrad!(kl, y, ∇f)
 
 function dHess(kl::KLLSModel)
-    @unpack A, λ, C, lse, scale = kl
-    H = hess(lse)
+    @unpack A, λ, C, kernel, scale = kl
+    H = hess(kernel)
     ∇²dObj = scale*(A*H*A')
     if λ > 0
         ∇²dObj += λ*C
@@ -63,19 +63,18 @@ end
 
 Product of the dual objective Hessian with a vector `z`
 
-    Hz ← ∇²d(y)z = τ A∇²log∑exp(A'y)Az + λCz,
+    Hz ← ∇²d(y)z = τ A∇²kernel(A'y)Az + λCz,
 
 where `y` is the point at which the objective was last evaluated.
 """
 function dHess_prod!(kl::KLLSModel, z, Hz)
-    @unpack A, λ, C, nbuf, lse, scale = kl
+    @unpack A, λ, C, nbuf, kernel, scale = kl
     w = nbuf
     increment!(kl, :neval_jprod)
     increment!(kl, :neval_jtprod)
-    g = grad(lse)
-    mul!(w, A', z)                 # w =                  A'z
-    w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'z)
-    mul!(Hz, A, w, scale, 0)       # v = scale*A(G - gg')(A'z)
+    mul!(w, A', z)                 # w =              A'z
+    hessvp!(kernel, w)             # w =        (∇²k)(A'z) 
+    mul!(Hz, A, w, scale, 0)       # v = scale*A(∇²k)(A'z)
     if λ > 0
         mul!(Hz, C, z, λ, 1)       # v += λCz
     end
@@ -146,7 +145,7 @@ function solve!(
         trunk_stats = SolverCore.solve!(solver, kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
     end
 
-    x = kl.scale .* grad(kl.lse)
+    x = (kl.scale).*grad(kl.kernel)
     
     stats = ExecutionStats(
         trunk_stats.status,

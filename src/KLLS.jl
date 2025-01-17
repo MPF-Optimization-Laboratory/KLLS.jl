@@ -15,12 +15,13 @@ using NonlinearSolve, LinearSolve
 import SciMLBase: ReturnCode
 
 export KLLSModel, SSModel, OTModel, LPModel
-export NewtonEQ, SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
+export NewtonEQ, SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet, ExpKernel
 export solve!, scale!, regularize!, histogram, maximize!, reset!, update_y0!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 
 include("logsumexp.jl")
+include("exp-kernel.jl")
 include("klls-model.jl")
 include("ss-model.jl")
 include("newtoncg.jl")

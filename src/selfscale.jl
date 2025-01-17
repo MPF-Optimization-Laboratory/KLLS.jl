@@ -14,7 +14,7 @@ where
 function NLPModels.residual!(ss::SSModel, yt, Fx)
 	increment!(ss, :neval_residual)
     kl = ss.kl
-	@unpack A, c, lse = kl
+	@unpack A, c, kernel = kl
 	m = kl.meta.nvar
     
     r = @view Fx[1:m]
@@ -22,7 +22,7 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
 	t =       yt[end]
     
     scale!(kl, t)             # Apply the latest scaling factor
-    f = lseatyc!(kl, y)       # f = logΣexp(A'y). Needed before grad eval
+    f = kernelatyc!(kl, y)    # f = kernel(A'y). Needed before grad eval
 	dGrad!(kl, y, r)          # r ≡ Fx[1:m] = ∇d(y)	
 	Fx[end] = f - log(t) - 1  # optimal scaling condition
 	return Fx
@@ -39,10 +39,10 @@ Compute the Jacobian-vector product,
 function NLPModels.jprod_residual!(ss::SSModel, yt, zα, Jyt)
 
     kl = ss.kl
-    @unpack A, lse, mbuf = kl
+    @unpack A, kernel, mbuf = kl
     Ax = mbuf
     m = kl.meta.nvar
-    x = grad(lse)
+    x = grad(kernel)
 
     increment!(ss, :neval_jprod_residual)
 
@@ -108,7 +108,7 @@ function solve!(
     optimality = sqrt(obj(ss, trunk_stats.solution))
 
     kl = ss.kl
-    x = kl.scale.*grad(kl.lse)
+    x = kl.scale.*grad(kl.kernel)
     y = @view trunk_stats.solution[1:end-1]
     stats = ExecutionStats(
         trunk_stats.status,          # status
@@ -276,7 +276,7 @@ function solve!(
 
     λ = kl.λ
     y = @view nlcache.u[1:m]
-    x = kl.scale.*grad(kl.lse)
+    x = kl.scale.*grad(kl.kernel)
     ∇d = @view nlcache.fu[1:m]
     r = λ*y
     stats = ExecutionStats(

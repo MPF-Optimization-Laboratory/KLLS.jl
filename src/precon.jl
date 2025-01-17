@@ -62,8 +62,8 @@ See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
 function DiagASAPreconditioner(kl::KLLSModel{T}; α::T=zero(T)) where T
     @unpack A, b, λ = kl
-    obj!(kl.lse, A'b)
-    d = diag_ASA!(similar(b), A, grad(kl.lse), α)
+    obj!(kl.kernel, A'b)
+    d = diag_ASA!(similar(b), A, grad(kl.kernel), α)
     DiagASAPreconditioner(kl, d, α)
 end
 
@@ -92,7 +92,7 @@ function diag_ASA!(d::AbstractVector{T}, A, g, λ) where T
 end
 
 function update!(P::DiagASAPreconditioner)
-    d = P.d; A = P.kl.A; α = P.α; g = grad(P.kl.lse)
+    d = P.d; A = P.kl.A; α = P.α; g = grad(P.kl.kernel)
     diag_ASA!(d, A, g, α)
 end
 
