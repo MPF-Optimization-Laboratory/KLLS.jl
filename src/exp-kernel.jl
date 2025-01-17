@@ -22,7 +22,7 @@ end
 """
 Evaluate ∑exp, its gradient, and Hessian at `p`:
 
-    f = obj!(lse, p)
+    f = obj!(expk, p)
 
 where `p` is a vector of length `n` and `expk` is a ExpKernel object.
 """
@@ -43,9 +43,9 @@ grad(expk::ExpKernel) = expk.g
 
 """
 Get the Hessian of ∑exp at the point `p` where
-the `lse` objective was last evaluated:
+the `expk` objective was last evaluated:
 
-    H = hess(lse)
+    H = hess(expk)
 """
 function hess(expk::ExpKernel)
     g = expk.g
@@ -56,7 +56,7 @@ end
 Get the Hessian vector product of logΣexp at the point `p`
 where the `expk` objective was last evaluated:
 
-    Hz = hessvp!(lse, z)
+    Hz = hessvp!(expk, z)
 """
 function hessvp!(expk::ExpKernel{T}, z::AbstractVector{T}) where T
     g = expk.g

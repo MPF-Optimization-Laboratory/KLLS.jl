@@ -289,7 +289,7 @@ function oracle_callback(
     trace::Bool=false,
 ) where {T}
     y = solver.x
-    x = kl.scale * grad(kl.lse)
+    x = kl.scale * grad(kl.kernel)
     dObj = -trunk_stats.objective - σ
     iter = trunk_stats.iter
     r = trunk_stats.dual_feas # = ||∇ dual obj(x)||
@@ -322,7 +322,7 @@ function oracle_callback(
     elseif tired
         trunk_stats.status = :max_iter
     elseif pObj < α * dObj && dObj > 0
-        st = -obj!(kl.lse, kl.A'y) + log(kl.scale) + 1
+        st = -obj!(kl.kernel, kl.A'y) + log(kl.scale) + 1
         ret .= [dObj, pObj, st]
         trunk_stats.status = :user # Ends the oracle iterations
     end
