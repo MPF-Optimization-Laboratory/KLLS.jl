@@ -16,7 +16,7 @@ import SciMLBase: ReturnCode
 
 export KLLSModel, SSModel, OTModel, LPModel
 export NewtonEQ, SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
-export solve!, scale!, regularize!, histogram, maximize!, reset!, update_y0!
+export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 

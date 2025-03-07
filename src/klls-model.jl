@@ -48,11 +48,30 @@ function Base.show(io::IO, kl::KLLSModel)
     println(io, @sprintf("       %10s  τ    = %7.1e"," ", kl.scale))
 end
 
+
+
+"""
+    regularize!(kl::KLLSModel{T}, λ::T) where T
+
+Set the regularization parameter of the KLLS model.
+"""
 function regularize!(kl::KLLSModel{T}, λ::T) where T
     kl.λ = λ
     return kl
 end
 
+"""
+    scale(kl::KLLSModel)
+
+Get the scaling factor of the KLLS model.
+"""
+scale(kl::KLLSModel) = kl.scale
+
+"""
+    scale!(kl::KLLSModel{T}, scale::T) where T
+
+Set the scaling factor of the KLLS model.
+"""
 function scale!(kl::KLLSModel{T}, scale::T) where T
     kl.scale = scale
     return kl

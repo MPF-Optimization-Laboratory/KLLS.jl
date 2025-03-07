@@ -1,10 +1,14 @@
+![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/KLLS.jl)
+[![Run_Tests](https://github.com/MPF-Optimization-Laboratory/KLLS.jl/actions/workflows/run-tests.yml/badge.svg)](https://github.com/MPF-Optimization-Laboratory/KLLS.jl/actions/workflows/run-tests.yml)
+
+
 # KLLS
 
-This package introduces a new algorithm to solve KL regularized least squares problems, that are of form
-
-$$ \min_{x\in \mathcal{C}} \frac{1}{2\lambda} \|Ax-b\|^2 + \langle c, x \rangle + KL(x\mid q) $$
-
-Where $\mathcal{C}$ is either the simplex or the non-negative orthant. **TODO: Explain how it works? add a link to the paper once it is done**
+This package provides an algorithm for solving KL-regularized least squares problems of the form
+$$
+\min_{x \in \mathcal{C}} \frac{1}{2\lambda} \|Ax - b\|^2 + \langle c, x \rangle + KL(x \mid q),
+$$
+where $\mathcal{C}$ is the simplex ($Δ = \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or the nonnegative orthant $ℝ^n_+$. The algorithm is based on a trust-region newton method on the dual problem.
 
 ## Usage
 
