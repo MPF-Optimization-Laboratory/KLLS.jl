@@ -8,4 +8,4 @@ KLLS.code-workspace
 klsolve.html
 
 /.quarto/
-.cursor/rules/julia-best-practices.mdc
+.cursor/**

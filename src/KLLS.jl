@@ -32,5 +32,4 @@ include("optimal-transport.jl")
 include("precon.jl")
 include("linear-programming.jl")
 include("utils.jl")
-
 end
