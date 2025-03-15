@@ -41,6 +41,33 @@ ot = KLLS.OTModel(μ, ν, C2, ϵ)      # Model initialization
 solution = solve!(ot, trace=true)   # Solution to the OT problem          
 ```
 
+## Extensions
+
+KLLS.jl provides the following optional extensions:
+
+### UnicodePlots Extension
+
+Provides plotting capabilities using the UnicodePlots package. To use:
+
+```julia
+using KLLS, UnicodePlots
+# Now you can plot KLLS.ExecutionStats objects
+histogram(solution)
+```
+
+### NonlinearSolve Extension
+
+Provides an alternative solver using NonlinearSolve.jl. To use:
+
+```julia
+using KLLS, NonlinearSolve
+# Now you can use the NewtonEQ solver
+model = KLLSModel(A, b, c, λ)
+solution = solve!(model, NewtonEQ())
+```
+
+The `NewtonEQ` solver uses Newton's method with equation-solving capabilities from NonlinearSolve.jl. This solver can be particularly effective for well-conditioned problems where a direct Newton approach is suitable.
+
 ## Developing
 
 ### Getting Started

@@ -9,13 +9,10 @@ using JSOSolvers: trunk, TrunkSolver
 using NLPModels
 using LinearOperators
 using SolverCore
-
-# NonlinearSolve packages
-using NonlinearSolve, LinearSolve
-import SciMLBase: ReturnCode
+using LinearSolve
 
 export KLLSModel, SSModel, OTModel, LPModel
-export NewtonEQ, SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
+export SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
 export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
