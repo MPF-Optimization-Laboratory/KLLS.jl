@@ -28,192 +28,146 @@ using KLLS, LinearAlgebra, UnPack, Printf
 import NPZ: npzread
 using UnicodePlots  # For Unicode plots
 
-# Load the synthetic UEG (Uniform Electron Gas) test problem data
-# This data contains:
-# - A: Constraint matrix
-# - b_avg: Target values
-# - b_std: Standard deviations for uncertainty
-# - mu: Reference distribution
-data_path = joinpath(project_root, "data", "synthetic-UEG_testproblem.npz")
-data = npzread(data_path)
-@unpack A, b_avg, b_std, mu = data
-b = b_avg
-q = convert(Vector{Float64}, mu)
-q .= max.(q, 1e-13)  # Ensure positivity
-q .= q./sum(q)      # Normalize to sum to 1
-C = inv.(b_std) |> diagm  # Convert standard deviations to weights
-
 println("Testing level-set algorithms with UEG synthetic test problem...")
 
-# Single λ comparison to show detailed information
-λ_single = 1e-4  # Regularization parameter for detailed comparison
-println("\n# Detailed comparison for λ = $(λ_single)")
+# Load test problem data
+# Get the absolute path to the project root directory
+data_path = joinpath(project_root, "data", "synthetic-UEG_testproblem.npz")
+data = npzread(data_path)
 
-# Create the KLLS model using the data 
-kl = KLLSModel(A, b, C=C, q=q, λ=λ_single)
+# Extract the data
+A = data["A"]
+b = data["b_avg"]
+q = convert(Vector{Float64}, data["mu"])
+q .= max.(q, 1e-13)  # Ensure positivity
+q .= q./sum(q)       # Normalize to sum to 1
+b_std = data["b_std"]
+C = inv.(b_std) |> diagm  # Convert standard deviations to weights
+c = q  # We'll use the reference distribution as the cost vector
 
-## Test 1: Sequential Solve with single λ
-println("\n## Testing Sequential Solve method")
-ssSoln = solve!(kl, SequentialSolve())
+m, n = size(A)
 
-# The scale is the sum of the primal variables.
-# These values should be close to each other.
-println("Scale: ", scale(kl))
-println("sum(p): ", sum(ssSoln.solution))
-println("Dual objective: ", ssSoln.dual_obj)
+# Set algorithm parameters
+maxiter = 1000000
+tol = 1e-6
+verbose = false
 
-## Test 2: Level-Set Method using the minorant with single λ
-println("\n## Testing Adaptive Level-Set method")
-# Reset the model
-kl = KLLSModel(A, b, C=C, q=q, λ=λ_single)
-alsSoln = solve!(kl, AdaptiveLevelSet(), logging=1)
+# Define a range of lambda values to test
+λ_values = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5]
+plot_λ_values = reverse(λ_values)  # Reverse for plotting (decreasing from left to right)
 
-println("Scale: ", scale(kl))
-println("sum(p): ", sum(alsSoln.solution))
-println("Dual objective: ", alsSoln.dual_obj)
+"""
+    SolverMetrics
 
-println("\nTests completed successfully.")
+Holds performance metrics for a level-set solver.
 
-# Print comparison table for single λ
-println("\nComparison of Methods (λ = $(λ_single)):")
-println("-"^72)
-@printf("%-20s %12s %12s %12s %12s\n", "Method", "Mat-Vecs", "Feasibility", "Optimality", "Time (s)")
-println("-"^72)
-@printf("%-20s %12d %12.2e %12.2e %12.2f\n", 
-    "Sequential", 
-    ssSoln.neval_jprod + ssSoln.neval_jtprod,
-    norm(ssSoln.residual, Inf),
-    ssSoln.optimality,
-    ssSoln.elapsed_time)
-@printf("%-20s %12d %12.2e %12.2e %12.2f\n",
-    "Adaptive Level-Set",
-    alsSoln.neval_jprod + alsSoln.neval_jtprod,
-    norm(alsSoln.residual, Inf),
-    alsSoln.optimality,
-    alsSoln.elapsed_time)
-println("-"^72)
-
-# Multi-λ comparison across a range of regularization parameters
-println("\n\n# Comparison across multiple λ values")
-
-# Generate logarithmically spaced λ values from 1e-1 to 1e-6
-λ_values = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]
-n_λ = length(λ_values)
-
-# Arrays to store results
-sequential_feasibility = zeros(n_λ)
-sequential_optimality = zeros(n_λ)
-sequential_time = zeros(n_λ)
-sequential_matvecs = zeros(Int, n_λ)
-
-adaptive_feasibility = zeros(n_λ)
-adaptive_optimality = zeros(n_λ)
-adaptive_time = zeros(n_λ)
-adaptive_matvecs = zeros(Int, n_λ)
-
-# Run both methods for each λ value
-for (i, λ) in enumerate(λ_values)
-    println("\nTesting with λ = $λ")
-    
-    # Sequential Solve method
-    kl_ss = KLLSModel(A, b, C=C, q=q, λ=λ)
-    ss_result = solve!(kl_ss, SequentialSolve(), logging=0)
-    
-    sequential_feasibility[i] = norm(ss_result.residual, Inf)
-    sequential_optimality[i] = ss_result.optimality
-    sequential_time[i] = ss_result.elapsed_time
-    sequential_matvecs[i] = ss_result.neval_jprod + ss_result.neval_jtprod
-    
-    # Adaptive Level-Set method
-    kl_als = KLLSModel(A, b, C=C, q=q, λ=λ)
-    als_result = solve!(kl_als, AdaptiveLevelSet(), logging=0)
-    
-    adaptive_feasibility[i] = norm(als_result.residual, Inf)
-    adaptive_optimality[i] = als_result.optimality
-    adaptive_time[i] = als_result.elapsed_time
-    adaptive_matvecs[i] = als_result.neval_jprod + als_result.neval_jtprod
-    
-    # Print comparison table for this λ
-    println("\nComparison of Methods (λ = $λ):")
-    println("-"^72)
-    @printf("%-20s %12s %12s %12s %12s\n", "Method", "Mat-Vecs", "Feasibility", "Optimality", "Time (s)")
-    println("-"^72)
-    @printf("%-20s %12d %12.2e %12.2e %12.2f\n", 
-        "Sequential", 
-        sequential_matvecs[i],
-        sequential_feasibility[i],
-        sequential_optimality[i],
-        sequential_time[i])
-    @printf("%-20s %12d %12.2e %12.2e %12.2f\n",
-        "Adaptive Level-Set",
-        adaptive_matvecs[i],
-        adaptive_feasibility[i],
-        adaptive_optimality[i],
-        adaptive_time[i])
-    println("-"^72)
+Fields:
+- `mat_vecs::Vector{Float64}`: Number of matrix-vector products
+- `feasibility::Vector{Float64}`: Feasibility measure (norm of residual)
+- `optimality::Vector{Float64}`: Optimality measure
+- `times::Vector{Float64}`: Computation time in seconds
+"""
+@kwdef struct SolverMetrics
+    mat_vecs::Vector{Int64} = Int64[]
+    feasibility::Vector{Float64} = Float64[]
+    optimality::Vector{Float64} = Float64[]
+    times::Vector{Float64} = Float64[]
 end
 
-# Create Unicode plots for comparing metrics vs λ
-
 """
-    create_comparison_plot(λ_values, seq_data, adap_data, metric_name; width=80, height=20)
+    push!(metrics::SolverMetrics, result)
 
-Create a log-log plot comparing Sequential and Adaptive methods across lambda values.
-
-# Arguments
-- `λ_values`: Array of lambda values
-- `seq_data`: Array of data for Sequential method
-- `adap_data`: Array of data for Adaptive method
-- `metric_name`: String name of the metric being compared
-- `width`: Plot width (default: 80)
-- `height`: Plot height (default: 20)
-
-# Returns
-A UnicodePlots scatterplot object
+Add solver results to the metrics collection.
 """
-function create_comparison_plot(λ_values, seq_data, adap_data, metric_name; width=80, height=20)
-    # Create the title and labels
-    title = "$metric_name vs λ"
+function Base.push!(metrics::SolverMetrics, result)
+    push!(metrics.mat_vecs, result.neval_jprod + result.neval_jtprod)
+    push!(metrics.feasibility, norm(result.residual, Inf))
+    push!(metrics.optimality, result.optimality)
+    push!(metrics.times, result.elapsed_time)
+end
+
+# Initialize metrics for both methods
+seq_metrics = SolverMetrics()
+adap_metrics = SolverMetrics()
+
+println("\n# Comparison across multiple λ values\n")
+
+# Test each lambda value
+for λ in λ_values
+    println("Testing with λ = $λ\n")
     
-    # Create the initial plot with Sequential method data
-    p = scatterplot(
-        λ_values, 
-        seq_data,
-        title=title,
-        xlabel="λ",
+    # Create KLLS model
+    kl_model = KLLSModel(A, b, C=C, q=q, λ=λ)
+    
+    # Test Sequential Solve method
+    seq_result = solve!(kl_model, SequentialSolve(), logging=0)
+    push!(seq_metrics, seq_result)
+    
+    # Create a new model instance for the Adaptive method
+    kl_model = KLLSModel(A, b, C=C, q=q, λ=λ)
+    
+    # Test Adaptive Level-Set method
+    adap_result = solve!(kl_model, AdaptiveLevelSet(), logging=0)
+    push!(adap_metrics, adap_result)
+    
+    # Print comparison table
+    println("Comparison of Methods (λ = $λ):")
+    println("------------------------------------------------------------------------")
+    println("Method                   Mat-Vecs  Feasibility   Optimality     Time (s)")
+    println("------------------------------------------------------------------------")
+    @printf("%-25s %8d    %.2e     %.2e         %.2f\n", 
+            "Sequential", seq_metrics.mat_vecs[end], seq_metrics.feasibility[end], 
+            seq_metrics.optimality[end], seq_metrics.times[end])
+    @printf("%-25s %8d    %.2e     %.2e         %.2f\n", 
+            "Adaptive Level-Set", adap_metrics.mat_vecs[end], adap_metrics.feasibility[end], 
+            adap_metrics.optimality[end], adap_metrics.times[end])
+    println("------------------------------------------------------------------------")
+    println()
+end
+
+# Create function for generating plots to avoid code duplication
+function create_comparison_plot(λ_values, seq_data, adap_data, metric_name; width=80, height=20)
+    plot = scatterplot(
+        λ_values, seq_data, 
+        xlabel="λ", 
         ylabel="$metric_name (log)",
+        title="$metric_name vs λ (log-log plot)",
         xscale=:log10,
         yscale=:log10,
+        marker='●',
         name="Sequential",
-        width=width, 
+        width=width,
         height=height,
-        marker='●',  # Larger circle character
-        xflip=true   # Flip x-axis to show decreasing values from left to right
+        xflip=true  # Flip x-axis to show decreasing lambda values from left to right
     )
     
-    # Add Adaptive method data to the plot
-    p = scatterplot!(
-        p,
-        λ_values, 
-        adap_data, 
-        name="Adaptive",
-        marker='◆'  # Diamond character
+    scatterplot!(
+        plot,
+        λ_values, adap_data,
+        marker='◆',
+        name="Adaptive"
     )
     
-    return p
+    return plot
 end
 
-# Metrics to plot
-plot_configs = [
-    ("Feasibility", sequential_feasibility, adaptive_feasibility),
-    ("Optimality", sequential_optimality, adaptive_optimality),
-    ("Matrix-Vector Products", sequential_matvecs, adaptive_matvecs),
-    ("Computation Time (s)", sequential_time, adaptive_time)
-]
+# Generate log-log plots for different metrics
+println("\nFeasibility vs λ (log-log plot):")
+feasibility_plot = create_comparison_plot(plot_λ_values, reverse(seq_metrics.feasibility), 
+                                        reverse(adap_metrics.feasibility), "Feasibility")
+println(feasibility_plot)
 
-# Generate and print all plots
-for (metric_name, seq_data, adap_data) in plot_configs
-    println("\n\n$metric_name vs λ (log-log plot):")
-    plot = create_comparison_plot(λ_values, seq_data, adap_data, metric_name)
-    println(plot)
-end
+println("\nOptimality vs λ (log-log plot):")
+optimality_plot = create_comparison_plot(plot_λ_values, reverse(seq_metrics.optimality), 
+                                       reverse(adap_metrics.optimality), "Optimality")
+println(optimality_plot)
+
+println("\nMatrix-Vector Products vs λ (log-log plot):")
+mvp_plot = create_comparison_plot(plot_λ_values, reverse(seq_metrics.mat_vecs), 
+                                reverse(adap_metrics.mat_vecs), "Matrix-Vector Products")
+println(mvp_plot)
+
+println("\nComputation Time (s) vs λ (log-log plot):")
+time_plot = create_comparison_plot(plot_λ_values, reverse(seq_metrics.times), 
+                                 reverse(adap_metrics.times), "Computation Time (s)")
+println(time_plot)

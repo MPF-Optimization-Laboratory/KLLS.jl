@@ -17,16 +17,14 @@ Roots = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
 SciMLBase = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
 SolverCore = "ff4d7338-4cf1-434d-91df-b86cb86fb843"
 UnPack = "3a884ed6-31ef-47d7-9d2a-63182c4928ed"
-
-[weakdeps]
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [extensions]
 UnicodePlotsExt = "UnicodePlots"
 
 [compat]
-GLPK = "1.2.1"
 Distances = "0.10.12"
+GLPK = "1.2.1"
 JSOSolvers = "0.12.1"
 JuMP = "1.23.3"
 Krylov = "0.9.6"
@@ -38,20 +36,21 @@ Roots = "2.2.1"
 SciMLBase = "2.56.1"
 SolverCore = "0.3.8"
 Statistics = "1.11.1"
+UnicodePlots = "3.7.2"
 julia = "1"
 
 [extras]
-OptimalTransport = "7e02d93a-ae51-4f58-b602-d97af76e3b33"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Distances = "b4f34e82-e78d-54a5-968a-f98e89d6e8f7"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 GLPK = "60bf3e95-4087-53dc-ae20-288a0d20c6a6"
 JuMP = "4076af6c-e467-56ae-b986-b466b2749572"
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 MAT = "23992714-dd62-5051-b70f-ba57cb901cac"
 NPZ = "15e1cf62-19b3-5cfa-8e77-841668bca605"
+OptimalTransport = "7e02d93a-ae51-4f58-b602-d97af76e3b33"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoLinks = "0ff47ea0-7a50-410d-8455-4348d5de0420"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
+Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
