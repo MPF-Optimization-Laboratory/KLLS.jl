@@ -1,8 +1,9 @@
 module UnicodePlotsExt
 
 using KLLS
+import UnicodePlots
 
-import UnicodePlots: histogram
+# Extend UnicodePlots.histogram to work with KLLS.ExecutionStats
 function UnicodePlots.histogram(stat::KLLS.ExecutionStats; kwargs...)
     println("")
     UnicodePlots.histogram(stat.solution; kwargs...)
