@@ -1,5 +1,0 @@
----
-title: "Maximum Entropy Linear Inversion Project"
-listing:
-   contents: .
----
