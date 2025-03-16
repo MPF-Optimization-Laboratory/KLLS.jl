@@ -1,12 +1,12 @@
 using Test
-using KLLS, NLPModels, LinearAlgebra, Random
+using Perspectron, NLPModels, LinearAlgebra, Random
 
 @testset "SSModel SequentialSolve test case" begin
       Random.seed!(1234)
       tol = 2e-5
       λ = 1e-2
       m, n = 8, 10
-      kl = KLLS.randKLmodel(m, n) 
+      kl = Perspectron.randPTmodel(m, n) 
       A, b = kl.A, kl.b
       regularize!(kl, λ)
 

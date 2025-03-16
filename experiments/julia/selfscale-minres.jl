@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 38a5d406-3fc0-48fa-aa14-e66f4001e9b5
-push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/KLLS.jl")
+push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/Perspectron.jl")
 
 # ╔═╡ 27b130f3-43b9-43b2-a52d-72f90a3cb4c0
 using Random, NPZ, UnPack, LinearAlgebra, Test
@@ -14,7 +14,7 @@ using Random, NPZ, UnPack, LinearAlgebra, Test
 using PlutoLinks
 
 # ╔═╡ 5e293c92-0fb4-471b-bc8f-a1db96348c22
-@revise using KLLS
+@revise using Perspectron
 
 # ╔═╡ f8d82b78-8cde-406d-ad73-e11e89b541e5
 md"## Self-scaling (Gauss-Newton via TrunkLS)"
@@ -29,15 +29,15 @@ kl = let
 	catch
 	         npzread("./data/synthetic-UEG_testproblem.npz")
 	end
+	
 	@unpack A, b_avg, b_std, mu = data
-    b = b_avg
-    q = convert(Vector{Float64}, mu)
-    q .= max.(q, 1e-13)
-    q .= q./sum(q)
-    C = inv.(b_std) |> diagm
-    λ = 1e-3
-    m, n = size(A)
-    KLLSModel(A, b, C=C, q=q, λ=λ)
+	b = b_avg
+	q = convert(Vector{Float64}, mu)
+	q .= max.(q, 1e-13)
+	q .= q./sum(q)
+	C = inv.(b_std) |> diagm
+	λ = 1e-4
+	PTModel(A, b, C=C, c=zeros(length(q)), q=q, λ=λ) 
 end
 
 # ╔═╡ ac625eec-36d3-4134-8e0f-85840a5a42d6

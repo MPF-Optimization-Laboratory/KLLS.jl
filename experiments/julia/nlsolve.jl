@@ -1,7 +1,7 @@
 using Test, NPZ, UnPack, LinearAlgebra
 using NonlinearSolve, LinearSolve
 using Suppressor
-using KLLS
+using Perspectron
 
 data = try # needed because of vscode quirks while developing
     npzread("../data/synthetic-UEG_testproblem.npz")
@@ -18,17 +18,27 @@ C = inv.(b_std) |> diagm
 λ = 1e-3
 m, n = size(A)
 
-kl = KLLSModel(A, b, C=C, q=q, λ=λ)
+# Create the model
+model = PTModel(A, b, C=C, q=q, λ=λ)
+ss = SSModel(model)
 
-# Now use the self-scaling approach
-reset!(kl)
-scale!(kl, 1.0)
-ss = KLLS.SSModel(kl)
-ssStats = KLLS.solve!(ss, verbose=0, rtol=1e-6)
+# Solve using NonlinearSolve
+stats = solve!(ss, NewtonEQ())
+println("Solved in $(stats.iter) iterations")
+println("Optimal t = $(stats.solution[end])")
+println("Residual norm = $(norm(stats.residual))")
+
+# Plot the solution
+using UnicodePlots
+histogram(stats.solution)
+
+reset!(model)
+scale!(model, 1.0)
+ssStats = Perspectron.solve!(ss, verbose=0, rtol=1e-6)
 xss = ssStats.solution
 
-reset!(kl)
-ff = NonlinearFunction(KLLS.nlresidual!; jvp=KLLS.nljprod!)
+reset!(model)
+ff = NonlinearFunction(Perspectron.nlresidual!; jvp=Perspectron.nljprod!)
 y0 = zeros(m)
 yt0 = vcat(y0, 1.0)
 prob = NonlinearProblem(ff, yt0, ss)

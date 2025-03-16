@@ -1,10 +1,10 @@
 module UnicodePlotsExt
 
-using KLLS
+using Perspectron
 import UnicodePlots
 
-# Extend UnicodePlots.histogram to work with KLLS.ExecutionStats
-function UnicodePlots.histogram(stat::KLLS.ExecutionStats; kwargs...)
+# Extend UnicodePlots.histogram to work with Perspectron.ExecutionStats
+function UnicodePlots.histogram(stat::Perspectron.ExecutionStats; kwargs...)
     println("")
     UnicodePlots.histogram(stat.solution; kwargs...)
 end

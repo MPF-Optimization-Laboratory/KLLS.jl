@@ -22,7 +22,7 @@ function NLPModels.residual!(ss::SSModel, yt, Fx)
 	t =       yt[end]
     
     scale!(kl, t)             # Apply the latest scaling factor
-    f = lseatyc!(kl, y)       # f = logΣexp(A'y). Needed before grad eval
+    f = lseatyc!(kl, y)       # f = logΣexp(A'y-c). Needed before grad eval
 	dGrad!(kl, y, r)          # r ≡ Fx[1:m] = ∇d(y)	
 	Fx[end] = f - log(t) - 1  # optimal scaling condition
 	return Fx
@@ -80,7 +80,7 @@ struct SSTrunkLS end
 Solve the self-scaled model using Gauss-Newton, via the TrunkLS algorithm.
 """
 function solve!(
-    kl::KLLSModel{T},
+    kl::PTModel{T},
     ::SSTrunkLS;
     logging=0,
     monotone=true,
@@ -102,7 +102,7 @@ function solve!(
       callback(ss, solver, stats, tracer, logging, max_time; kwargs...)
     
     trunk_stats =
-      trunk(ss; callback=cb, atol=atol, rtol=rtol, max_time=max_time, monotone=monotone) 
+      trunk(ss; callback=cb, atol=T(0), rtol=T(0), max_time=max_time, monotone=monotone) 
 
     # Optimality. Report the maximum ∇d(y) and v'(t)
     optimality = sqrt(obj(ss, trunk_stats.solution))
@@ -156,8 +156,10 @@ function callback(
     ε = atol + rtol * ss.kl.bNrm
     
     # Test exit conditions
+    # TODO: should the optimality check be based on `norm∇d` or norm of the full residual?
     tired = iter >= max_iter
-    optimal = r < ε 
+    # optimal = r < ε
+    optimal = norm∇d < ε
     done = tired || optimal
     
     log_items = (iter, scale, vpt, norm∇d, r, Δ, actual_to_predicted, cgits, cgexit) 

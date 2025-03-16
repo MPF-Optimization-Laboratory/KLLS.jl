@@ -27,7 +27,7 @@ Pkg.activate(project_root)
 # Now activate the test environment which has Plots, DataFrames, etc.
 import TestEnv; TestEnv.activate()
 
-using KLLS, Plots, LinearAlgebra, UnPack, DataFrames
+using Perspectron, Plots, LinearAlgebra, UnPack, DataFrames
 import NPZ: npzread
 import JSOSolvers: TrunkSolver
 
@@ -47,8 +47,8 @@ q .= q./sum(q)      # Normalize to sum to 1
 C = inv.(b_std) |> diagm  # Convert standard deviations to weights
 λ = 1e-4  # Regularization parameter
 
-# Create the KLLS model using the data 
-kl = KLLSModel(A, b, C=C, q=q, λ=λ)
+# Create the PTModel using the data 
+kl = PTModel(A, b, C=C, q=q, λ=λ)
 
 ## Sequential Solve - needed to get the target value σ
 # This is the naive version of the level-set method based on
@@ -66,7 +66,7 @@ vts = map(ts) do t
 end 
 
 # Reset the model for the level-set algorithm
-kl = KLLSModel(A, b, C=C, q=q, λ=λ)
+kl = PTModel(A, b, C=C, q=q, λ=λ)
 
 # Level-set algorithm parameters
 mutable struct LevelSetState
@@ -92,7 +92,7 @@ path = [(state.t, σ)]  # Track (t,σ) pairs
 
 anim = @animate for frame in 1:frames
     # Compute next iteration
-    l, u, s = KLLS.oracle!(kl, state.α, state.σ, solver, state.tracer)
+    l, u, s = Perspectron.oracle!(kl, state.α, state.σ, solver, state.tracer)
     t_next = state.t - l/s
     
     # Plot current state

@@ -1,7 +1,7 @@
 module NonlinearSolveExt
 
 using NonlinearSolve
-using KLLS
+using Perspectron
 using LinearAlgebra
 using Printf
 using DataFrames
@@ -37,7 +37,7 @@ function nljprod!(Jyt, zα, yt, ss::SSModel)
     jprod_residual!(ss, yt, zα, Jyt)
 end
 
-function KLLS.solve!(
+function Perspectron.solve!(
     ss::SSModel{T},
     ::NewtonEQ;
     y0 = begin
@@ -45,8 +45,8 @@ function KLLS.solve!(
         zeros(T, m)
     end,
     t0 = one(T),
-    atol = KLLS.DEFAULT_PRECISION(T),
-    rtol = KLLS.DEFAULT_PRECISION(T),
+    atol = Perspectron.DEFAULT_PRECISION(T),
+    rtol = Perspectron.DEFAULT_PRECISION(T),
     logging=0,
     max_time=30.0,
     max_iter=1000,
@@ -117,12 +117,12 @@ function KLLS.solve!(
     x = kl.scale.*grad(kl.lse)
     ∇d = @view nlcache.fu[1:m]
     r = λ*y
-    stats = KLLS.ExecutionStats(
+    stats = Perspectron.ExecutionStats(
         status,
         elapsed_time,       # elapsed time
         iter,               # number of iterations
-        KLLS.neval_jprod(kl),    # number of products with A
-        KLLS.neval_jtprod(kl),   # number of products with A'
+        Perspectron.neval_jprod(kl),    # number of products with A
+        Perspectron.neval_jtprod(kl),   # number of products with A'
         zero(T),            # TODO: primal objective
         zero(T),            # dual objective
         x,                  # primal solultion `x`

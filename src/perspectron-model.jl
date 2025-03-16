@@ -41,14 +41,12 @@ end
 PTModel(A, b; kwargs...) = PTModel(A=A, b=b; kwargs...)
 
 function Base.show(io::IO, kl::PTModel)
-    println(io, "PT regularized least-squares"*
+    println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))
     println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(kl.A, 1), kl.bNrm))
     println(io, @sprintf("   n = %10d  λ    = %7.1e", size(kl.A, 2), kl.λ))
     println(io, @sprintf("       %10s  τ    = %7.1e"," ", kl.scale))
 end
-
-
 
 """
     regularize!(kl::PTModel{T}, λ::T) where T
@@ -63,14 +61,14 @@ end
 """
     scale(kl::PTModel)
 
-Get the scaling factor of the PT model.
+Get the scaling factor of the Perspectron model.
 """
 scale(kl::PTModel) = kl.scale
 
 """
     scale!(kl::PTModel{T}, scale::T) where T
 
-Set the scaling factor of the PT model.
+Set the scaling factor of the Perspectron model.
 """
 function scale!(kl::PTModel{T}, scale::T) where T
     kl.scale = scale
@@ -86,4 +84,4 @@ function NLPModels.reset!(kl::PTModel)
       setfield!(kl.counters, f, 0)
     end
     return kl
-end
+end 

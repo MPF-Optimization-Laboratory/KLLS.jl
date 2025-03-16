@@ -1,8 +1,8 @@
-![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/KLLS.jl)
-[![Run_Tests](https://github.com/MPF-Optimization-Laboratory/KLLS.jl/actions/workflows/run-tests.yml/badge.svg)](https://github.com/MPF-Optimization-Laboratory/KLLS.jl/actions/workflows/run-tests.yml)
+![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/Perspectron.jl)
+[![Run_Tests](https://github.com/MPF-Optimization-Laboratory/Perspectron.jl/actions/workflows/run-tests.yml/badge.svg)](https://github.com/MPF-Optimization-Laboratory/Perspectron.jl/actions/workflows/run-tests.yml)
 
 
-# KLLS
+# Perspectron
 
 This package provides an algorithm for solving KL-regularized least squares problems of the form
 $$
@@ -19,7 +19,7 @@ where $\mathcal{C}$ is the simplex ($Δ = \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or
 To install this package, run:
 
 ```julia
-import Pkg; Pkg.install("KLLS")
+import Pkg; Pkg.install("Perspectron")
 ```
 
 ## Examples
@@ -29,7 +29,7 @@ import Pkg; Pkg.install("KLLS")
 To solve a simple optimal transport problem
 
 ```julia
-using KLLS, LinearAlgebra, Distances
+using Perspectron, LinearAlgebra, Distances
 
 μsupport = νsupport = range(-2, 2; length=100)
 C = pairwise(SqEuclidean(), μsupport', νsupport'; dims=2)           # Cost matrix
@@ -37,21 +37,21 @@ C = pairwise(SqEuclidean(), μsupport', νsupport'; dims=2)           # Cost mat
 ν = normalize!(νsupport .^ 2 .* exp.(-νsupport .^ 2 ./ 0.5^2), 1)   # Target distribution
 
 ϵ = 0.01*median(C2)                 # Entropy regularization constant
-ot = KLLS.OTModel(μ, ν, C2, ϵ)      # Model initialization
+ot = Perspectron.OTModel(μ, ν, C2, ϵ)      # Model initialization
 solution = solve!(ot, trace=true)   # Solution to the OT problem          
 ```
 
 ## Extensions
 
-KLLS.jl provides the following optional extensions:
+Perspectron.jl provides the following optional extensions:
 
 ### UnicodePlots Extension
 
 Provides plotting capabilities using the UnicodePlots package. To use:
 
 ```julia
-using KLLS, UnicodePlots
-# Now you can plot KLLS.ExecutionStats objects
+using Perspectron, UnicodePlots
+# Now you can plot Perspectron.ExecutionStats objects
 histogram(solution)
 ```
 
@@ -60,9 +60,9 @@ histogram(solution)
 Provides an alternative solver using NonlinearSolve.jl. To use:
 
 ```julia
-using KLLS, NonlinearSolve
+using Perspectron, NonlinearSolve
 # Now you can use the NewtonEQ solver
-model = KLLSModel(A, b, c, λ)
+model = PTModel(A, b, c, λ)
 solution = solve!(model, NewtonEQ())
 ```
 
@@ -75,7 +75,7 @@ The `NewtonEQ` solver uses Newton's method with equation-solving capabilities fr
 To get started with developing the package, first pull the Github repo
 
 ```shell
-git clone https://github.com/MPF-Optimization-Laboratory/KLLS.jl.git
+git clone https://github.com/MPF-Optimization-Laboratory/Perspectron.jl.git
 ```
 
 Or better, [create fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) to develop!
@@ -91,7 +91,7 @@ julia --project=. -i -e 'using Pkg; Pkg.activate(".")'
 This will start the julia REPL, and add the repo to the julia `LOAD_PATH`. To start using, run
 
 ```julia
-using KLLS
+using Perspectron
 ```
 
 And start running code.

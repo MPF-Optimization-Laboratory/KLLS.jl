@@ -23,7 +23,7 @@ function OTModel_prior(p, q, C, ε; kwargs...)
     b = vcat(p, q)
     c = vec(C)
     q = inv.(exp.(c/ε))
-    kl = KLLSModel(A, b, c=0*c, q=q; kwargs...)
+    kl = PTModel(A, b, c=0*c, q=q; kwargs...)
     λ = kl.λ
     regularize!(kl, ε*kl.λ)
     return OTModel(m, n, ε, λ, kl)
@@ -34,7 +34,7 @@ function OTModel(p, q, C, ε; kwargs...)
     A = row_col_sum_operator(m, n)
     b = vcat(p, q)
     c = vec(C)/ε
-    kl = KLLSModel(A, b, c=c; kwargs...)
+    kl = PTModel(A, b, c=c; kwargs...)
     λ = kl.λ
     regularize!(kl, ε*kl.λ)
     return OTModel(m, n, ε, λ, kl)

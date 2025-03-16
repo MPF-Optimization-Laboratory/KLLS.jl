@@ -28,14 +28,19 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 """
-    randKLmodel(m, n)
+    randPTmodel(m, n; λ=1e-3) -> PTModel
 
-Generate a random KL model of size `m` x `n`.
+Generate a random PT model. Arguments:
+- `m`: number of rows of the matrix `A`
+- `n`: number of columns of the matrix `A`
+- `λ`: regularization parameter (default: 1e-3)
 """
-function randKLmodel(m, n)
+function randPTmodel(m, n; λ=1e-3)
     A = randn(m, n)
-    b = randn(m)
-    return KLLSModel(A, b)
+    xs = rand(n)
+    xs ./= sum(xs)
+    b = A * xs
+    return PTModel(A, b, λ=λ)
 end
 
 """

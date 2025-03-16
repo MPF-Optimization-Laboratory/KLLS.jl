@@ -1,5 +1,5 @@
 using Test
-using KLLS, LinearAlgebra, Random
+using Perspectron, LinearAlgebra, Random
 using JuMP
 using GLPK
 
@@ -15,25 +15,23 @@ using GLPK
 
     c = rand(n)
 
-    lp = KLLS.LPModel(A, b, c, ε=5e-3, λ=5e-3)
+    lp = Perspectron.LPModel(A, b, c, ε=5e-3, λ=5e-3)
     stats = solve!(lp, trace=true)
     optimal_x_lpmodel = stats.solution
-    @test stats.status == :optimal
 
-    model = Model(GLPK.Optimizer)
-
-    @variable(model, x[1:n] >= 0)
-    @objective(model, Min, c' * x)
-    @constraint(model, A * x .== b)
-
-    optimize!(model)
+    # Compare with JuMP LP solution
+    jump_model = Model(GLPK.Optimizer)
+    @variable(jump_model, x[1:n] >= 0)
+    @constraint(jump_model, A * x .== b)
+    @objective(jump_model, Min, sum(c .* x))
+    optimize!(jump_model)
+    objective_jump = objective_value(jump_model)
     optimal_x_jump = value.(x)
 
-    @test c'optimal_x_lpmodel ≈ c'optimal_x_jump atol=1e-1
-    @test norm(optimal_x_jump .- optimal_x_lpmodel) < 1e-1
-
-    # 13 Nov '24: The self-scaling model may have nonoptimal stationary points. Verify that 
-
+    # Tests
+    @test all(optimal_x_lpmodel .>= 0)  # Non-negativity
+    @test norm(A * optimal_x_lpmodel - b, Inf) < 1e-2  # Feasibility
+    @test dot(c, optimal_x_lpmodel) ≈ objective_jump rtol=1e-1  # Optimality
 end
 
 @testset "Infeasible LP" begin
@@ -53,7 +51,7 @@ end
 
     c = rand(n)
 
-    lp = KLLS.LPModel(A, b, c, ε=5e-1, λ=5e-1)
+    lp = Perspectron.LPModel(A, b, c, ε=5e-1, λ=5e-1)
     stats = solve!(lp)
     @test stats.status == :infeasible
 

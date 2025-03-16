@@ -14,10 +14,10 @@ which is equivalent to:
 
 where ε is the relaxation constant, λ is the feasibility constant, and H(x) is the entropy function.
 """
-struct LPModel{T, KL<:KLLSModel{T}}
+struct LPModel{T, KL<:PTModel{T}}
     kl::KL   # Self-scaled model
     ε::T     # Relaxation constant
-    λ::T     # Feasibility constant
+    λ::T     # Feasibility constant. TODO: `kl` already has a `λ` field. Remove this and update references to it.
 end
 
 """
@@ -48,7 +48,7 @@ function LPModel(
     if maximize
         c = -c
     end
-    kl = KLLSModel(A=A, b=b, c=c, λ=λ, kwargs...)
+    kl = PTModel(A=A, b=b, c=c, λ=λ, kwargs...)
     regularize!(kl, ε * λ)
     return LPModel(kl, ε, λ)
 end
@@ -60,7 +60,7 @@ function Base.show(io::IO, lp::LPModel)
     println(io, "KL regularized LP" *
                 (lp.kl.name == "" ? "" : ": " * lp.kl.name))
     println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(lp.kl.A, 1), lp.kl.bNrm))
-    println(io, @sprintf("   n = %10d  λ    = %7.1e", size(lp.kl.A, 2), lp.λ))
+    println(io, @sprintf("   n = %10d  λ    = %7.1e", size(lp.kl.A, 2), lp.kl.λ))
     println(io, @sprintf("       %10s  ε    = %7.1e", " ", lp.ε))
 end
 

@@ -1,4 +1,4 @@
-using KLLS, Test, LinearAlgebra, Random
+using Perspectron, Test, LinearAlgebra, Random
 import Krylov: cg
 
 @testset failfast=true "Preconditioning" begin
@@ -10,12 +10,12 @@ import Krylov: cg
     d = randn(m)
     b = randn(10)
     λ = rand()
-    data = KLLSModel(A, b, λ=λ)
+    data = PTModel(A, b, λ=λ)
 
     # To start: unconditioned CG on any PSD Hp=d system
     xi, sti = cg(H,d)
     Δ = 0.1*norm(xi)
-    norm(H*xi-d) < 1e-10
+    @test norm(H*xi-d) < 1e-10
     @test sti.status == "solution good enough given atol and rtol"
 
     # Construct an inverse
@@ -34,7 +34,7 @@ import Krylov: cg
     @test sti.niter > stm.niter
 
     # Diag(AA') preconditioner
-    M = KLLS.DiagAAPreconditioner(data)
+    M = Perspectron.DiagAAPreconditioner(data)
     P = Diagonal(diag(A*A'))
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))
@@ -42,8 +42,8 @@ import Krylov: cg
     @test xt'*P*xt ≈ Δ^2
 
     # DiagASAtPreconditioner
-    M = KLLS.DiagASAPreconditioner(data)
-    g = KLLS.grad(data.lse)
+    M = Perspectron.DiagASAPreconditioner(data)
+    g = Perspectron.grad(data.lse)
     S = Diagonal(g)
     P = Diagonal(A*S*A')
     @test all(P*d ≈ mul!(similar(d), M, d))
@@ -52,7 +52,7 @@ import Krylov: cg
     @test xt'*P*xt ≈ Δ^2
 
     # AA' preconditioner
-    M = KLLS.AAPreconditioner(data)
+    M = Perspectron.AAPreconditioner(data)
     P = A*A' + λ*I
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))

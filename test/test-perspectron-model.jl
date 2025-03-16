@@ -1,13 +1,13 @@
-using KLLS, Test, LinearAlgebra, Random
+using Perspectron, Test, LinearAlgebra, Random
 
-@testset "KLLSData correctness" begin
+@testset "PTModel correctness" begin
     Random.seed!(1234)
     m, n = 200, 400
     q = (v=rand(n); v/sum(v))
     A = randn(m, n)
     b = randn(m) 
     λ = 1e-3
-    data = KLLSModel(A, b, q=q, λ=λ)
+    data = PTModel(A, b, q=q, λ=λ)
 
     @test size(data.A) == (m, n)
     @test size(data.b) == (m,)
@@ -20,7 +20,7 @@ end
     m, n = 10, 30
     A = randn(m, n)
     b = randn(m)
-    data = KLLSModel(A, b)
+    data = PTModel(A, b)
 
     # Test scaling
     @test try

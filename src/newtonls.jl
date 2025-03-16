@@ -17,7 +17,7 @@ Newton's method for minimizing unconstrained optimization problems
 - `(p, y)` approximate primal-dual pair
 """
 function newton_opt(
-    kl::KLLSModel;
+    kl::PTModel;
     y0::Vector = zeros(size(kl.A, 1)),
     optTol::Real = 1e-6,
     max_iter::Int = 100,

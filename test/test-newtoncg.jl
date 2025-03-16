@@ -1,7 +1,7 @@
-using KLLS, Test, LinearAlgebra, Random
+using Perspectron, Test, LinearAlgebra, Random
 using NPZ, UnPack
 
-@testset "Newton CG for KLLSModel" begin
+@testset "Newton CG for PTModel" begin
     Random.seed!(1234)
     m, n = 10, 30
     A = randn(m, n)
@@ -12,25 +12,25 @@ using NPZ, UnPack
 
     b = randn(m)#A*x0
     λ = 1e-3
-    data = KLLSModel(A, b, λ=λ)
+    data = PTModel(A, b, λ=λ)
     atol = rtol = 1e-6
     st = solve!(data, atol=atol, rtol=rtol)
     x = st.solution; r = st.residual
     @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
-    M = KLLS.AAPreconditioner(data)
+    M = Perspectron.AAPreconditioner(data)
     st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
-@testset "Newton CG for KLLSModel with synthetic" begin
-    data = try # needed because of vscode quirks while developing
+@testset "Newton CG for PTModel with synthetic" begin
+    kl = try # needed because of vscode quirks while developing
         npzread("../data/synthetic-UEG_testproblem.npz")
     catch
         npzread("./data/synthetic-UEG_testproblem.npz")
     end
 
-    @unpack A, b_avg, b_std, mu = data
+    @unpack A, b_avg, b_std, mu = kl
     b = b_avg
     q = convert(Vector{Float64}, mu)
     q .= max.(q, 1e-13)
@@ -40,7 +40,7 @@ end
     n = length(q)
 
     # Create and solve the KL problem
-    kl = KLLSModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
+    kl = PTModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
     sP = solve!(kl, atol=1e-5, rtol = 1e-5, logging=0, trace=true)
     @test sP.optimality < 1e-5*kl.bNrm
 
@@ -49,7 +49,7 @@ end
     ssSoln = solve!(kl, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
     x1 = ssSoln.solution
     t1 = kl.scale
-    @test KLLS.value!(kl, t1) < 1e-6
+    @test Perspectron.value!(kl, t1) < 1e-6
 
     # Solve the KL problem with the scaling `t1` obtained above
     reset!(kl)
@@ -68,13 +68,13 @@ end
     A = randn(m, n)
     b = randn(m)
     λ = 1e-1
-    kl = KLLSModel(A, b, λ=λ)
+    kl = PTModel(A, b, λ=λ)
 
     atol = rtol = 1e-6
     st = solve!(kl, atol=atol, rtol=rtol)
 
-    pObj = KLLS.pObj!(kl, st.solution)
-    dObj = KLLS.dObj!(kl, st.residual / λ)
+    pObj = Perspectron.pObj!(kl, st.solution)
+    dObj = Perspectron.dObj!(kl, st.residual / λ)
     @test isapprox(pObj, -dObj)
 end
 
@@ -86,13 +86,13 @@ end
     A = randn(m, n)
     b = randn(m)
     λ = 1e-1
-    kl = KLLSModel(A, b, λ=λ)
+    kl = PTModel(A, b, λ=λ)
     scale!(kl, 8.0)
 
     atol = rtol = 1e-6
     st = solve!(kl, atol=atol, rtol=rtol)
 
-    pObj = KLLS.pObj!(kl, st.solution)
-    dObj = KLLS.dObj!(kl, st.residual / λ)
+    pObj = Perspectron.pObj!(kl, st.solution)
+    dObj = Perspectron.dObj!(kl, st.residual / λ)
     @test isapprox(pObj, -dObj)
 end

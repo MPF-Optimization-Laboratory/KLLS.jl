@@ -18,14 +18,14 @@ Dual objective:
 - with scaling and weighted 2-norm:
     f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
 """
-function dObj!(kl::KLLSModel, y)
+function dObj!(kl::PTModel, y)
     @unpack b, λ, C, scale = kl 
     increment!(kl, :neval_jtprod)
     f = lseatyc!(kl, y)
     return scale*f - scale*log(scale) + 0.5λ*dot(y, C, y) - b⋅y
 end
 
-NLPModels.obj(kl::KLLSModel, y) = dObj!(kl, y)
+NLPModels.obj(kl::PTModel, y) = dObj!(kl, y)
 
 """
 Dual objective gradient
@@ -34,7 +34,7 @@ Dual objective gradient
 
 evaluated at `y`. Assumes that the objective was last evaluated at the same point `y`.
 """
-function dGrad!(kl::KLLSModel, y, ∇f)
+function dGrad!(kl::PTModel, y, ∇f)
     @unpack A, b, λ, C, lse, scale = kl
     increment!(kl, :neval_jprod)
     p = grad(lse)
@@ -46,9 +46,9 @@ function dGrad!(kl::KLLSModel, y, ∇f)
     return ∇f
 end
 
-NLPModels.grad!(kl::KLLSModel, y, ∇f) = dGrad!(kl, y, ∇f)
+NLPModels.grad!(kl::PTModel, y, ∇f) = dGrad!(kl, y, ∇f)
 
-function dHess(kl::KLLSModel)
+function dHess(kl::PTModel)
     @unpack A, λ, C, lse, scale = kl
     H = hess(lse)
     ∇²dObj = scale*(A*H*A')
@@ -59,7 +59,7 @@ function dHess(kl::KLLSModel)
 end
 
 """
-    dHess_prod!(kl::KLLSModel{T}, z, Hz) where T
+    dHess_prod!(kl::PTModel{T}, z, Hz) where T
 
 Product of the dual objective Hessian with a vector `z`
 
@@ -67,7 +67,7 @@ Product of the dual objective Hessian with a vector `z`
 
 where `y` is the point at which the objective was last evaluated.
 """
-function dHess_prod!(kl::KLLSModel, z, Hz)
+function dHess_prod!(kl::PTModel, z, Hz)
     @unpack A, λ, C, nbuf, lse, scale = kl
     w = nbuf
     increment!(kl, :neval_jprod)
@@ -82,7 +82,7 @@ function dHess_prod!(kl::KLLSModel, z, Hz)
     return Hz
 end
 
-function NLPModels.hprod!(kl::KLLSModel{T}, ::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(T)) where T
+function NLPModels.hprod!(kl::PTModel{T}, ::AbstractVector, z::AbstractVector, Hz::AbstractVector; obj_weight::Real=one(T)) where T
     return Hz = dHess_prod!(kl, z, Hz)
 end
 
@@ -95,7 +95,7 @@ Calculates the primal objective value
 
 
 """
-function pObj!(kl::KLLSModel, x)
+function pObj!(kl::PTModel, x)
     @unpack A, b, c, C, q, λ, mbuf, mbuf2 = kl
 
     # Compute Ax - b in-place
@@ -119,7 +119,7 @@ function pObj!(kl::KLLSModel, x)
 end
 
 function solve!(
-    kl::KLLSModel{T};
+    kl::PTModel{T};
     M=I,
     logging=0,
     max_time::Float64=30.0,
@@ -165,7 +165,7 @@ end
 const newtoncg = solve!
 
 function callback(
-    kl::KLLSModel{T},
+    kl::PTModel{T},
     solver,
     M,
     trunk_stats,
