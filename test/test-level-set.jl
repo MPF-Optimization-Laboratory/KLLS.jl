@@ -13,7 +13,11 @@ using NPZ, UnPack
     b = randn(m)#A*x0
     λ = 1e-3
     kl = KLLSModel(A, b, λ=λ)
-    σ = -solve!(kl, SequentialSolve()).dual_obj # Find the optimal objective value
+    
+    # Get the optimal objective value.
+    # Assumes that the dual problem is **minimization**, thus the negative sign.
+    σ = -solve!(kl, SequentialSolve()).dual_obj
+
     atol = rtol = 1e-6
     st = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=atol, rtol=rtol)
     x = st.solution; r = st.residual

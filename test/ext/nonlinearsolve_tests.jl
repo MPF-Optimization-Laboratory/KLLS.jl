@@ -16,7 +16,7 @@ Random.seed!(42)
     λ = 1.0
     
     # Create the model
-    model = KLLSModel(A, b, c, λ)
+    model = KLLSModel(A, b, c=c, λ=λ)
     
     # Test NewtonEQ solver with default parameters
     stats = solve!(model, NewtonEQ())

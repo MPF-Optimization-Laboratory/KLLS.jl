@@ -1,14 +1,11 @@
 module NonlinearSolveExt
 
-using KLLS
 using NonlinearSolve
+using KLLS
 using LinearAlgebra
 using Printf
 using DataFrames
 using UnPack
-
-# Import necessary types/functions from KLLS
-import KLLS: solve!, SSModel, DEFAULT_PRECISION, ExecutionStats, neval_jprod, neval_jtprod
 
 """
     nlresidual!(F, yt, ss::SSModel)
@@ -40,9 +37,7 @@ function nljprod!(Jyt, zα, yt, ss::SSModel)
     jprod_residual!(ss, yt, zα, Jyt)
 end
 
-struct NewtonEQ end
-
-function solve!(
+function KLLS.solve!(
     ss::SSModel{T},
     ::NewtonEQ;
     y0 = begin
@@ -50,8 +45,8 @@ function solve!(
         zeros(T, m)
     end,
     t0 = one(T),
-    atol = DEFAULT_PRECISION(T),
-    rtol = DEFAULT_PRECISION(T),
+    atol = KLLS.DEFAULT_PRECISION(T),
+    rtol = KLLS.DEFAULT_PRECISION(T),
     logging=0,
     max_time=30.0,
     max_iter=1000,
@@ -122,12 +117,12 @@ function solve!(
     x = kl.scale.*grad(kl.lse)
     ∇d = @view nlcache.fu[1:m]
     r = λ*y
-    stats = ExecutionStats(
+    stats = KLLS.ExecutionStats(
         status,
         elapsed_time,       # elapsed time
         iter,               # number of iterations
-        neval_jprod(kl),    # number of products with A
-        neval_jtprod(kl),   # number of products with A'
+        KLLS.neval_jprod(kl),    # number of products with A
+        KLLS.neval_jtprod(kl),   # number of products with A'
         zero(T),            # TODO: primal objective
         zero(T),            # dual objective
         x,                  # primal solultion `x`

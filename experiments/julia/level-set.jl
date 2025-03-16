@@ -17,13 +17,14 @@
 # 1. Sequential Solve method (naive rootfinding approach)
 # 2. Adaptive Level-Set method (using minorants)
 
-# Set up project environment by activating main project first,
-# then switching to test environment for additional dependencies
+# Set up project environment
 import Pkg, TestEnv
-project_root = joinpath(@__DIR__, "..", "..")
+script_dir = dirname(@__FILE__)
+project_root = abspath(joinpath(script_dir, "..", ".."))
 Pkg.activate(project_root)
 TestEnv.activate()
 
+# Ensure all required packages are available
 using KLLS, LinearAlgebra, UnPack, Printf
 import NPZ: npzread
 using UnicodePlots  # For Unicode plots

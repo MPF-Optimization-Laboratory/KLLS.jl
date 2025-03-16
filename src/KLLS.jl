@@ -9,7 +9,6 @@ using JSOSolvers: trunk, TrunkSolver
 using NLPModels
 using LinearOperators
 using SolverCore
-using LinearSolve
 
 export KLLSModel, SSModel, OTModel, LPModel
 export SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet

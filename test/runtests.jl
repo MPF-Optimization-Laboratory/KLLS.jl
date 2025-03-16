@@ -32,15 +32,8 @@ end
     include("test-sequential-scale.jl")
 end
 
-# Extension tests
-@testset "Extensions" begin
-    # Test NonlinearSolve extension if available
-    if Base.get_extension(KLLS, :NonlinearSolveExt) !== nothing
-        @testset "NonlinearSolve extension" begin
-            @info "Testing NonlinearSolve extension..."
-            include("ext/nonlinearsolve_tests.jl")
-        end
-    else
-        @info "Skipping NonlinearSolve extension tests (extension not available)"
-    end
-end
+# NonlinearSolve extension tests
+# - removing because NonlinearSolve.jl is too heavy
+# @testset "NonlinearSolve extension" begin
+#     include("ext/nonlinearsolve_tests.jl")
+# end
