@@ -23,7 +23,7 @@ using PlutoLinks: @revise
   ╠═╡ =#
 
 # ╔═╡ c3472e68-45e0-4f80-92f5-49b0e6b895cb
-dir = joinpath(homedir(), "Documents", "Projects", "Software", "Perspectron.jl")
+dir = joinpath(homedir(), "Documents", "Projects", "Software", "DualPerspective.jl")
 
 # ╔═╡ 5e6efdbd-336a-43b2-ae65-c200af4e4013
 begin

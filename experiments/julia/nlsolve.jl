@@ -1,7 +1,7 @@
 using Test, NPZ, UnPack, LinearAlgebra
 using NonlinearSolve, LinearSolve
 using Suppressor
-using Perspectron
+using DualPerspective
 
 data = try # needed because of vscode quirks while developing
     npzread("../data/synthetic-UEG_testproblem.npz")
@@ -34,11 +34,11 @@ histogram(stats.solution)
 
 reset!(model)
 scale!(model, 1.0)
-ssStats = Perspectron.solve!(ss, verbose=0, rtol=1e-6)
+ssStats = DualPerspective.solve!(ss, verbose=0, rtol=1e-6)
 xss = ssStats.solution
 
 reset!(model)
-ff = NonlinearFunction(Perspectron.nlresidual!; jvp=Perspectron.nljprod!)
+ff = NonlinearFunction(DualPerspective.nlresidual!; jvp=DualPerspective.nljprod!)
 y0 = zeros(m)
 yt0 = vcat(y0, 1.0)
 prob = NonlinearProblem(ff, yt0, ss)

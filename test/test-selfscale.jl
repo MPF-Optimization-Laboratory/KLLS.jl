@@ -1,12 +1,12 @@
 using Test
-using Perspectron, NLPModels, LinearAlgebra, Random
+using DualPerspective, NLPModels, LinearAlgebra, Random
 
 @testset "SSModel test case" begin
       Random.seed!(1234)
       tol = 2e-5
       λ = 1e-2
       m, n = 8, 10
-      kl = Perspectron.randPTmodel(m, n; λ=λ) 
+      kl = DualPerspective.randPTmodel(m, n; λ=λ) 
       A, b = kl.A, kl.b
 
       stats = solve!(kl)
@@ -27,7 +27,7 @@ using Perspectron, NLPModels, LinearAlgebra, Random
       # Form the Jacobian manually and compare
       t = 1.0
       scale!(kl, t)
-      Jtrue = [ Perspectron.dHess(kl) A*x; (A*x)' -1/t ]
+      Jtrue = [ DualPerspective.dHess(kl) A*x; (A*x)' -1/t ]
       J = let
             e(i) = let e = zeros(m+1); e[i] = 1; e end
             reduce(hcat, [jtprod_residual(ss, [y; t], e(i)) for i in 1:m+1])

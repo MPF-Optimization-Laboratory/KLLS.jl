@@ -1,5 +1,5 @@
 using Test, OptimalTransport, Distances, Statistics, LinearAlgebra
-using Perspectron
+using DualPerspective
 
 @testset "OTModel correctness relative to sinkhorn" begin
     μsupport = νsupport = range(-2, 2; length=100)
@@ -12,7 +12,7 @@ using Perspectron
         ϵ = 0.01*median(C2)
         Tsk = sinkhorn(μ, ν, C2, ϵ)
         Tkl, klstats = let
-            ot = Perspectron.OTModel(μ, ν, C2, ϵ)
+            ot = DualPerspective.OTModel(μ, ν, C2, ϵ)
             solve!(ot, trace=true)
         end
         Tsk, Tkl, klstats

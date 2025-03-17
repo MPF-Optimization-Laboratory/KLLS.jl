@@ -1,4 +1,4 @@
-using Perspectron
+using DualPerspective
 using Test
 using NonlinearSolve
 using LinearAlgebra

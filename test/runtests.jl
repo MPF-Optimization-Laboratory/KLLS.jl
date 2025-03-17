@@ -1,7 +1,7 @@
 using Test
 
-@testset "test-perspectron-model" begin
-    include("test-perspectron-model.jl")
+@testset "test-dualperspective-model" begin
+    include("test-dualperspective-model.jl")
 end
 
 @testset "test-level-set" begin

@@ -1,5 +1,5 @@
 using Test
-using Perspectron, LinearAlgebra, Random
+using DualPerspective, LinearAlgebra, Random
 using JuMP
 using GLPK
 
@@ -15,7 +15,7 @@ using GLPK
 
     c = rand(n)
 
-    lp = Perspectron.LPModel(A, b, c, ε=5e-3, λ=5e-3)
+    lp = DualPerspective.LPModel(A, b, c, ε=5e-3, λ=5e-3)
     stats = solve!(lp, trace=true)
     optimal_x_lpmodel = stats.solution
 
@@ -51,7 +51,7 @@ end
 
     c = rand(n)
 
-    lp = Perspectron.LPModel(A, b, c, ε=5e-1, λ=5e-1)
+    lp = DualPerspective.LPModel(A, b, c, ε=5e-1, λ=5e-1)
     stats = solve!(lp)
     @test stats.status == :infeasible
 

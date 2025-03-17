@@ -1,4 +1,4 @@
-using Perspectron, Test, LinearAlgebra, Random
+using DualPerspective, Test, LinearAlgebra, Random
 import Krylov: cg
 
 @testset failfast=true "Preconditioning" begin
@@ -34,7 +34,7 @@ import Krylov: cg
     @test sti.niter > stm.niter
 
     # Diag(AA') preconditioner
-    M = Perspectron.DiagAAPreconditioner(data)
+    M = DualPerspective.DiagAAPreconditioner(data)
     P = Diagonal(diag(A*A'))
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))
@@ -42,8 +42,8 @@ import Krylov: cg
     @test xt'*P*xt ≈ Δ^2
 
     # DiagASAtPreconditioner
-    M = Perspectron.DiagASAPreconditioner(data)
-    g = Perspectron.grad(data.lse)
+    M = DualPerspective.DiagASAPreconditioner(data)
+    g = DualPerspective.grad(data.lse)
     S = Diagonal(g)
     P = Diagonal(A*S*A')
     @test all(P*d ≈ mul!(similar(d), M, d))
@@ -52,7 +52,7 @@ import Krylov: cg
     @test xt'*P*xt ≈ Δ^2
 
     # AA' preconditioner
-    M = Perspectron.AAPreconditioner(data)
+    M = DualPerspective.AAPreconditioner(data)
     P = A*A' + λ*I
     @test all(P*d ≈ mul!(similar(d), M, d))
     @test all(P\d ≈ ldiv!(similar(d), M, d))

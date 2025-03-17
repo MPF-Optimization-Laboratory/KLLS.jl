@@ -1,4 +1,4 @@
-module Perspectron
+module DualPerspective
 
 using LinearAlgebra
 using Printf
@@ -17,7 +17,7 @@ export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 
 include("logsumexp.jl")
-include("perspectron-model.jl")
+include("dualperspective-model.jl")
 include("ss-model.jl")
 include("newtoncg.jl")
 include("newtonls.jl")

@@ -10,3 +10,7 @@ klsolve.html
 /.quarto/
 .cursor/**
 anim_fps1.gif
+rename_package.sh
+Package Renaming to Perspectron.md
+KLLS_References.md
+Perspectron.code-workspace

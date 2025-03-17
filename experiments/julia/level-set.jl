@@ -25,7 +25,7 @@ Pkg.activate(project_root)
 TestEnv.activate()
 
 # Ensure all required packages are available
-using Perspectron, LinearAlgebra, UnPack, Printf
+using DualPerspective, LinearAlgebra, UnPack, Printf
 import NPZ: npzread
 using UnicodePlots  # For Unicode plots
 

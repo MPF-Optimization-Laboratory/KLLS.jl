@@ -27,7 +27,7 @@ Pkg.activate(project_root)
 # Now activate the test environment which has Plots, DataFrames, etc.
 import TestEnv; TestEnv.activate()
 
-using Perspectron, Plots, LinearAlgebra, UnPack, DataFrames
+using DualPerspective, Plots, LinearAlgebra, UnPack, DataFrames
 import NPZ: npzread
 import JSOSolvers: TrunkSolver
 
@@ -92,7 +92,7 @@ path = [(state.t, σ)]  # Track (t,σ) pairs
 
 anim = @animate for frame in 1:frames
     # Compute next iteration
-    l, u, s = Perspectron.oracle!(kl, state.α, state.σ, solver, state.tracer)
+    l, u, s = DualPerspective.oracle!(kl, state.α, state.σ, solver, state.tracer)
     t_next = state.t - l/s
     
     # Plot current state

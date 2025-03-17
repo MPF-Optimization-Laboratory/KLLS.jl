@@ -5,7 +5,7 @@ using Markdown
 using InteractiveUtils
 
 # ╔═╡ 38a5d406-3fc0-48fa-aa14-e66f4001e9b5
-push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/Perspectron.jl")
+push!(LOAD_PATH,"/Users/mpf/Documents/projects/Software/DualPerspective.jl")
 
 # ╔═╡ 27b130f3-43b9-43b2-a52d-72f90a3cb4c0
 using Random, NPZ, UnPack, LinearAlgebra, Test
@@ -14,7 +14,7 @@ using Random, NPZ, UnPack, LinearAlgebra, Test
 using PlutoLinks
 
 # ╔═╡ 5e293c92-0fb4-471b-bc8f-a1db96348c22
-@revise using Perspectron
+@revise using DualPerspective
 
 # ╔═╡ f8d82b78-8cde-406d-ad73-e11e89b541e5
 md"## Self-scaling (Gauss-Newton via TrunkLS)"

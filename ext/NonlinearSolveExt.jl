@@ -1,7 +1,7 @@
 module NonlinearSolveExt
 
+using DualPerspective
 using NonlinearSolve
-using Perspectron
 using LinearAlgebra
 using Printf
 using DataFrames
@@ -37,7 +37,7 @@ function nljprod!(Jyt, zα, yt, ss::SSModel)
     jprod_residual!(ss, yt, zα, Jyt)
 end
 
-function Perspectron.solve!(
+function DualPerspective.solve!(
     ss::SSModel{T},
     ::NewtonEQ;
     y0 = begin
@@ -45,8 +45,8 @@ function Perspectron.solve!(
         zeros(T, m)
     end,
     t0 = one(T),
-    atol = Perspectron.DEFAULT_PRECISION(T),
-    rtol = Perspectron.DEFAULT_PRECISION(T),
+    atol = DualPerspective.DEFAULT_PRECISION(T),
+    rtol = DualPerspective.DEFAULT_PRECISION(T),
     logging=0,
     max_time=30.0,
     max_iter=1000,
@@ -117,12 +117,12 @@ function Perspectron.solve!(
     x = kl.scale.*grad(kl.lse)
     ∇d = @view nlcache.fu[1:m]
     r = λ*y
-    stats = Perspectron.ExecutionStats(
+    stats = DualPerspective.ExecutionStats(
         status,
         elapsed_time,       # elapsed time
         iter,               # number of iterations
-        Perspectron.neval_jprod(kl),    # number of products with A
-        Perspectron.neval_jtprod(kl),   # number of products with A'
+        DualPerspective.neval_jprod(kl),    # number of products with A
+        DualPerspective.neval_jtprod(kl),   # number of products with A'
         zero(T),            # TODO: primal objective
         zero(T),            # dual objective
         x,                  # primal solultion `x`

@@ -1,4 +1,4 @@
-using Perspectron, Test, LinearAlgebra, Random
+using DualPerspective, Test, LinearAlgebra, Random
 
 @testset "PTModel correctness" begin
     Random.seed!(1234)

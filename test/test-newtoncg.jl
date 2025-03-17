@@ -1,4 +1,4 @@
-using Perspectron, Test, LinearAlgebra, Random
+using DualPerspective, Test, LinearAlgebra, Random
 using NPZ, UnPack
 
 @testset "Newton CG for PTModel" begin
@@ -19,7 +19,7 @@ using NPZ, UnPack
     @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
-    M = Perspectron.AAPreconditioner(data)
+    M = DualPerspective.AAPreconditioner(data)
     st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
@@ -49,7 +49,7 @@ end
     ssSoln = solve!(kl, SequentialSolve(), zverbose=false, rtol=1e-6, logging=0, δ=1e-1)
     x1 = ssSoln.solution
     t1 = kl.scale
-    @test Perspectron.value!(kl, t1) < 1e-6
+    @test DualPerspective.value!(kl, t1) < 1e-6
 
     # Solve the KL problem with the scaling `t1` obtained above
     reset!(kl)
@@ -73,8 +73,8 @@ end
     atol = rtol = 1e-6
     st = solve!(kl, atol=atol, rtol=rtol)
 
-    pObj = Perspectron.pObj!(kl, st.solution)
-    dObj = Perspectron.dObj!(kl, st.residual / λ)
+    pObj = DualPerspective.pObj!(kl, st.solution)
+    dObj = DualPerspective.dObj!(kl, st.residual / λ)
     @test isapprox(pObj, -dObj)
 end
 
@@ -92,7 +92,7 @@ end
     atol = rtol = 1e-6
     st = solve!(kl, atol=atol, rtol=rtol)
 
-    pObj = Perspectron.pObj!(kl, st.solution)
-    dObj = Perspectron.dObj!(kl, st.residual / λ)
+    pObj = DualPerspective.pObj!(kl, st.solution)
+    dObj = DualPerspective.dObj!(kl, st.residual / λ)
     @test isapprox(pObj, -dObj)
 end

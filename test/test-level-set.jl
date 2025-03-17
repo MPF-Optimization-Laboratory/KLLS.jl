@@ -1,4 +1,4 @@
-using Perspectron, Test, LinearAlgebra, Random
+using DualPerspective, Test, LinearAlgebra, Random
 using NPZ, UnPack
 
 @testset "Level Set Method for random PTModel" begin
@@ -24,7 +24,7 @@ using NPZ, UnPack
     @test norm(A*x + r - b) < atol + rtol*norm(b)
 
     # Add preconditioning
-    M = Perspectron.AAPreconditioner(kl)
+    M = DualPerspective.AAPreconditioner(kl)
     st = solve!(kl, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
