@@ -29,8 +29,8 @@ A = np.random.rand(m, n)
 b = A @ x0
 
 # Create and solve the problem
-model = DualPerspectiveModel(A, b)
-model = regularize(model, 1e-4)  # Optional: set regularization parameter
+model = DPModel(A, b)
+regularize(model, 1e-4)  # Optional: set regularization parameter
 solution = solve(model)
 
 print(f"Sum of solution: {np.sum(solution):.6f} (should be ≈ {np.pi:.6f})")
