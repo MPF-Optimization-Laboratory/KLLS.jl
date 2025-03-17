@@ -62,7 +62,7 @@ Provides an alternative solver using NonlinearSolve.jl. To use:
 ```julia
 using DualPerspective, NonlinearSolve
 # Now you can use the NewtonEQ solver
-model = PTModel(A, b, c, λ)
+model = DPModel(A, b, c, λ)
 solution = solve!(model, NewtonEQ())
 ```
 

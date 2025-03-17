@@ -1,4 +1,4 @@
-struct SSModel{T, S, K<:PTModel{T}} <: AbstractNLSModel{T,S}
+struct SSModel{T, S, K<:DPModel{T}} <: AbstractNLSModel{T,S}
     kl::K
     meta::NLPModelMeta{T,S}
     nls_meta::NLSMeta{T,S}
@@ -6,12 +6,12 @@ struct SSModel{T, S, K<:PTModel{T}} <: AbstractNLSModel{T,S}
 end
 
 """
-    SSModel(kl::PTModel) -> SSModel
+    SSModel(kl::DPModel) -> SSModel
 
 Create a self-scaled model from a Perspectron model.
 
 # Arguments
-- `kl::PTModel`: The Perspectron model to wrap
+- `kl::DPModel`: The Perspectron model to wrap
 
 # Description
 This model is a container for `kl` and the augmented problem for the self-scaled model 
@@ -19,7 +19,7 @@ in the variables (y,t).
 
 The default starting point is `(y0, 1.0)`, where `y0` is the starting point of `kl`.
 """
-function SSModel(kl::PTModel{T}) where T
+function SSModel(kl::DPModel{T}) where T
     m = kl.meta.nvar
     y0 = kl.meta.x0
     meta = NLPModelMeta(

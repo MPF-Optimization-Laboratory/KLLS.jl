@@ -10,7 +10,7 @@ Structure for Perspectron model
     - `bNrm` is the norm of the right-hand side
     - `name` is the name of the problem
 """
-@kwdef mutable struct PTModel{T<:AbstractFloat, M, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
+@kwdef mutable struct DPModel{T<:AbstractFloat, M, CT, SB<:AbstractVector{T}, S<:AbstractVector{T}} <: AbstractNLPModel{T, S}
     A::M
     b::SB
     c::S = begin
@@ -38,9 +38,9 @@ Structure for Perspectron model
     counters::Counters = Counters()
 end
 
-PTModel(A, b; kwargs...) = PTModel(A=A, b=b; kwargs...)
+DPModel(A, b; kwargs...) = DPModel(A=A, b=b; kwargs...)
 
-function Base.show(io::IO, kl::PTModel)
+function Base.show(io::IO, kl::DPModel)
     println(io, "KL regularized least-squares"*
                 (kl.name == "" ? "" : ": "*kl.name))
     println(io, @sprintf("   m = %10d  bNrm = %7.1e", size(kl.A, 1), kl.bNrm))
@@ -49,37 +49,37 @@ function Base.show(io::IO, kl::PTModel)
 end
 
 """
-    regularize!(kl::PTModel{T}, λ::T) where T
+    regularize!(kl::DPModel{T}, λ::T) where T
 
 Set the regularization parameter of the Perspectron model.
 """
-function regularize!(kl::PTModel{T}, λ::T) where T
+function regularize!(kl::DPModel{T}, λ::T) where T
     kl.λ = λ
     return kl
 end
 
 """
-    scale(kl::PTModel)
+    scale(kl::DPModel)
 
 Get the scaling factor of the Perspectron model.
 """
-scale(kl::PTModel) = kl.scale
+scale(kl::DPModel) = kl.scale
 
 """
-    scale!(kl::PTModel{T}, scale::T) where T
+    scale!(kl::DPModel{T}, scale::T) where T
 
 Set the scaling factor of the Perspectron model.
 """
-function scale!(kl::PTModel{T}, scale::T) where T
+function scale!(kl::DPModel{T}, scale::T) where T
     kl.scale = scale
     return kl
 end
 
-function update_y0!(kl::PTModel{T}, y0::AbstractVector{T}) where T
+function update_y0!(kl::DPModel{T}, y0::AbstractVector{T}) where T
     kl.meta = NLPModelMeta(kl.meta, x0=y0)
 end
 
-function NLPModels.reset!(kl::PTModel)
+function NLPModels.reset!(kl::DPModel)
     for f in fieldnames(Counters)
       setfield!(kl.counters, f, 0)
     end

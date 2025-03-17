@@ -16,7 +16,7 @@ Random.seed!(42)
     λ = 1.0
     
     # Create the model
-    model = PTModel(A, b, c=c, λ=λ)
+    model = DPModel(A, b, c=c, λ=λ)
     
     # Test NewtonEQ solver with default parameters
     stats = solve!(model, NewtonEQ())

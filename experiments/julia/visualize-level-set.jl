@@ -47,8 +47,8 @@ q .= q./sum(q)      # Normalize to sum to 1
 C = inv.(b_std) |> diagm  # Convert standard deviations to weights
 λ = 1e-4  # Regularization parameter
 
-# Create the PTModel using the data 
-kl = PTModel(A, b, C=C, q=q, λ=λ)
+# Create the DPModel using the data 
+kl = DPModel(A, b, C=C, q=q, λ=λ)
 
 ## Sequential Solve - needed to get the target value σ
 # This is the naive version of the level-set method based on
@@ -66,7 +66,7 @@ vts = map(ts) do t
 end 
 
 # Reset the model for the level-set algorithm
-kl = PTModel(A, b, C=C, q=q, λ=λ)
+kl = DPModel(A, b, C=C, q=q, λ=λ)
 
 # Level-set algorithm parameters
 mutable struct LevelSetState

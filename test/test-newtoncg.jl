@@ -1,7 +1,7 @@
 using DualPerspective, Test, LinearAlgebra, Random
 using NPZ, UnPack
 
-@testset "Newton CG for PTModel" begin
+@testset "Newton CG for DPModel" begin
     Random.seed!(1234)
     m, n = 10, 30
     A = randn(m, n)
@@ -12,7 +12,7 @@ using NPZ, UnPack
 
     b = randn(m)#A*x0
     λ = 1e-3
-    data = PTModel(A, b, λ=λ)
+    data = DPModel(A, b, λ=λ)
     atol = rtol = 1e-6
     st = solve!(data, atol=atol, rtol=rtol)
     x = st.solution; r = st.residual
@@ -23,7 +23,7 @@ using NPZ, UnPack
     st = solve!(data, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
-@testset "Newton CG for PTModel with synthetic" begin
+@testset "Newton CG for DPModel with synthetic" begin
     kl = try # needed because of vscode quirks while developing
         npzread("../data/synthetic-UEG_testproblem.npz")
     catch
@@ -40,7 +40,7 @@ end
     n = length(q)
 
     # Create and solve the KL problem
-    kl = PTModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
+    kl = DPModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
     sP = solve!(kl, atol=1e-5, rtol = 1e-5, logging=0, trace=true)
     @test sP.optimality < 1e-5*kl.bNrm
 
@@ -68,7 +68,7 @@ end
     A = randn(m, n)
     b = randn(m)
     λ = 1e-1
-    kl = PTModel(A, b, λ=λ)
+    kl = DPModel(A, b, λ=λ)
 
     atol = rtol = 1e-6
     st = solve!(kl, atol=atol, rtol=rtol)
@@ -86,7 +86,7 @@ end
     A = randn(m, n)
     b = randn(m)
     λ = 1e-1
-    kl = PTModel(A, b, λ=λ)
+    kl = DPModel(A, b, λ=λ)
     scale!(kl, 8.0)
 
     atol = rtol = 1e-6

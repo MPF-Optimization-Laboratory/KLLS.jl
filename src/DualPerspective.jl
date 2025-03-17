@@ -10,7 +10,7 @@ using NLPModels
 using LinearOperators
 using SolverCore
 
-export PTModel, SSModel, OTModel, LPModel
+export DPModel, SSModel, OTModel, LPModel
 export SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
 export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
 

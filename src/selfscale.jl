@@ -80,7 +80,7 @@ struct SSTrunkLS end
 Solve the self-scaled model using Gauss-Newton, via the TrunkLS algorithm.
 """
 function solve!(
-    kl::PTModel{T},
+    kl::DPModel{T},
     ::SSTrunkLS;
     logging=0,
     monotone=true,

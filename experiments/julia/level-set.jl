@@ -98,14 +98,14 @@ for λ in λ_values
     println("Testing with λ = $λ\n")
     
     # Create KLLS model
-    kl_model = PTModel(A, b, C=C, q=q, λ=λ)
+    kl_model = DPModel(A, b, C=C, q=q, λ=λ)
     
     # Test Sequential Solve method
     seq_result = solve!(kl_model, SequentialSolve(), logging=0)
     push!(seq_metrics, seq_result)
     
     # Create a new model instance for the Adaptive method
-    kl_model = PTModel(A, b, C=C, q=q, λ=λ)
+    kl_model = DPModel(A, b, C=C, q=q, λ=λ)
     
     # Test Adaptive Level-Set method
     adap_result = solve!(kl_model, AdaptiveLevelSet(), logging=0)

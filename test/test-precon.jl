@@ -10,7 +10,7 @@ import Krylov: cg
     d = randn(m)
     b = randn(10)
     λ = rand()
-    data = PTModel(A, b, λ=λ)
+    data = DPModel(A, b, λ=λ)
 
     # To start: unconditioned CG on any PSD Hp=d system
     xi, sti = cg(H,d)

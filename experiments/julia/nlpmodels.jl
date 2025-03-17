@@ -43,7 +43,7 @@ kl = let
 	m, n = 2, 3
 	A = randn(m, n)
 	b = randn(m)
-	PTModel(A, b)
+	DPModel(A, b)
 end;
 
 # ╔═╡ d0851366-ca37-4216-ba44-70cbd8a1ce48
@@ -66,14 +66,14 @@ $F(y, \tau) =
 
 # ╔═╡ 5338d560-f4a6-47f3-98fc-708f4116ff63
 begin
-	struct SSModel{T, S, K<:PTModel{T}} <: AbstractNLSModel{T,S}
+	struct SSModel{T, S, K<:DPModel{T}} <: AbstractNLSModel{T,S}
 		kl::K
 		meta::NLPModelMeta{T,S}
 		nls_meta::NLSMeta{T,S}
 		counters::NLSCounters
 	end
 
-	function SSModel(kl::PTModel{T}) where T
+	function SSModel(kl::DPModel{T}) where T
 		m = kl.meta.nvar
 		y0 = kl.meta.x0
 		meta = NLPModelMeta(

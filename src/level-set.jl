@@ -1,7 +1,7 @@
 struct LevelSet end
 
 function solve!(
-    kl::PTModel{T},
+    kl::DPModel{T},
     ::LevelSet;
     α::T=1.5,
     σ=kl.bNrm^2 / (2 * kl.λ),
@@ -93,7 +93,7 @@ end
 struct AdaptiveLevelSet end
 
 function solve!(
-    kl::PTModel{T},
+    kl::DPModel{T},
     ::AdaptiveLevelSet;
     α::T=1.5,               # upper to lower bound ratio of oracle!
     t=one(T),
@@ -250,7 +250,7 @@ end
 ##############################################################################
 
 function oracle!(
-    kl::PTModel{T},
+    kl::DPModel{T},
     α::T,
     σ::T,
     solver::TrunkSolver,
@@ -275,7 +275,7 @@ function oracle!(
 end
 
 function oracle_callback(
-    kl::PTModel{T},
+    kl::DPModel{T},
     solver,
     trunk_stats,
     tracer,
@@ -298,7 +298,7 @@ function oracle_callback(
     cgits = solver.subsolver.stats.niter
     cgexit = get(cg_msg, solver.subsolver.stats.status, "default")
     ε = atol + rtol * kl.bNrm
-    pObj = pObj!(kl::PTModel, x) - σ
+    pObj = pObj!(kl::DPModel, x) - σ
 
     # Test exit conditions
     tired = iter >= max_iter

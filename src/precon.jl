@@ -16,22 +16,22 @@ update!(::UniformScaling) = nothing
 #     M = Diag(diag(AA') + λ ))
 #       = Diag(||aᵢ||² + λ, i∈[1,m])
 ######################################################
-struct DiagAAPreconditioner{T, K<:PTModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
+struct DiagAAPreconditioner{T, K<:DPModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     kl::K
     d::V
 end
 
 """
-    DiagAAPreconditioner(data::PTModel)
+    DiagAAPreconditioner(data::DPModel)
 
 Construct a diagonal preconditioner for the Perspectron problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
     M = Diag(diag(AA')) + λI,
 
-where λ is the regularizer defined in the PTModel object. The preconditioner is stored as a vector `d`. It's computed only once at construction.
+where λ is the regularizer defined in the DPModel object. The preconditioner is stored as a vector `d`. It's computed only once at construction.
 """
 # TODO: Verify that this is correct. At the very least, fix docstring above, which doesn't match the code.
-function DiagAAPreconditioner(kl::PTModel{T}; α::T=zero(T)) where T
+function DiagAAPreconditioner(kl::DPModel{T}; α::T=zero(T)) where T
     d = map(a->dot(a,a)+α, eachrow(kl.A))
     DiagAAPreconditioner(kl, d)
 end
@@ -42,14 +42,14 @@ end
 # with
 #     S = diagm(g) - gg'.
 ######################################################
-struct DiagASAPreconditioner{T, K<:PTModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
+struct DiagASAPreconditioner{T, K<:DPModel{T}, V<:AbstractVector{T}} <: AbstractDiagPreconditioner{T}
     kl::K
     d::V
     α::T
 end
 
 """
-    DiagASAPreconditioner(data::PTModel{T})
+    DiagASAPreconditioner(data::DPModel{T})
 
 Construct a diagonal preconditioner for the KLLS problem with the matrix `A` and the vector `b`. The preconditioner is defined as
 
@@ -59,7 +59,7 @@ where G := diagm(g), and g is the LSE gradient at the current iterate. The preco
 
 See also [`mul!`](@ref), [`ldiv!`](@ref), and [`update!`](@ref).
 """
-function DiagASAPreconditioner(kl::PTModel{T}; α::T=zero(T)) where T
+function DiagASAPreconditioner(kl::DPModel{T}; α::T=zero(T)) where T
     @unpack A, b, λ = kl
     obj!(kl.lse, A'b)
     d = diag_ASA!(similar(b), A, grad(kl.lse), α)
@@ -99,13 +99,13 @@ end
 # Cholesky factorization of AA'
 ###############################
 
-struct AAPreconditioner{T, K<:PTModel{T}, F<:Cholesky{T}, V<:AbstractVector} <: AbstractPreconditioner{T}
+struct AAPreconditioner{T, K<:DPModel{T}, F<:Cholesky{T}, V<:AbstractVector} <: AbstractPreconditioner{T}
     kl::K
     P::F
     v::V # buffer for linear solves
 end
 
-function AAPreconditioner(kl::PTModel{T}) where T
+function AAPreconditioner(kl::DPModel{T}) where T
     @unpack A, λ = kl
     v = Vector{T}(undef, size(A, 1))
     AAPreconditioner(kl, cholesky(A*A'+λ*I), v)

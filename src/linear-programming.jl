@@ -14,7 +14,7 @@ which is equivalent to:
 
 where ε is the relaxation constant, λ is the feasibility constant, and H(x) is the entropy function.
 """
-struct LPModel{T, KL<:PTModel{T}}
+struct LPModel{T, KL<:DPModel{T}}
     kl::KL   # Self-scaled model
     ε::T     # Relaxation constant
     λ::T     # Feasibility constant. TODO: `kl` already has a `λ` field. Remove this and update references to it.
@@ -48,7 +48,7 @@ function LPModel(
     if maximize
         c = -c
     end
-    kl = PTModel(A=A, b=b, c=c, λ=λ, kwargs...)
+    kl = DPModel(A=A, b=b, c=c, λ=λ, kwargs...)
     regularize!(kl, ε * λ)
     return LPModel(kl, ε, λ)
 end

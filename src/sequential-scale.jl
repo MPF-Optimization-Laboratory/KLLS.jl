@@ -1,9 +1,9 @@
 """
-    value!(kl::PTModel, t; kwargs...)
+    value!(kl::DPModel, t; kwargs...)
 
 Compute the dual objective of a Perspectron model with respect to the scaling parameter `t`.
 """
-function value!(kl::PTModel, t; jprods=Int[0], jtprods=Int[0], kwargs...)
+function value!(kl::DPModel, t; jprods=Int[0], jtprods=Int[0], kwargs...)
     @unpack λ, A = kl
     scale!(kl, t)
     s = solve!(kl; kwargs...)
@@ -24,7 +24,7 @@ end
 
 struct SequentialSolve end
 """
-    solve!(kl::PTModel, ::SequentialSolve; kwargs...) -> ExecutionStats
+    solve!(kl::DPModel, ::SequentialSolve; kwargs...) -> ExecutionStats
 
 Solve the KL-regularized least squares problem by finding the optimal scaling parameter `t` 
 that maximizes the dual objective. The optimal `t` is found by applying root-finding to the derivative of the dual objective with respect to `t`.
@@ -51,7 +51,7 @@ An `ExecutionStats` struct containing:
 - Residuals and optimality measures
 """
 function solve!(
-    kl::PTModel{T},
+    kl::DPModel{T},
     ::SequentialSolve;
     t=one(T),
     rtol=1e-6,

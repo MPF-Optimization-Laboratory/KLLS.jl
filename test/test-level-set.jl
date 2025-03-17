@@ -1,7 +1,7 @@
 using DualPerspective, Test, LinearAlgebra, Random
 using NPZ, UnPack
 
-@testset "Level Set Method for random PTModel" begin
+@testset "Level Set Method for random DPModel" begin
     Random.seed!(1234)
     m, n = 10, 30
     A = randn(m, n)
@@ -12,7 +12,7 @@ using NPZ, UnPack
 
     b = randn(m)#A*x0
     λ = 1e-3
-    kl = PTModel(A, b, λ=λ)
+    kl = DPModel(A, b, λ=λ)
     
     # Get the optimal objective value.
     # Assumes that the dual problem is **minimization**, thus the negative sign.
@@ -28,7 +28,7 @@ using NPZ, UnPack
     st = solve!(kl, M=M, logging=0, atol=atol, rtol=rtol)
 end
 
-@testset "Level Set Method for PTModel with synthetic kl" begin
+@testset "Level Set Method for DPModel with synthetic kl" begin
     kl = try # needed because of vscode quirks while developing
         npzread("../data/synthetic-UEG_testproblem.npz")
     catch
@@ -45,13 +45,13 @@ end
     n = length(q)
 
     # Create and solve the KL problem
-    kl = PTModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
+    kl = DPModel(A, b, C=C, c=zeros(n), q=q, λ=λ)
     σ = -solve!(kl, SequentialSolve()).dual_obj # Find the optimal objective value
     sP = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=1e-5, rtol = 1e-5)
     @test sP.optimality < 1e-5*kl.bNrm
 end
 
-@testset "Adaptive Level Set Method for PTModel with synthetic kl" begin
+@testset "Adaptive Level Set Method for DPModel with synthetic kl" begin
     kl = try # needed because of vscode quirks while developing
         npzread("../data/synthetic-UEG_testproblem.npz")
     catch
@@ -68,7 +68,7 @@ end
     n = length(q)
 
     # Create and solve the KL problem
-    kl = PTModel(A, b, C=C, c=zeros(n), q=q, λ=λ) 
+    kl = DPModel(A, b, C=C, c=zeros(n), q=q, λ=λ) 
     sP = solve!(kl, AdaptiveLevelSet(), α=1.5, atol=1e-5, rtol = 1e-5)
     @test sP.optimality < 1e-5*kl.bNrm
 end

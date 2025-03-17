@@ -19,7 +19,7 @@ C = inv.(b_std) |> diagm
 m, n = size(A)
 
 # Create the model
-model = PTModel(A, b, C=C, q=q, λ=λ)
+model = DPModel(A, b, C=C, q=q, λ=λ)
 ss = SSModel(model)
 
 # Solve using NonlinearSolve

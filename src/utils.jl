@@ -28,7 +28,7 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 """
-    randPTmodel(m, n; λ=1e-3) -> PTModel
+    randPTmodel(m, n; λ=1e-3) -> DPModel
 
 Generate a random PT model. Arguments:
 - `m`: number of rows of the matrix `A`
@@ -40,7 +40,7 @@ function randPTmodel(m, n; λ=1e-3)
     xs = rand(n)
     xs ./= sum(xs)
     b = A * xs
-    return PTModel(A, b, λ=λ)
+    return DPModel(A, b, λ=λ)
 end
 
 """

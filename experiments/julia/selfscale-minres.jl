@@ -37,7 +37,7 @@ kl = let
 	q .= q./sum(q)
 	C = inv.(b_std) |> diagm
 	λ = 1e-4
-	PTModel(A, b, C=C, c=zeros(length(q)), q=q, λ=λ) 
+	DPModel(A, b, C=C, c=zeros(length(q)), q=q, λ=λ) 
 end
 
 # ╔═╡ ac625eec-36d3-4134-8e0f-85840a5a42d6
