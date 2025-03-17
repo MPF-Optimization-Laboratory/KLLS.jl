@@ -4,13 +4,22 @@ derivations_files
 **/.jupyter_cache/
 /klsolve_files
 
-KLLS.code-workspace
-klsolve.html
-
 /.quarto/
 .cursor/**
 anim_fps1.gif
-rename_package.sh
-Package Renaming to Perspectron.md
-KLLS_References.md
-Perspectron.code-workspace
+
+# Python specific
+__pycache__/
+*.pyc
+dist/
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+ENV/
+.vscode/
+.idea/
+*.swp
+*~
+.env
+.env.local
