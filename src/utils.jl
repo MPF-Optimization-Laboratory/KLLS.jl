@@ -28,14 +28,14 @@ function Base.show(io::IO, s::ExecutionStats)
 end
 
 """
-    randPTmodel(m, n; λ=1e-3) -> DPModel
+    randDPModel(m, n; λ=1e-3) -> DPModel
 
 Generate a random PT model. Arguments:
 - `m`: number of rows of the matrix `A`
 - `n`: number of columns of the matrix `A`
 - `λ`: regularization parameter (default: 1e-3)
 """
-function randPTmodel(m, n; λ=1e-3)
+function randDPModel(m, n; λ=1e-3)
     A = randn(m, n)
     xs = rand(n)
     xs ./= sum(xs)

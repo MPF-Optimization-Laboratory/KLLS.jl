@@ -4,11 +4,15 @@
 
 # DualPerspective
 
-This package provides an algorithm for solving KL-regularized least squares problems of the form
+This package provides an algorithm for solving Kullback-Leibler (KL) regularized least squares problems of the form
 $$
-\min_{x \in \mathcal{C}} \frac{1}{2\lambda} \|Ax - b\|^2 + \langle c, x \rangle + KL(x \mid q),
+\min_{p \in \mathcal{X}} \frac{1}{2\lambda} \|Ax - b\|^2 + \langle c, x \rangle + \mathop{KL}(x \mid q),
 $$
-where $\mathcal{C}$ is the simplex ($Δ = \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or the nonnegative orthant $ℝ^n_+$. The algorithm is based on a trust-region newton method on the dual problem.
+where $\mathcal{X}$ is either
+- the probability simplex: $\Delta := \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or,
+- the nonnegative orthant $ℝ^n_+$.
+
+The algorithm is based on a trust-region newton method on the dual problem.
 
 ## Usage
 
@@ -54,19 +58,6 @@ using DualPerspective, UnicodePlots
 # Now you can plot DualPerspective.ExecutionStats objects
 histogram(solution)
 ```
-
-### NonlinearSolve Extension
-
-Provides an alternative solver using NonlinearSolve.jl. To use:
-
-```julia
-using DualPerspective, NonlinearSolve
-# Now you can use the NewtonEQ solver
-model = DPModel(A, b, c, λ)
-solution = solve!(model, NewtonEQ())
-```
-
-The `NewtonEQ` solver uses Newton's method with equation-solving capabilities from NonlinearSolve.jl. This solver can be particularly effective for well-conditioned problems where a direct Newton approach is suitable.
 
 ## Developing
 

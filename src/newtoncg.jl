@@ -1,22 +1,70 @@
 """
-Compute f(y) = logΣexp(A'y - c) and it's gradient,
-stored in the `lse` internal buffer.
+    lseatyc!(kl::DPModel{T}, y) -> T where T<:AbstractFloat
+
+Compute the log-sum-exp term `f(y) = logΣexp(A'y - c)` used in the dual objective function.
+
+# Arguments
+- `kl`: A `DPModel` containing model parameters and buffers
+- `y`: Vector at which to evaluate the log-sum-exp term
+
+# Details
+This function calculates `logΣexp(A'y - c)` by:
+1. Copying `c` to internal buffer `nbuf`
+2. Computing `nbuf = A'y - c` in-place using matrix-vector multiplication
+3. Evaluating the log-sum-exp operation via `obj!(lse, nbuf)`
+
+The gradient of the log-sum-exp term is automatically computed and stored in the 
+`lse` internal buffer, accessible via `grad(lse)`.
+
+# Returns
+- The scalar value of the log-sum-exp term, with type matching the model's type parameter T
+
+# Note
+This is an in-place operation that modifies internal buffers of the model.
 """
 function lseatyc!(kl, y)
     @unpack A, c, nbuf, lse = kl
     nbuf .= c
-    mul!(nbuf, A', y, 1, -1)
+    LinearAlgebra.mul!(nbuf, A', y, 1, -1)
     return obj!(lse, nbuf)
 end
 
 """
-Dual objective:
+    dObj!(kl::DPModel, y) -> T where T<:AbstractFloat
 
-- base case (no scaling, unweighted 2-norm):
+Compute the dual objective function value at point y.
+
+# Arguments
+- `kl`: A `DPModel` containing model parameters and buffers
+- `y`: Vector at which to evaluate the dual objective
+
+# Details
+The dual objective has two forms depending on scaling:
+
+1. Base case (no scaling, unweighted 2-norm):
+    ```
     f(y) = log∑exp(A'y - c) - 0.5λ y∙Cy - b∙y
+    ```
 
-- with scaling and weighted 2-norm:
+2. With scaling parameter τ and weighted 2-norm:
+    ```
     f(y) = τ log∑exp(A'y - c) - τ log τ + 0.5λ y∙Cy - b∙y
+    ```
+
+where:
+- A is the linear operator
+- c is the cost vector
+- λ is the regularization parameter
+- C is the positive definite scaling matrix
+- b is the target vector
+- τ is the scaling parameter (stored in kl.scale)
+
+# Returns
+- The scalar value of the dual objective, with type matching the model's type parameter T
+
+# Note
+This is an in-place operation that modifies internal buffers of the model and
+increments the transpose product counter.
 """
 function dObj!(kl::DPModel, y)
     @unpack b, λ, C, scale = kl 
@@ -40,9 +88,9 @@ function dGrad!(kl::DPModel, y, ∇f)
     p = grad(lse)
     ∇f .= -b
     if λ > 0
-        mul!(∇f, C, y, λ, 1)
+        LinearAlgebra.mul!(∇f, C, y, λ, 1)
     end
-    mul!(∇f, A, p, scale, 1)
+    LinearAlgebra.mul!(∇f, A, p, scale, 1)
     return ∇f
 end
 
@@ -73,11 +121,11 @@ function dHess_prod!(kl::DPModel, z, Hz)
     increment!(kl, :neval_jprod)
     increment!(kl, :neval_jtprod)
     g = grad(lse)
-    mul!(w, A', z)                 # w =                  A'z
+    LinearAlgebra.mul!(w, A', z)                 # w =                  A'z
     w .= g.*(w .- (g⋅w))           # w =        (G - gg')(A'z)
-    mul!(Hz, A, w, scale, 0)       # v = scale*A(G - gg')(A'z)
+    LinearAlgebra.mul!(Hz, A, w, scale, 0)       # v = scale*A(G - gg')(A'z)
     if λ > 0
-        mul!(Hz, C, z, λ, 1)       # v += λCz
+        LinearAlgebra.mul!(Hz, C, z, λ, 1)       # v += λCz
     end
     return Hz
 end
@@ -146,7 +194,7 @@ function solve!(
         trunk_stats = SolverCore.solve!(solver, kl; M=M, callback=cb, atol=zero(T), rtol=zero(T)) 
     end
 
-    x = kl.scale .* grad(kl.lse)
+    primal_solution = kl.scale .* grad(kl.lse)
     
     stats = ExecutionStats(
         trunk_stats.status,
@@ -154,9 +202,9 @@ function solve!(
         trunk_stats.iter,               # number of iterations
         neval_jprod(kl),                # number of products with A
         neval_jtprod(kl),               # number of products with A'
-        pObj!(kl, x),                   # primal objective
+        pObj!(kl, primal_solution),     # primal objective
         trunk_stats.objective,          # dual objective
-        x,                              # primal solution `x`
+        primal_solution,                # primal solution `x`
         (kl.λ).*(trunk_stats.solution), # residual r = λy
         trunk_stats.dual_feas,          # norm of the gradient of the dual objective
         tracer

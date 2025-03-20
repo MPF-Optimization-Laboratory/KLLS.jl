@@ -6,7 +6,7 @@ using DualPerspective, NLPModels, LinearAlgebra, Random
       tol = 2e-5
       λ = 1e-2
       m, n = 8, 10
-      kl = DualPerspective.randPTmodel(m, n; λ=λ) 
+      kl = DualPerspective.randDPModel(m, n; λ=λ) 
       A, b = kl.A, kl.b
 
       stats = solve!(kl)
