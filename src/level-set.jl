@@ -298,7 +298,7 @@ function oracle_callback(
     cgits = solver.subsolver.stats.niter
     cgexit = get(cg_msg, solver.subsolver.stats.status, "default")
     ε = atol + rtol * kl.bNrm
-    pObj = pObj!(kl::DPModel, x) - σ
+    pObj = pObj!(kl, x) - σ
 
     # Test exit conditions
     tired = iter >= max_iter
