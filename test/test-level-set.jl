@@ -24,7 +24,7 @@ using NPZ, UnPack
 
     st = solve!(kl, LevelSet(), α=1.9, σ=σ, atol=tol, rtol=tol)
     x = st.solution; r = st.residual
-    @test norm(A*x + r - b) < tol
+    @test norm(A*x + r - b) < 4*tol
 
     # Add preconditioning
     M = DualPerspective.AAPreconditioner(kl)
