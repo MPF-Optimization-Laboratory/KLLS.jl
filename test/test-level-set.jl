@@ -7,25 +7,30 @@ using NPZ, UnPack
     A = randn(m, n)
     x0 = [1/i for i in 1:n]
     x0 = x0 / sum(x0)
-    @test all(x0 .>= 0)
-    @test sum(x0) ≈ 1.0
-
     b = randn(m)#A*x0
+    @test sum(x0) ≈ 1.0
+    @test all(x0 .>= 0)
+
+    tol = 1e-6*(1+norm(b))
     λ = 1e-3
     kl = DPModel(A, b, λ=λ)
     
     # Get the optimal objective value.
     # Assumes that the dual problem is **minimization**, thus the negative sign.
-    σ = -solve!(kl, SequentialSolve()).dual_obj
-
-    atol = rtol = 1e-6
-    st = solve!(kl, LevelSet(), α=1.5, σ=σ, atol=atol, rtol=rtol)
+    st = solve!(kl, SequentialSolve())
+    σ = -st.dual_obj
     x = st.solution; r = st.residual
-    @test norm(A*x + r - b) < atol + rtol*norm(b)
+    @test norm(A*x + r - b) < tol
+
+    st = solve!(kl, LevelSet(), α=1.9, σ=σ, atol=tol, rtol=tol)
+    x = st.solution; r = st.residual
+    @test norm(A*x + r - b) < tol
 
     # Add preconditioning
     M = DualPerspective.AAPreconditioner(kl)
-    st = solve!(kl, M=M, logging=0, atol=atol, rtol=rtol)
+    st = solve!(kl, M=M, logging=0, atol=tol, rtol=tol)
+    x = st.solution; r = st.residual
+    @test norm(A*x + r - b) < tol
 end
 
 @testset "Level Set Method for DPModel with synthetic kl" begin

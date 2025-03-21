@@ -23,7 +23,7 @@ function solve!(
 
     it = 0
     tracer = DataFrame(iter=Int[], l=T[], u=T[], u_over_l=T[], s=T[])
-    l, u, s = 0.0, 0.0, 0.0
+    l, u, s = zero(T), zero(T), zero(T)
     solver = TrunkSolver(kl)
     subsolver_logging = Int(max(0, logging-1))
     start_time = time()
@@ -31,18 +31,30 @@ function solve!(
     while true
         it += 1
         l, u, s = oracle!(kl, α, σ, solver, tracer, logging=subsolver_logging, max_time=max_time) # TODO: weird max time
+
         tk = t - l / s
         
         small_step = abs(tk - t) ≤ atol + t*rtol
         min_value = u ≤ atol + σ*rtol
-        done = small_step || min_value
+        ratio = log10(u/l) < 1e-3
+        done = small_step || ratio || min_value
 
         if logging > 0
-            @printf("lvl itn: %7d ℓ: %9.2e u: %9.2e s: %9.2e tₖ: %9.2e  Δₜ: %9.2e\n", it, l, u, s, tk, abs(tk - t))
+            if it == 1
+                println("\n\e[1;32mLevel Set Method:\e[0m")
+                @printf("\e[1;32m%7s  %9s  %9s  %9s  %9s  %9s  %9s\e[0m\n",
+                        "iter", "l", "u", "s", "t", "|Δt|", "log(u/l)")
+                @printf("\e[1;32m%7s  %9s  %9s  %9s  %9s  %9s  %9s\e[0m\n",
+                        "-----", "-------", "-------", "-------", "-------", "-------", "-------")
+            end
+            @printf("\e[1;32m%7d  %9.2e  %9.2e  %9.2e  %9.2e  %9.2e  %9.1e\e[0m\n", 
+                    it, l, u, s, tk, abs(tk - t), log10(u/l))
             if done && small_step
-                println("Stopping due to small step in t")
+                @printf("\n\e[1;31mStop on small Δt\e[0m")
             elseif done
-                println("Stopping due to small upper bound")
+                @printf("\n\e[1;31mStop on small upper bound\e[0m")
+            elseif done && ratio
+                @printf("\n\e[1;31mStop on small ratio\e[0m")
             end
         end
 
@@ -146,6 +158,11 @@ function solve!(
     
     if logging > 0 
         println("t windup is complete at t = $t")
+        println("\n\e[1;32mAdaptive Level Set Method:\e[0m")
+        @printf("\e[1;32m%7s  %9s  %9s  %9s  %9s  %9s\e[0m\n",
+                "iter", "l", "u", "s", "t", "|Δt|")
+        @printf("\e[1;32m%7s  %9s  %9s  %9s  %9s  %9s\e[0m\n",
+                "-----", "-------", "-------", "-------", "-------", "-------")
     end
 
     tₐ, sₐ, lₐ = t, s, l
@@ -180,11 +197,12 @@ function solve!(
         done = small_step || min_value
 
         if logging > 0
-            @printf("lvl itn: %7d ℓ: %9.2e u: %9.2e s: %9.2e tₖ: %9.2e  Δₜ: %9.2e\n", it, l, u, s, t_proposed, abs(t_proposed - t))
+            @printf("\e[1;32m%7d  %9.2e  %9.2e  %9.2e  %9.2e  %9.2e\e[0m\n", 
+                    it, l, u, s, t_proposed, abs(t_proposed - t))
             if done && small_step
-                println("Stopping due to small step in t")
+                @printf("\n\e[1;31mStop on small Δt\e[0m\n")
             elseif done
-                println("Stopping due to small upper bound")
+                @printf("\n\e[1;31mStop on small upper bound\e[0m\n")
             end
         end
 
@@ -260,7 +278,7 @@ function oracle!(
     kwargs...
 ) where {T}
     # return values (l, u, s)
-    ret = [0.0, 0.0, 0.0]
+    ret = zeros(T, 3)
 
     # Reset the solver
     SolverCore.reset!(solver, kl)
@@ -306,15 +324,18 @@ function oracle_callback(
     done = tired || optimal
 
     # Logging & Tracing
-    log_items = (iter, dObj, pObj, pObj / dObj, r, Δ, actual_to_predicted, cgits, cgexit)
+    ratio = abs(dObj) < eps(T) ? zero(T) : log10(abs(pObj / dObj))
+    log_items = (iter, dObj, pObj, ratio, r, Δ, actual_to_predicted, cgits, cgexit)
     trace && push!(tracer, log_items)
     if logging > 0 && iter == 0
         println("Inside loop:")
         @printf("%7s  %9s  %9s  %9s  %9s  %9s  %9s  %6s  %10s\n",
             "iter", "dObj-σ", "pObj-σ", "ratio", "∥∇dObj∥", "Δ", "Δₐ/Δₚ", "cg its", "cg msg")
+        @printf("%7s  %9s  %9s  %9s  %9s  %9s  %9s  %6s  %10s\n",
+            "-----", "-------", "-------", "-------", "-------", "---", "-------", "------", "--------")
     end
     if logging > 0 && (mod(iter, logging) == 0 || done)
-        @printf("%7d  %9.2e  %9.2e %9.1f %9.1e %9.1e %9.1e  %6d   %10s\n", (log_items...))
+        @printf("%7d  %9.2e  %9.2e  %9.1e  %9.1e  %9.1e  %9.1e  %6d   %10s\n", (log_items...))
     end
 
     if optimal
@@ -322,7 +343,7 @@ function oracle_callback(
     elseif tired
         trunk_stats.status = :max_iter
     elseif pObj < α * dObj && dObj > 0
-        st = -obj!(kl.lse, kl.A'y) + log(kl.scale) + 1
+        st = -(lseatyc!(kl, y) - log(kl.scale) - 1)
         ret .= [dObj, pObj, st]
         trunk_stats.status = :user # Ends the oracle iterations
     end

@@ -2,64 +2,76 @@ import numpy as np
 from juliacall import Main as jl
 import os
 
-# Module-level variable for the DualPerspective.jl repository URL
-dualperspective_url = "https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl"
+# Constants
+GITHUB_URL = "https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl"
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+USE_LOCAL = os.environ.get('DUALPERSPECTIVE_USE_LOCAL', '').lower() in ('true', '1', 'yes')
 
 def _reinstall_dualperspective():
     """Reinstall DualPerspective.jl from the repository."""
     jl.seval(f"""
         import Pkg
-        Pkg.add(url="{dualperspective_url}")
+        Pkg.add(url="{GITHUB_URL}")
         Pkg.resolve()
         """)
 
 def _initialize_julia():
-    """Initialize Julia and install DualPerspective if needed."""
+    """Initialize Julia and load DualPerspective from either local directory or GitHub."""
     try:
-        # Set up the Julia project and install packages
-        jl.seval(f"""
-            import Pkg
-            if !haskey(Pkg.project().dependencies, "DualPerspective")
-                Pkg.add(url="{dualperspective_url}")
-                Pkg.resolve()
-            end
-            
-            # Add SnoopPrecompile if not present
-            if !haskey(Pkg.project().dependencies, "SnoopPrecompile")
-                Pkg.add("SnoopPrecompile")
-            end
-            """)
-        
-        # Now load KLLS with precompilation hints
-        jl.seval("""
-            using DualPerspective
-            using SnoopPrecompile
-            
-            # Define aliases for methods with ! in their names
-            solve = DualPerspective.solve!
-            scale = DualPerspective.scale!
-            regularize = DualPerspective.regularize!
-            
-            # Include precompilation statements
-            if !isdefined(DualPerspective, :_precompiled)
-                @precompile_all_calls begin
-                    m, n = 20, 10
-                    A = rand(m, n)
-                    b = rand(m)
-                    model = DPModel(A, b)
-                    scale(model, 1.0)
-                    regularize(model, 1e-4)
-                    solver = SequentialSolve()
-                    solve(model, solver)
+        if USE_LOCAL:
+            # Use local Julia project
+            jl.seval(f"""
+                import Pkg
+                Pkg.activate("{ROOT_DIR}")
+                using DualPerspective
+                
+                # Define method aliases
+                solve = DualPerspective.solve!
+                scale = DualPerspective.scale!
+                regularize = DualPerspective.regularize!
+                """)
+        else:
+            # Use GitHub version
+            jl.seval(f"""
+                import Pkg
+                if !haskey(Pkg.project().dependencies, "DualPerspective")
+                    Pkg.add(url="{GITHUB_URL}")
+                    Pkg.resolve()
                 end
-                global _precompiled = true
-            end
-            """)
-            
+                
+                # Add SnoopPrecompile if not present
+                if !haskey(Pkg.project().dependencies, "SnoopPrecompile")
+                    Pkg.add("SnoopPrecompile")
+                end
+                
+                using DualPerspective
+                using SnoopPrecompile
+                
+                # Define aliases for methods with ! in their names
+                solve = DualPerspective.solve!
+                scale = DualPerspective.scale!
+                regularize = DualPerspective.regularize!
+                
+                # Include precompilation statements
+                if !isdefined(DualPerspective, :_precompiled)
+                    @precompile_all_calls begin
+                        m, n = 20, 10
+                        A = rand(m, n)
+                        b = rand(m)
+                        model = DPModel(A, b)
+                        scale(model, 1.0)
+                        regularize(model, 1e-4)
+                        solver = SequentialSolve()
+                        solve(model, solver)
+                    end
+                    global _precompiled = true
+                end
+                """)
+                
     except Exception as e:
-        raise RuntimeError(f"Failed to initialize Julia or install KLLS: {str(e)}")
+        raise RuntimeError(f"Failed to initialize Julia or install DualPerspective: {str(e)}")
 
-# Initialize Julia and KLLS on module import
+# Initialize on module import
 _initialize_julia()
 
 class DPModel:
@@ -127,4 +139,19 @@ def regularize(model, λ):
         model: DualPerspectiveModel instance
         λ: Regularization parameter
     """
-    jl.regularize(model.model, λ) 
+    jl.regularize(model.model, λ)
+
+def rand_dp_model(m, n):
+    """
+    Create a random DPModel with dimensions m x n.
+    
+    Args:
+        m: Number of rows
+        n: Number of columns
+        
+    Returns:
+        A DPModel instance with random data
+    """
+    A = np.random.rand(m, n)
+    b = np.random.rand(m)
+    return DPModel(A, b)

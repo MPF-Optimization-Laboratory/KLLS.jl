@@ -13,6 +13,7 @@ using SolverCore
 export DPModel, SSModel, OTModel, LPModel
 export SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
 export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
+export randDPModel
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
 

@@ -14,7 +14,7 @@ function value!(kl::DPModel, t; jprods=Int[0], jtprods=Int[0], kwargs...)
     
     # Compute derivative of value function
     y = s.residual/λ
-    dv = obj!(kl.lse, A'y) - log(t) - 1
+    dv = -(lseatyc!(kl, y) - log(t) - 1)
     
     # Set starting point for next iteration
     update_y0!(kl, s.residual/λ)
