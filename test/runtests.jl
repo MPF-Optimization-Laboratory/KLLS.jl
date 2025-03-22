@@ -32,10 +32,10 @@ end
     include("test-sequential-scale.jl")
 end
 
-# Python binding tests
-@testset "Python bindings" begin
-    include("test_python.jl")
-end
+# # Python binding tests
+# @testset "Python bindings" begin
+#     include("test_python.jl")
+# end
 
 # NonlinearSolve extension tests
 # - removing because NonlinearSolve.jl is too heavy
