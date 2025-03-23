@@ -1,11 +1,27 @@
 import numpy as np
 from juliacall import Main as jl
 import os
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
 
-# Constants
-GITHUB_URL = "https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl"
+# Paths
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+PYPI_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Useful for development: environment variable to install the package from the local directory.
 USE_LOCAL = os.environ.get('DUALPERSPECTIVE_USE_LOCAL', '').lower() in ('true', '1', 'yes')
+
+# Read repository URL from pyproject.toml
+def _get_repo_url():
+    """Get the repository URL from pyproject.toml."""
+    pyproject_path = os.path.join(PYPI_DIR, "pyproject.toml")
+    with open(pyproject_path, "rb") as f:
+        pyproject_data = tomllib.load(f)
+    return pyproject_data["project"]["urls"].get("Repository")
+
+GITHUB_URL = _get_repo_url()
 
 def _reinstall_dualperspective():
     """Reinstall DualPerspective.jl from the repository."""
@@ -23,12 +39,6 @@ def _initialize_julia():
             jl.seval(f"""
                 import Pkg
                 Pkg.activate("{ROOT_DIR}")
-                using DualPerspective
-                
-                # Define method aliases
-                solve = DualPerspective.solve!
-                scale = DualPerspective.scale!
-                regularize = DualPerspective.regularize!
                 """)
         else:
             # Use GitHub version
@@ -38,41 +48,29 @@ def _initialize_julia():
                     Pkg.add(url="{GITHUB_URL}")
                     Pkg.resolve()
                 end
-                
-                # Add SnoopPrecompile if not present
-                if !haskey(Pkg.project().dependencies, "SnoopPrecompile")
-                    Pkg.add("SnoopPrecompile")
-                end
-                
-                using DualPerspective
-                using SnoopPrecompile
-                
-                # Define aliases for methods with ! in their names
-                solve = DualPerspective.solve!
-                scale = DualPerspective.scale!
-                regularize = DualPerspective.regularize!
-                
-                # Include precompilation statements
-                if !isdefined(DualPerspective, :_precompiled)
-                    @precompile_all_calls begin
-                        m, n = 20, 10
-                        A = rand(m, n)
-                        b = rand(m)
-                        model = DPModel(A, b)
-                        scale(model, 1.0)
-                        regularize(model, 1e-4)
-                        solver = SequentialSolve()
-                        solve(model, solver)
-                    end
-                    global _precompiled = true
-                end
                 """)
+
+        jl.seval("""
+            using DualPerspective
+            solve = DualPerspective.solve!
+            scale = DualPerspective.scale!
+            regularize = DualPerspective.regularize!
+            """)
                 
     except Exception as e:
         raise RuntimeError(f"Failed to initialize Julia or install DualPerspective: {str(e)}")
 
 # Initialize on module import
 _initialize_julia()
+
+def version():
+    """
+    Return the current version of DualPerspective package.
+    
+    Returns:
+        str: Version string of the DualPerspective package
+    """
+    return str(jl.DualPerspective.version())
 
 class DPModel:
     """Python wrapper for DualPerspective.jl's DPModel."""
@@ -104,7 +102,6 @@ class DPModel:
             kwargs['λ'] = λ
             
         self.model = jl.DPModel(self.A, self.b, **kwargs)
-        self.ss_model = jl.SequentialSolve()
 
 def solve(model, verbose=False, logging=0):
     """
@@ -118,7 +115,8 @@ def solve(model, verbose=False, logging=0):
     Returns:
         numpy array containing the solution
     """
-    result = jl.solve(model.model, model.ss_model, zverbose=verbose, logging=logging)
+    s_model = jl.SequentialSolve()
+    result = jl.solve(model.model, s_model, zverbose=verbose, logging=logging)
     return np.array(result.solution)
 
 def scale(model, scale_factor):

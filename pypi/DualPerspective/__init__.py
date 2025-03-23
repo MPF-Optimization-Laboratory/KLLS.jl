@@ -1,4 +1,5 @@
-from .core import DPModel, solve, regularize, rand_dp_model
+from .core import DPModel, solve, regularize, rand_dp_model, version
 
-__version__ = "0.1.0"
-__all__ = ["DPModel", "solve", "regularize", "rand_dp_model"]
+# Get version from the Julia package
+__version__ = version()
+__all__ = ["DPModel", "solve", "regularize", "rand_dp_model", "version"]

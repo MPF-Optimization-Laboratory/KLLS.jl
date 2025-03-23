@@ -19,6 +19,7 @@ classifiers = [
 dependencies = [
     "juliacall>=0.9.7",
     "numpy>=1.20.0",
+    "tomli>=2.0.0;python_version<'3.11'",
 ]
 
 [project.urls]

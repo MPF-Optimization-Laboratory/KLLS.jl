@@ -65,4 +65,84 @@ This Python interface uses Julia's precompilation features to ensure good perfor
 
 ## License
 
-This project is licensed under the MIT License. 
+This project is licensed under the MIT License.
+
+## Advanced Usage
+
+### Reinstalling the Julia Package
+
+If you need to update the underlying Julia package to the latest version from the repository, you can use the following command:
+
+```python
+from DualPerspective.core import _reinstall_dualperspective
+_reinstall_dualperspective()
+```
+
+This will pull the latest version of DualPerspective.jl from the GitHub repository and reinstall it in your Julia environment. This can be useful for:
+- Getting the latest bugfixes
+- Testing new features before they're included in an official Python package release
+- Troubleshooting version compatibility issues
+
+Note: While this function has a leading underscore (indicating it's "private"), it's documented here for users who need this functionality.
+
+## Development
+
+### Building and Publishing the Package
+
+Follow these steps to build and publish new versions of the package to PyPI:
+
+#### Prerequisites
+
+Make sure you have the necessary tools:
+
+```bash
+pip install --upgrade build twine
+```
+
+#### Building the Package
+
+Build both wheel and source distributions:
+
+```bash
+python -m build
+```
+
+This creates distribution files in the `dist/` directory.
+
+#### Testing Locally
+
+Before publishing, test the package locally:
+
+```bash
+# Install in development mode
+pip install -e .
+
+# Or install the built wheel
+pip install dist/DualPerspective-0.1.1-py3-none-any.whl
+```
+
+#### Publishing to TestPyPI (Optional)
+
+To test the publishing process:
+
+```bash
+twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+
+# Install from TestPyPI
+pip install --index-url https://test.pypi.org/simple/ DualPerspective
+```
+
+#### Publishing to PyPI
+
+Once tested and ready:
+
+```bash
+twine upload dist/*
+```
+
+#### Updating for New Releases
+
+1. Update the version number in `pyproject.toml`
+2. Make code changes
+3. Rebuild: `python -m build`
+4. Upload: `twine upload dist/*`
