@@ -88,8 +88,8 @@ class DPModel:
             λ: Optional regularization parameter
         """
         # Convert numpy arrays to Julia arrays
-        self.A = jl.convert(jl.Matrix, A)
-        self.b = jl.convert(jl.Vector, b)
+        A_jl = jl.convert(jl.Matrix, A)
+        b_jl = jl.convert(jl.Vector, b)
         
         kwargs = {}
         if q is not None:
@@ -101,7 +101,22 @@ class DPModel:
         if λ is not None:
             kwargs['λ'] = λ
             
-        self.model = jl.DPModel(self.A, self.b, **kwargs)
+        self.model = jl.DPModel(A_jl, b_jl, **kwargs)
+        
+    @classmethod
+    def from_julia_model(cls, julia_model):
+        """
+        Create a DPModel directly from a Julia DPModel object.
+        
+        Args:
+            julia_model: A Julia DPModel object
+            
+        Returns:
+            DPModel: A Python wrapper for the Julia model
+        """
+        instance = cls.__new__(cls)
+        instance.model = julia_model
+        return instance
 
 def solve(model, verbose=False, logging=0):
     """
@@ -139,17 +154,17 @@ def regularize(model, λ):
     """
     jl.regularize(model.model, λ)
 
-def rand_dp_model(m, n):
+def rand_dp_model(m, n, λ=1e-3):
     """
     Create a random DPModel with dimensions m x n.
     
     Args:
         m: Number of rows
         n: Number of columns
+        λ: Regularization parameter (default: 1e-3)
         
     Returns:
         A DPModel instance with random data
     """
-    A = np.random.rand(m, n)
-    b = np.random.rand(m)
-    return DPModel(A, b)
+    julia_model = jl.randDPModel(m, n, λ=λ)
+    return DPModel.from_julia_model(julia_model)

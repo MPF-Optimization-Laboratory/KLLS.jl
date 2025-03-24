@@ -46,12 +46,12 @@ def test_regularize():
     regularize(model, λ)
     assert model.model.λ == λ
 
-# def test_solve():
-#     """Test solving functionality."""
-#     model = rand_dp_model(m, n)
-#     solution = solve(model)
-#     assert solution.shape == (n,)
-#     assert not np.any(np.isnan(solution)) 
+def test_solve():
+    """Test solving functionality."""
+    model = rand_dp_model(m, n)
+    solution = solve(model, verbose=True)
+    assert solution.shape == (n,)
+    assert not np.any(np.isnan(solution)) 
 
 def test_rand_dp_model():
     """Test random DPModel creation."""
