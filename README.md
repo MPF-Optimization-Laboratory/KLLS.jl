@@ -14,23 +14,33 @@ where $\mathcal{X}$ is either
 
 The algorithm is based on a trust-region newton method on the dual problem.
 
+## Release v0.1.2
+
+The latest release (v0.1.2) includes:
+- Package renamed from "Perspectron" to "DualPerspective"
+- Updated model classes and interfaces
+- Bug fixes in model initialization and regularization
+- Python package available on PyPI
+
 ## Usage
 
 ### Installation
 
-**TODO: For this part to work, we need add the package to the julia pacakge registry**
-
-To install this package, run:
+You can install this package directly from GitHub:
 
 ```julia
-import Pkg; Pkg.install("DualPerspective")
+import Pkg; Pkg.add(url="https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl")
+```
+
+For Python users, install from PyPI:
+
+```bash
+pip install DualPerspective
 ```
 
 ## Examples
 
-**TODO: Complete this part with examples of the models that end up in the final implementation**
-
-To solve a simple optimal transport problem
+To solve a simple optimal transport problem:
 
 ```julia
 using DualPerspective, LinearAlgebra, Distances
@@ -40,8 +50,8 @@ C = pairwise(SqEuclidean(), μsupport', νsupport'; dims=2)           # Cost mat
 μ = normalize!(exp.(-μsupport .^ 2 ./ 0.5^2), 1)                    # Start distribution
 ν = normalize!(νsupport .^ 2 .* exp.(-νsupport .^ 2 ./ 0.5^2), 1)   # Target distribution
 
-ϵ = 0.01*median(C2)                 # Entropy regularization constant
-ot = DualPerspective.OTModel(μ, ν, C2, ϵ)      # Model initialization
+ϵ = 0.01*median(C)                 # Entropy regularization constant
+ot = DualPerspective.OTModel(μ, ν, C, ϵ)      # Model initialization
 solution = solve!(ot, trace=true)   # Solution to the OT problem          
 ```
 
