@@ -5,9 +5,11 @@
 # DualPerspective
 
 This package provides an algorithm for solving Kullback-Leibler (KL) regularized least squares problems of the form
+
 $$
 \min_{p \in \mathcal{X}} \frac{1}{2\lambda} \|Ax - b\|^2 + \langle c, x \rangle + \mathop{KL}(x \mid q),
 $$
+
 where $\mathcal{X}$ is either
 - the probability simplex: $\Delta := \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or,
 - the nonnegative orthant $ℝ^n_+$.
