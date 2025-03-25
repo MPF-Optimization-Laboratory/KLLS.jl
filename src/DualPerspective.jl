@@ -14,20 +14,9 @@ using Pkg
 export DPModel, SSModel, OTModel, LPModel
 export SSTrunkLS, SequentialSolve, LevelSet, AdaptiveLevelSet
 export solve!, scale!, scale, regularize!, histogram, reset!, update_y0!
-export randDPModel, version
+export randDPModel
 
 DEFAULT_PRECISION(T) = (eps(T))^(1/3)
-
-"""
-    version() -> String
-
-Return the current version of DualPerspective.jl package.
-"""
-function version()
-    # Read directly from Project.toml
-    project_path = joinpath(dirname(dirname(@__FILE__)), "Project.toml")
-    return Pkg.TOML.parsefile(project_path)["version"]
-end
 
 include("logsumexp.jl")
 include("dualperspective-model.jl")

@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from DualPerspective import DPModel, solve, regularize, rand_dp_model, version
+from DualPerspective import DPModel, solve, regularize, rand_dp_model
 
 # Set random seeds for reproducibility
 np.random.seed(42)
@@ -58,11 +58,3 @@ def test_rand_dp_model():
     model = rand_dp_model(m, n)
     assert model.A.shape == (m, n)
     assert model.b.shape == (m,)
-
-def test_version():
-    """Test version function returns a valid version string."""
-    v = version()
-    assert isinstance(v, str)
-    assert len(v) > 0
-    # Version should match the pattern x.y.z
-    assert v.count('.') in (1, 2)  # Allow for major.minor or major.minor.patch

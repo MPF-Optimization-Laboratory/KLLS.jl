@@ -63,15 +63,6 @@ def _initialize_julia():
 # Initialize on module import
 _initialize_julia()
 
-def version():
-    """
-    Return the current version of DualPerspective package.
-    
-    Returns:
-        str: Version string of the DualPerspective package
-    """
-    return str(jl.DualPerspective.version())
-
 class DPModel:
     """Python wrapper for DualPerspective.jl's DPModel."""
     
@@ -102,7 +93,15 @@ class DPModel:
             kwargs['λ'] = λ
             
         self.model = jl.DPModel(A_jl, b_jl, **kwargs)
-        
+
+    @property
+    def A(self):
+        return np.array(self.model.A)
+
+    @property
+    def b(self):
+        return np.array(self.model.b)
+
     @classmethod
     def from_julia_model(cls, julia_model):
         """

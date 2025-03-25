@@ -49,19 +49,3 @@ end
 Plot a histogram of the solution.
 """
 function histogram end
-
-"""
-    version() -> String
-
-Return the current version of DualPerspective.jl package.
-"""
-function version()
-    pkg_info = Pkg.project()
-    for (uuid, info) in pkg_info.dependencies
-        if info.name == Base.moduleroot(@__MODULE__).name
-            return info.version
-        end
-    end
-    # Fallback to the local project file if not installed as dependency
-    return Pkg.TOML.parsefile(pkgdir(@__MODULE__), "Project.toml")["version"]
-end
