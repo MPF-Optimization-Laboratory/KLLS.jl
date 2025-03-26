@@ -1,4 +1,5 @@
 ![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/DualPerspective.jl?include_prereleases)
+![PyPI - Version](https://img.shields.io/pypi/v/DualPerspective)
 [![Run_Tests](https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl/actions/workflows/run-tests.yml/badge.svg)](https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl/actions/workflows/run-tests.yml)
 
 
@@ -14,12 +15,11 @@ where $\mathcal{X}$ is either
 - the probability simplex: $\Delta := \{ x∈ℝ^n_+ \mid ∑_j x_j=1\}$) or,
 - the nonnegative orthant $ℝ^n_+$.
 
-The algorithm is based on a trust-region newton method on the dual problem.
+The algorithm is based on a trust-region Newton CG method on the dual problem.
 
 ## Release v0.1.2
 
 The latest release (v0.1.2) includes:
-- Package renamed from "Perspectron" to "DualPerspective"
 - Updated model classes and interfaces
 - Bug fixes in model initialization and regularization
 - Python package available on PyPI
