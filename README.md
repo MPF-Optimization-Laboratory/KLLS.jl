@@ -1,4 +1,4 @@
-![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/DualPerspective.jl?include_prereleases=true)
+![Latest Release](https://img.shields.io/github/v/release/MPF-Optimization-Laboratory/DualPerspective.jl?include_prereleases)
 [![Run_Tests](https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl/actions/workflows/run-tests.yml/badge.svg)](https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl/actions/workflows/run-tests.yml)
 
 
