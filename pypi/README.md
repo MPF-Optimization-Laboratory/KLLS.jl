@@ -10,7 +10,7 @@ pip install DualPerspective
 
 The package will automatically:
 1. Install Julia if not already installed (via juliacall)
-2. Install the DualPerspective.jl Julia package
+2. Install the DualPerspective.jl Julia package from the official Julia registry
 3. Perform precompilation to ensure fast performance from the first run
 
 ## Usage
@@ -23,10 +23,9 @@ from DualPerspective import DPModel, solve, regularize
 np.random.seed(42)
 n = 200  # dimension of solution
 m = 100  # number of measurements
-x0 = np.random.rand(n)
-x0 = np.pi * x0 / np.sum(x0)  # Rescale to sum to pi
+x0 = np.pi * (tmp := np.random.rand(n)) / np.sum(tmp)
 A = np.random.rand(m, n)
-b = A @ x0
+b = A @ x0  # measurements
 
 # Create and solve the problem
 model = DPModel(A, b)
@@ -71,19 +70,13 @@ This project is licensed under the MIT License.
 
 ### Reinstalling the Julia Package
 
-If you need to update the underlying Julia package to the latest version from the repository, you can use the following command:
+If you need to reinstall the Julia package, you can simply reinstall the Python package:
 
-```python
-from DualPerspective.core import _reinstall_dualperspective
-_reinstall_dualperspective()
+```bash
+pip install --force-reinstall DualPerspective
 ```
 
-This will pull the latest version of DualPerspective.jl from the GitHub repository and reinstall it in your Julia environment. This can be useful for:
-- Getting the latest bugfixes
-- Testing new features before they're included in an official Python package release
-- Troubleshooting version compatibility issues
-
-Note: While this function has a leading underscore (indicating it's "private"), it's documented here for users who need this functionality.
+This will ensure you have the latest version from the Julia registry.
 
 ## Development
 
@@ -129,7 +122,7 @@ To test the publishing process:
 twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
 # Install from TestPyPI
-pip install --index-url https://test.pypi.org/simple/ DualPerspective
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ DualPerspective
 ```
 
 #### Publishing to PyPI

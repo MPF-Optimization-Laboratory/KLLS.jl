@@ -6,47 +6,36 @@ try:
 except ModuleNotFoundError:
     import tomli as tomllib
 
-# Paths
+# Path
 ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-PYPI_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Useful for development: environment variable to install the package from the local directory.
 USE_LOCAL = os.environ.get('DUALPERSPECTIVE_USE_LOCAL', '').lower() in ('true', '1', 'yes')
 
-# Read repository URL from pyproject.toml
-def _get_repo_url():
-    """Get the repository URL from pyproject.toml."""
-    pyproject_path = os.path.join(PYPI_DIR, "pyproject.toml")
-    with open(pyproject_path, "rb") as f:
-        pyproject_data = tomllib.load(f)
-    return pyproject_data["project"]["urls"].get("Repository")
-
-GITHUB_URL = _get_repo_url()
-
-def _reinstall_dualperspective():
-    """Reinstall DualPerspective.jl from the repository."""
-    jl.seval(f"""
-        import Pkg
-        Pkg.add(url="{GITHUB_URL}")
-        Pkg.resolve()
-        """)
+# def _reinstall_dualperspective():
+#     """Reinstall DualPerspective.jl from the repository."""
+#     jl.seval(f"""
+#         import Pkg
+#         Pkg.rm("DualPerspective")
+#         Pkg.add("DualPerspective")
+#         Pkg.instantiate()
+#         """)
 
 def _initialize_julia():
-    """Initialize Julia and load DualPerspective from either local directory or GitHub."""
+    """Initialize Julia and load DualPerspective."""
     try:
         if USE_LOCAL:
             # Use local Julia project
             jl.seval(f"""
                 import Pkg
-                Pkg.activate("{ROOT_DIR}")
+                Pkg.develop("{ROOT_DIR}")
                 """)
         else:
-            # Use GitHub version
-            jl.seval(f"""
+            # Use registry version
+            jl.seval("""
                 import Pkg
                 if !haskey(Pkg.project().dependencies, "DualPerspective")
-                    Pkg.add(url="{GITHUB_URL}")
-                    Pkg.resolve()
+                    Pkg.add("DualPerspective")
                 end
                 """)
 

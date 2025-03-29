@@ -3,7 +3,7 @@ derivations_files
 .DS_Store
 **/.jupyter_cache/
 /klsolve_files
-
+/docs/build/
 /.quarto/
 .cursor/**
 anim_fps1.gif

@@ -17,21 +17,20 @@ where $\mathcal{X}$ is either
 
 The algorithm is based on a trust-region Newton CG method on the dual problem.
 
-## Release v0.1.2
+## Release v0.1.3
 
-The latest release (v0.1.2) includes:
-- Updated model classes and interfaces
-- Bug fixes in model initialization and regularization
+The latest release (v0.1.3) includes:
+- Official Julia registry support
 - Python package available on PyPI
 
 ## Usage
 
 ### Installation
 
-You can install this package directly from GitHub:
+You can install this package directly from Julia's package manager:
 
 ```julia
-import Pkg; Pkg.add(url="https://github.com/MPF-Optimization-Laboratory/DualPerspective.jl")
+import Pkg; Pkg.add("DualPerspective")
 ```
 
 For Python users, install from PyPI:
